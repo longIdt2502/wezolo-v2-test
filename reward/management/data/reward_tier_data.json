@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Dùng thử",
+    "min_points": 0
+  },
+  {
+    "name": "Gói 1 - Bạc",
+    "min_points": 0
+  },
+  {
+    "name": "Gói 2 - Vàng",
+    "min_points": 100000000
+  },
+  {
+    "name": "Gói 3 - Bạch kim",
+    "min_points": 1000000000
+  }
+]

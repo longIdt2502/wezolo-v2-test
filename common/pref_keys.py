@@ -1,0 +1,4 @@
+
+class PrefKeys:
+    WALLET_URL = 'WALLET_URL'
+    ZALO_OA_ACCESS_TOKEN = 'ZALO_OA_ACCESS_TOKEN'

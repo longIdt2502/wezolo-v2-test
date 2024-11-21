@@ -1,0 +1,22 @@
+[
+  {
+    "code": "OWNER",
+    "title": "Chủ sở hữu",
+    "note": "Vai trò chủ sở hữu của Workspace"
+  },
+  {
+    "code": "ADMIN",
+    "title": "Quản lý workspace",
+    "note": "Vai trò quản lý workspace"
+  },
+  {
+    "code": "ADMIN_OA",
+    "title": "Quản lý OA",
+    "note": "Vai trò quản lý OA"
+  },
+  {
+    "code": "SALE",
+    "title": "Chủ sở hữu",
+    "note": "Vai trò nhân viên sale"
+  }
+]

@@ -1,0 +1,15 @@
+env
+venv
+.env
+.venv
+.DS_Store
+.vscode
+.idea
+__pycache__
+*/.idea
+db-data
+compose.yaml
+backup
+
+pharmago/settings.py
+media/
