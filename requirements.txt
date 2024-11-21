@@ -79,3 +79,4 @@ zope.interface==6.1
 django-vi-address==0.1.6
 channels[daphne]>=4.0.0
 payos==0.1.7
+boto3==1.35.66
