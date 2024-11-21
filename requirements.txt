@@ -77,4 +77,5 @@ vine==5.1.0
 wcwidth==0.2.13
 zope.interface==6.1
 django-vi-address==0.1.6
-payos=0.1.7
+channels[daphne]>=4.0.0
+payos==0.1.7
