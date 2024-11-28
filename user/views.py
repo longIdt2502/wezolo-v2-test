@@ -7,9 +7,10 @@ from django.contrib.auth.hashers import make_password
 
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Q
+from django.db.models import Q, OuterRef, IntegerField, Count, F
 from rest_framework.authtoken.models import Token
 from common.pref_keys import PrefKeys
+from common.core.subquery import *
 
 from user.util import send_verify_otp
 from utils.convert_response import convert_response
@@ -19,6 +20,8 @@ from django.utils import timezone
 
 from user.models import User, Verify, City, District, Ward
 from wallet.models import Wallet
+from workspace.models import Workspace
+from zalo.models import ZaloOA
 
 
 class RegisterView(APIView):
@@ -291,8 +294,54 @@ class UsersManage(APIView):
 
     def get(self, request):
         user = request.user
+        data = request.GET.copy()
+        page_size = int(data.get('page_size', 20))
+        offset = (int(data.get('page', 1)) - 1) * page_size
+        search = data.get('search', '')
         if not user.is_superuser:
             return convert_response('permission denied', 400)
-        data = request.GET.copy()
-        users = User.objects.filter()
-        pass
+
+        users_query = User.objects.filter().order_by('full_name')
+        total_user = users_query.count()
+
+        is_active = data.get('is_active')
+        if is_active is not None:
+            is_active = True if is_active == 'true' else False
+            users_query = users_query.filter(is_active=is_active)
+
+        package = data.get('package')
+        if package:
+            users_query = users_query.filter(package__code=package)
+
+        total_ws_subquery = Subquery(
+            Workspace.objects.filter(created_by_id=OuterRef('id')).values('created_by').annotate(
+                workspace_count=Count('id')
+            ).values('workspace_count')[:1],
+            output_field=IntegerField()
+        )
+
+        print(Workspace.objects.filter(created_by_id=13).count())
+
+        total_oa_subquery = Subquery(
+            ZaloOA.objects.filter(created_by_id=OuterRef('id')).values('created_by').annotate(
+                oa_count=Count('id')
+            ).values('oa_count')[:1],
+            output_field=IntegerField()
+        )
+
+        users = users_query.filter(
+            Q(phone__icontains=search) | Q(full_name__icontains=search)
+        )[offset: offset + page_size].values().annotate(
+            wallet_data=SubqueryJson(
+                Wallet.objects.filter(id=OuterRef('wallet')).values(
+                    'id', 'wallet_uid', 'balance'
+                )[:1]
+            ),
+            total_ws=total_ws_subquery,
+            total_oa=total_oa_subquery
+        )
+
+        return convert_response('success', 200, data={
+            'data': users,
+            'count': total_user
+        })
