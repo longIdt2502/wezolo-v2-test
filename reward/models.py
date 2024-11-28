@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from wallet.models import WalletTransaction
 from django.utils import timezone
+from django.db.models import Sum
 
 from user.models import User
 from package.models import Price
@@ -18,7 +19,19 @@ class Reward(models.Model):
     points_earned = models.IntegerField(default=0, null=False, blank=False)
     expiration_date = models.DateTimeField(default=timezone.now() + timedelta(days=180))
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField()
+    updated_at = models.DateTimeField(null=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        user = self.customer_id
+        total_point = Reward.objects.filter(customer_id=self.customer_id).aggregate(
+            total_point=Sum('points_earned')
+        )['total_point'] or 0
+        reward_tier = RewardTier.objects.filter()
+        for item in reward_tier:
+            if total_point > item.min_points:
+                user.level = item
+                user.save()
 
 
 class RewardTier(models.Model):
@@ -53,6 +66,6 @@ class RewardBenefit(models.Model):
     benefit_name = models.TextField(null=False, blank=False)
     benefit_description = models.TextField(null=True, blank=True)
     type = models.CharField(max_length=255, choices=Price.Type.choices, null=True, blank=True)
-    value = models.IntegerField(default=0, null=False, blank=False)
+    value = models.ForeignKey(Price, on_delete=models.CASCADE, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField()

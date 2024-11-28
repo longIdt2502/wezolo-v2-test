@@ -4,13 +4,13 @@ from datetime import datetime
 from rest_framework.views import APIView
 from django.db import transaction
 from django.core.exceptions import ValidationError
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import Subquery, OuterRef
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
 from utils.convert_response import convert_response
-from workspace.models import Workspace
+from workspace.models import Workspace, Role
 from wallet.models import Wallet, WalletTransaction
 from package.models import Package
 from user.models import Address
@@ -68,21 +68,13 @@ class Workspaces(APIView):
                     user.package_active = True
                     user.save()
                 else:
-                    wallet_trans = WalletTransaction.objects.create(
+                    WalletTransaction.objects.create(
                         user=user,
                         type='EXPENDITURE',
                         method='TRANSFER',
                         amount=1500000,
                         total_amount=1500000,
                         wallet=wallet,
-                    )
-                    channel_layer = get_channel_layer()
-                    async_to_sync(channel_layer.group_send)(
-                        f'wallet_{wallet.id}',
-                        {
-                            'type': 'message_handler',
-                            'wallet_trans_id': wallet_trans.id
-                        },
                     )
                 return convert_response('Tạo workspace thành công', 201, data=ws.to_json())
 
@@ -105,10 +97,12 @@ class WorkspaceDetail(APIView):
         ws.update_from_json(data)
 
         files = request.FILES.get('image')
-        ws = ws.save_image(files)
+        if files:
+            ws = ws.save_image(files)
 
-        address_data = json.loads(request.POST.get('address'))
+        address_data = request.POST.get('address')
         if address_data:
+            address_data = json.loads(request.POST.get('address'))
             if ws.address:
                 address_ins = ws.address.update_from_json(address_data)
                 ws.address = address_ins
@@ -141,3 +135,10 @@ class WorkspaceCheck(APIView):
             return convert_response('success', 200, data=True)
         return convert_response('mã check không tồn tại (NAME_UNIQUE | CREATE)', 400)
 
+
+class RoleAPI(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, _):
+        roles = Role.objects.filter().values()
+        return convert_response('success', 200, data=roles)

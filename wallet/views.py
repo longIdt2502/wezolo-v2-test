@@ -3,10 +3,12 @@ import uuid
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from utils.convert_response import convert_response
 from common.pay_os.pay_os_init import payOS
 from payos import PaymentData, ItemData
+
 from .models import Wallet, WalletTransaction
 from reward.models import Reward
 
@@ -76,7 +78,16 @@ class WalletReceiveHookPayment(APIView):
         Reward.objects.create(
             customer_id=wallet_trans.user,
             event=wallet_trans,
-            points_earned=wallet_trans.total_amount
+            points_earned=wallet_trans.total_amount,
+        )
+        wallet = Wallet.objects.get(owner=wallet_trans.user)
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'wallet_{wallet.id}',
+            {
+                'type': 'message_handler',
+                'wallet_trans_id': wallet_trans.id
+            },
         )
         return convert_response('success', 200)
 
