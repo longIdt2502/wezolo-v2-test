@@ -268,3 +268,31 @@ class WardListAPIView(APIView):
             wards = wards.filter(name__icontains=search)
         wards = wards.values("name", "slug", "type", "name_with_type", "code", "id")
         return convert_response('Success', 200, data=wards)
+
+
+class UserApi(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        data = request.GET.copy()
+        phone = data.get('phone')
+        if not phone:
+            return convert_response('Yêu cầu số điện thoại', 400)
+        user = User.objects.filter(phone=phone).values(
+            'id', 'phone', 'full_name', 'avatar', 'gender', 'email'
+        ).first()
+        if not user:
+            return convert_response('Số điện thoại chưa đăng ký', 400)
+        return convert_response('success', 200, data=user)
+
+
+class UsersManage(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if not user.is_superuser:
+            return convert_response('permission denied', 400)
+        data = request.GET.copy()
+        users = User.objects.filter()
+        pass

@@ -1,0 +1,36 @@
+{
+    "get_oa_info": {
+        "data": {
+            "oaid": "4462152339089565647",
+            "name": "Zalo Official Account",
+            "description": "Zalo Official Account (Zalo OA) ",
+            "oa_alias": "officialaccount",
+            "is_verified": true,
+            "oa_type": 2,
+            "cate_name": "Thực phẩm & Đồ uống",
+            "num_follower": 5,
+            "avatar": "https://s160-ava-talk.zadn.vn/a/e/f/b/1/160/5e56485fc25803aa9f1c646fa931c592.jpg",
+            "cover": "https://cover-talk.zadn.vn/c/1/0/5/2/5e56485fc25803aa9f1c646fa931c592.jpg",
+            "package_name": "Nâng cao",
+            "package_valid_through_date": "13/12/2023",
+            "package_auto_renew_date": "14/12/2023",
+            "linked_ZCA": "ZBA-1048473834"
+        },
+        "error": 0,
+        "message": "Success"
+    },
+    "get_list_user": {
+        "data": {
+            "total": 9,
+            "count": 15,
+            "offset": 0,
+            "users": [
+                {
+                    "user_id": "19690136983815414"
+                }
+            ]
+        },
+        "error": 0,
+        "message": "Success"
+    }
+}

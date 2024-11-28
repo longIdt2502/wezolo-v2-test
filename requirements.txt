@@ -11,7 +11,6 @@ billiard==4.2.0
 celery==5.4.0
 certifi==2023.11.17
 cffi==1.16.0
-channels==4.0.0
 channels-redis==4.1.0
 charset-normalizer==3.3.2
 click==8.1.7
@@ -21,12 +20,10 @@ click-repl==0.3.0
 constantly==23.10.4
 cron-descriptor==1.4.3
 cryptography==41.0.7
-daphne==4.0.0
 Django==5.0.1
 django-apscheduler==0.6.2
 django-celery-beat==2.6.0
 django-celery-results==2.5.1
-django-channels==0.7.0
 django-cors-headers==4.3.1
 django-import-export==4.1.1
 django-redis==5.4.0
@@ -77,6 +74,7 @@ vine==5.1.0
 wcwidth==0.2.13
 zope.interface==6.1
 django-vi-address==0.1.6
-channels[daphne]>=4.0.0
 payos==0.1.7
 boto3==1.35.66
+rq==2.0.0
+django-rq==0.2.1

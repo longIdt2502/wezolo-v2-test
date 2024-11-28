@@ -14,4 +14,7 @@ urlpatterns = [
     path("cities", views.CityListAPIView.as_view()),
     path("districts", views.DistrictListAPIView.as_view()),
     path("wards", views.WardListAPIView.as_view()),
+    path("users/find", views.UserApi.as_view()),
+    #
+    path('admin/users_manage', views.UsersManage.as_view())
 ]

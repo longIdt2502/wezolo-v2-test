@@ -37,6 +37,7 @@ CSRF_TRUSTED_ORIGINS = ['https://5b80-222-252-18-38.ngrok-free.app']
 
 INSTALLED_APPS = [
     'daphne',
+    'django_rq',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -100,6 +101,25 @@ ASGI_APPLICATION = "wezolo.asgi.application"
 CHANNEL_LAYERS = {
     'default': {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
+
+# Redis
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+    },
+    'high': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+    },
+    'low': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
     }
 }
 

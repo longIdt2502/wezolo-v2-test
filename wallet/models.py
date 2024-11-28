@@ -1,6 +1,9 @@
+from asgiref.sync import async_to_sync
 from django.db import models
 from django.utils import timezone
 from django.db.models import F
+
+from channels.layers import get_channel_layer
 
 from user.models import User, Address
 from zalo.models import ZaloOA
@@ -20,7 +23,7 @@ class Wallet(models.Model):
     def to_json(self):
         return {
             "id": self.id,
-            "wallet_uid": self.wallet_uid,
+            "wallet_uid": str(self.wallet_uid),
             "balance": self.balance,
             "owner": {
                 "id": self.owner.id,
@@ -30,6 +33,17 @@ class Wallet(models.Model):
             },
             "wallet_authorization": self.wallet_authorization,
         }
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'wallet_{self.id}',
+            {
+                'type': 'message_handler',
+            },
+        )
 
 
 class WalletTransaction(models.Model):
@@ -65,17 +79,18 @@ class WalletTransaction(models.Model):
         # Check if the object is being created
         is_new = self.pk is None
 
-        # Save transaction
-        super().save(*args, **kwargs)
-
         if is_new:
-            if self.type == self.Type.DEPOSIT and self.pay_os_reference is None:
-                self.wallet.balance = F('balance') + self.amount
-            elif self.type == self.Type.RETURN or self.type == self.Type.EXPENDITURE or self.type == self.Type.PACKAGE:
+            if self.type == self.Type.RETURN or self.type == self.Type.EXPENDITURE or self.type == self.Type.PACKAGE:
                 if self.wallet.balance < self.amount:
                     raise ValueError("Insufficient wallet balance")
                 self.wallet.balance = F('balance') - self.amount
+            self.wallet.save()
 
+        # Save transaction
+        super().save(*args, **kwargs)
+
+        if self.type == self.Type.DEPOSIT and self.pay_os_reference is not None:
+            self.wallet.balance = F('balance') + self.amount
             self.wallet.save()
 
     def to_json(self):

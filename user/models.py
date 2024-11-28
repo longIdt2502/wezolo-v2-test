@@ -1,6 +1,6 @@
 import json
 from datetime import timedelta
-from random import random
+import random
 
 from django.apps import apps
 from django.core.files.base import ContentFile
@@ -62,9 +62,9 @@ class Address(models.Model):
         return instance
 
     def to_json(self):
-        city = City.objects.get(id=self.city)
-        district = District.objects.get(id=self.district)
-        ward = Ward.objects.get(id=self.ward)
+        city = City.objects.get(id=self.city.id)
+        district = District.objects.get(id=self.district.id)
+        ward = Ward.objects.get(id=self.ward.id)
         return {
             "address": self.address,
             "city": {
@@ -132,7 +132,7 @@ class User(AbstractUser):
             "is_active": self.is_active,
             "is_superuser": self.is_superuser,
             "wallet": wallet_ins,
-            "package": self.package.to_json(),
+            "package": self.package.to_json() if self.package else None,
             "package_start": self.package_start,
             "package_active": self.package_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
@@ -148,7 +148,8 @@ class User(AbstractUser):
         user.save()
 
     def upload_image(self, file):
-        file_name = f"{self.username}.png"
+        r = random.randint(100000, 999999)
+        file_name = f"{self.username}_{r}.png"
         image_file = ContentFile(file.read(), name=file_name)
         # AwsS3.delete_file(file_name)
         uploaded_file_name = AwsS3.upload_file(image_file, 'users/')

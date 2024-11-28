@@ -1,11 +1,17 @@
+import random
+
+from django.core.files.base import ContentFile
 from django.db import models
 
+from common.s3 import AwsS3
 from user.models import User
 from workspace.models import Workspace
 from django.utils.translation import gettext_lazy as _
+from datetime import datetime, timedelta
+
+from user.models import Address
 
 created_at_field = models.DateTimeField(_("Created at"), auto_now_add=True)
-from datetime import datetime
 
 
 class CodeVerifier(models.Model):
@@ -31,20 +37,39 @@ class SendBy(models.IntegerChoices):
 
 
 class ZaloOA(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Chờ đăng ký'
+        REGISTERING = 'REGISTERING', 'Đang đăng ký'
+        NOT_CONNECTED = 'NOT_CONNECTED', 'Chưa kết nối'
+        CONNECTED = 'CONNECTED', 'Đã kết nối'
+        DISCONNECTED = 'DISCONNECTED', 'Ngừng kết nối'
+
     company = models.ForeignKey(
-        Workspace, on_delete=models.SET_NULL, null=True, blank=True, related_name="zalo_company")
-    secret_app = models.CharField(max_length=255, null=True, blank=True)
-    url_callback = models.CharField(max_length=255, null=True, blank=True)
+        Workspace,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="zalo_company")
+    code_ref = models.CharField(max_length=255, null=True, blank=True)
+    status = models.CharField(max_length=255, choices=Status.choices, default=Status.PENDING)
+    active = models.BooleanField(default=True, null=False)
     app_id = models.CharField(max_length=255, null=True, blank=True)
     oa_id = models.CharField(max_length=255, null=True, blank=True)
     oa_name = models.CharField(max_length=255, null=True, blank=True)
-    oa_img = models.URLField(max_length=200, blank=True, null=True)
+    oa_avatar = models.URLField(max_length=200, blank=True, null=True)
+    oa_cover = models.URLField(max_length=200, blank=True, null=True)
     cate_name = models.CharField(max_length=255, null=True, blank=True)
     description = models.CharField(max_length=255, null=True, blank=True)
+    giay_dang_ky = models.URLField(max_length=200, blank=True, null=True)
+    cccd_truoc = models.URLField(max_length=200, blank=True, null=True)
+    cccd_sau = models.URLField(max_length=200, blank=True, null=True)
+    ho_chieu = models.URLField(max_length=200, blank=True, null=True)
+    cong_van = models.URLField(max_length=200, blank=True, null=True)
+    chung_minh = models.URLField(max_length=200, blank=True, null=True)
     oa_type = models.IntegerField(default=2)
+    address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True)
     num_follower = models.IntegerField(default=0)
     package_name = models.CharField(max_length=255, null=True, blank=True)
-    created_at = created_at_field
     activate = models.BooleanField(default=False)
     refresh_token = models.TextField(null=True, blank=True)
     access_token = models.TextField(null=True, blank=True)
@@ -52,6 +77,11 @@ class ZaloOA(models.Model):
     token_expired_at = models.DateTimeField(null=True, blank=True)
     verify_hook_url = models.CharField(max_length=255, null=True, blank=True)
     verify_html_file = models.FileField(null=True, blank=True, upload_to="zaloa/verify")
+    secret_app = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='user_create_oa')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='user_update_oa')
 
     def sync_data_info(self):
         from utils.zalo_oa import get_oa_infor
@@ -66,31 +96,60 @@ class ZaloOA(models.Model):
                     setattr(self, key, value)
         self.save()
 
+    def upload_file(self, file, name):
+        file_name = name
+        image_file = ContentFile(file.read(), name=file_name)
+        uploaded_file_name = AwsS3.upload_file(image_file, f'zalo_oa/{self.code_ref}/')
+        return uploaded_file_name
+
+    def update_from_json(self, data):
+        zalo_oa = self
+        zalo_oa.cate_name = data.get('cate_name', zalo_oa.cate_name)
+        zalo_oa.num_follower = data.get('num_follower', zalo_oa.num_follower)
+        zalo_oa.description = data.get('description', zalo_oa.description)
+        zalo_oa.package_name = data.get('access_token', zalo_oa.package_name)
+        zalo_oa.oa_type = data.get('oa_type', zalo_oa.oa_type)
+
+        zalo_oa.access_token = data.get('access_token', zalo_oa.access_token)
+        zalo_oa.refresh_token = data.get('refresh_token', zalo_oa.refresh_token)
+        expires_in_seconds = int(data.get("expires_in", 0))
+        zalo_oa.token_expired_at = datetime.now() + timedelta(seconds=expires_in_seconds)
+        zalo_oa.save()
+        return zalo_oa
+
+    def to_json(self):
+        return {
+            'oa_id': self.oa_id,
+            'oa_name': self.oa_name,
+            'cate_name': self.cate_name,
+            'oa_avatar': self.oa_avatar,
+            'oa_cover': self.oa_cover,
+        }
+
 
 class UserZalo(models.Model):
-    zalo_name = models.CharField(
+    name = models.CharField(
         max_length=100, blank=True, null=True, verbose_name=('zname'))
     phone = models.CharField(max_length=20, null=True, blank=True)
-    user_id = models.CharField(
+    user_zalo_id = models.CharField(
         max_length=300, blank=True, null=True, verbose_name=('UID'))
+    avatar_small = models.URLField(max_length=200, blank=True, null=True)
+    avatar_big = models.URLField(max_length=200, blank=True, null=True)
+    last_message_time = models.DateTimeField(null=True, blank=True)
+    gender = models.CharField(
+        max_length=10, blank=True, null=True, verbose_name='gender')
+    oa = models.ForeignKey(ZaloOA, on_delete=models.CASCADE, null=True)
+    is_follower = models.BooleanField(default=False, null=False)
     created_at = created_at_field
     updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
-    zalo_img = models.URLField(max_length=200, blank=True, null=True)
-    last_message_time = models.DateTimeField(null=True, blank=True)
-    user_gender = models.CharField(
-        max_length=10, blank=True, null=True, verbose_name=('gender'))
-    activate = models.BooleanField(default=True)
-    oa_id = models.CharField(max_length=50, null=True, blank=True, db_index=True)
-    oa_instance = models.ForeignKey(
-        ZaloOA, on_delete=models.SET_NULL, null=True, blank=True)
 
-    def save(self, *args, **kwargs):
-        super(UserZalo, self).save(*args, **kwargs)
-        _id = self.pk
-        other_users = UserZalo.objects.filter(user_id=self.user_id, oa_id=self.oa_id).exclude(
-            pk=self.pk)
-        if other_users.count() > 0:
-            other_users.delete()
+    # def save(self, *args, **kwargs):
+    #     super(UserZalo, self).save(*args, **kwargs)
+    #     _id = self.pk
+    #     other_users = UserZalo.objects.filter(user_zalo_id=self.user_zalo_id, oa_id=self.oa_id).exclude(
+    #         pk=self.pk)
+    #     if other_users.count() > 0:
+    #         other_users.delete()
 
 
 class UserZaloTag(models.Model):
@@ -99,26 +158,44 @@ class UserZaloTag(models.Model):
 
 
 class Message(models.Model):
-    send_by = models.IntegerField(choices=SendBy.choices, default=SendBy.USER)
-    send_at = models.DateTimeField(_("Sent at"), null=True, blank=True)
-    user = models.ForeignKey(
-        UserZalo, on_delete=models.SET_NULL, null=True, blank=True)
-    user_uid = models.CharField(null=True, blank=True, max_length=50, db_index=True)
-    oa_uid = models.CharField(max_length=50, null=True, blank=True)
-    oa = models.ForeignKey(
-        ZaloOA, on_delete=models.SET_NULL, null=True, blank=True)
+    class Type(models.TextChoices):
+        TEXT = 'TEXT', 'tin nhắn văn bản'
+        VOICE = 'VOICE', 'tin nhắn thoại'
+        PHOTO = 'PHOTO', 'tin nhắn ảnh'
+        GIF = 'GIF', 'tin nhắn GIF'
+        LINK = 'LINK', 'tin nhắn có nội dung là đường link'
+        LINKS = 'LINKS', 'tin nhắn theo mẫu đính kèm danh sách'
+        STICKER = 'STICKER', 'tin nhắn sticker'
+        LOCATION = 'LOCATION', 'tin nhắn chia sẻ location'
+
+    class TypeSend(models.TextChoices):
+        USER = 'USER', 'Người dùng gửi'
+        CAMPAIGN = 'CAMPAIGN', 'Chiến dịch gửi'
+        BOT = 'BOT', 'Bot gửi'
+
     message_id = models.CharField(max_length=255, null=True, blank=True)
-    tracking_id = models.CharField(max_length=255, null=True, blank=True)
+    src = models.IntegerField(choices=SendBy.choices, default=SendBy.USER)
+    time = models.FloatField(null=True, blank=True, db_index=True)
+    send_at = models.DateTimeField(null=True, blank=True)
+    type_message = models.CharField(max_length=255, choices=Type.choices, default=Type.TEXT, null=False)
+    type_send = models.CharField(max_length=255, choices=TypeSend.choices, default=TypeSend.USER, null=False)
     message_text = models.TextField(null=True, blank=True)
-    timestamp = models.FloatField(null=True, blank=True, db_index=True)
-    read = models.BooleanField(default=False)
-    success = models.BooleanField(default=False)
-    use_oa_send = models.BooleanField(default=True)
+    message_thumb = models.URLField(max_length=255, null=True, blank=True)
+    message_url = models.URLField(max_length=255, null=True, blank=True)
+    message_links = models.CharField(max_length=255, null=True, blank=True)
+    message_location = models.TextField(null=True, blank=True)
+    message_description_photo = models.TextField(max_length=255, null=True, blank=True)
+    from_id = models.CharField(max_length=255, null=True)
+    to_id = models.CharField(max_length=255, null=True)
+    success = models.BooleanField(default=False, null=False)
+    send_by = models.ForeignKey(UserZalo, null=False, on_delete=models.CASCADE)
+    oa = models.ForeignKey(ZaloOA, null=True, on_delete=models.CASCADE)
+    seen = models.BooleanField(default=True, null=False)
 
     def convert_ts_to_datetime(self):
-        if self.timestamp is None:
+        if self.time is None:
             return
-        dt = datetime.fromtimestamp(self.timestamp)
+        dt = datetime.fromtimestamp(self.time)
         self.send_at = dt
         self.save()
 

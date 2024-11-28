@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from django.apps import apps
 from django.db import models
 import random
 from django.utils.translation import gettext_lazy as _
@@ -61,6 +61,8 @@ class Workspace(models.Model):
         return ws
 
     def to_json(self):
+        employee = apps.get_model('employee', 'Employee')
+        total_employee = employee.objects.filter(workspace=self).count()
         return {
             "id": self.id,
             "name": self.name,
@@ -69,8 +71,9 @@ class Workspace(models.Model):
             "dev_note": self.dev_note,
             "tax_number": self.tax_number,
             "email": self.email,
+            "total_employee": total_employee,
             "category": self.category,
-            # "address": self.address.to_json() if self.address else None,
+            "address": self.address.to_json() if self.address else None,
             "image": self.image,
             "created_by_id": self.created_by_id
         }

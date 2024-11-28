@@ -7,6 +7,7 @@ from utils.convert_response import convert_response
 
 from employee.models import Employee, EmployeeOa, EmployeeUserZalo
 from user.models import User
+from workspace.models import Role
 
 
 class Employees(APIView):
@@ -58,14 +59,14 @@ class Employees(APIView):
                     'id', 'username', 'full_name', 'avatar', 'phone'
                 )[:1]
             ),
+            role_data=SubqueryJson(
+                Role.objects.filter(id=OuterRef('role')).values()[:1]
+            ),
             total_customer=total_customer_query,
             oa_take_care=oa_query,
         )
 
-        return convert_response('success', 200, data={
-            "details": employees,
-            "count": employees_in_ws.count()
-        })
+        return convert_response('success', 200, data=employees, count=employees_in_ws.count())
 
     def post(self, request):
         user_req = request.user

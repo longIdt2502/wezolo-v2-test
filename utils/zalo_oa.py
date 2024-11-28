@@ -10,6 +10,7 @@ from django.utils import timezone as tz
 
 from zalo.models import Message, SendBy, UserZalo, ZaloOaLog, SendMessageLog
 
+
 def format_currency_vnd(number):
     if number != "":
         integer_part = int(number)

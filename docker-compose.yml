@@ -1,0 +1,82 @@
+version: '3.8'
+services:
+  server:
+    build: .
+    volumes:
+      - .:/app
+      - /app/logs
+      - dev-static-data4:/vol/web
+    container_name: wezolo_be
+    command: bash -c "python manage.py makemigrations && python manage.py migrate && python manage.py init_reward_tier && python manage.py init_package && python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DJANGO_SECRET_KEY=123
+      - ENV_ALLOWED_HOSTS=159.223.60.41,localhost
+      - ENV_ALLOWED_CORS=http://localhost,http://159.223.60.41
+      - ENV_ALLOWED_ORIGIN_REGEXES='https?://([\w.-]+\.)?kafa\.pro,http?://([\w.-]+\.)?localhost:8000'
+      - ENV_DOMAIN=http://159.223.60.41
+      - DB_NAME=wezolo
+      - DB_USERNAME=root
+      - DB_PASSWORD=localhost1234
+      - DB_HOST=wezolo_db
+      - DB_PORT=5432
+      - DOMAIN_URL=http://159.223.60.41
+      - ZALO_OPENAPI=https://openapi.zalo.me
+      - ZALO_OA_AUTH=https://oauth.zaloapp.com
+      - ZALO_ZNS_URL=https://business.openapi.zalo.me/message/template
+      - WALLET_URL=http://167.71.202.210
+      - AWS_ACCESS_KEY_ID=AKIAQKGGXJTBDROU2N5D
+      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_STORAGE_BUCKET_NAME=wezolo-test
+      - AWS_S3_REGION_NAME=ap-southeast-1
+      - AWS_S3_CUSTOM_DOMAIN=dj8k73wzhvv1w.cloudfront.net
+      - ZALO_APP_ID=3400715993471037517
+      - ZALO_APP_SECRET=yM7wVNiI0hIV8VlYSik2
+      - ZALO_OA_AUTH_DOMAIN=https://oauth.zaloapp.com/v4/oa/permission
+      - ZALO_OA_ACCESS_TOKEN=q4AV5FC83ndHJf4Jym8B6TTEa1ho7rjkfXEQ0Ce2KtATAObatNjL6BDlotpdUZGlgpBQUCGW9Mw31Ua4z5Sv3D5Fl6UUUtnf_6-U5gDPM4hTGRe7Z0Pc1SmUbrYi96ONw2sbHSa-PngE7eLtrYXTEevWm6tCMqK_kKMQHzfhGJ6hOvfzvsX4SgjIlWR96t58h2QTIjzXLnQnKPHomaPFVVbWWYgvJ59Vn5kl9lznSrcdR98to7GNPh9Fs1dm1XDegmpGFyuz37VkCvCgkIL-AUaRWrMH0bzNoqIOE9ODSc3V5h43v2js3QOXxNZ36Wbwk23pSlSk71ko0_Lwy4uJU8zusGZtJ4X_b5-42lf766Y9KOXYhLuLCkn8wrEKNmevpalICB9iD6d5SEiXucW5Tg14n7zv5d-eE_8J11q
+      - ZALO_OA_REFRESH_TOKEN=q4AV5FC83ndHJf4Jym8B6TTEa1ho7rjkfXEQ0Ce2KtATAObatNjL6BDlotpdUZGlgpBQUCGW9Mw31Ua4z5Sv3D5Fl6UUUtnf_6-U5gDPM4hTGRe7Z0Pc1SmUbrYi96ONw2sbHSa-PngE7eLtrYXTEevWm6tCMqK_kKMQHzfhGJ6hOvfzvsX4SgjIlWR96t58h2QTIjzXLnQnKPHomaPFVVbWWYgvJ59Vn5kl9lznSrcdR98to7GNPh9Fs1dm1XDegmpGFyuz37VkCvCgkIL-AUaRWrMH0bzNoqIOE9ODSc3V5h43v2js3QOXxNZ36Wbwk23pSlSk71ko0_Lwy4uJU8zusGZtJ4X_b5-42lf766Y9KOXYhLuLCkn8wrEKNmevpalICB9iD6d5SEiXucW5Tg14n7zv5d-eE_8J11q
+      - PAY_OS_CLIENT_ID=5a2c1b39-1217-442e-b933-20720bd0531c
+      - PAY_OS_API_KEY=8a0eeaf0-34ff-45b2-bed5-93008bf27441
+      - PAY_OS_CHECK_SUM_KEY=e9ef4634856e3175561da56eb63c7aba1621760aa84fe073629420f756a76174
+    env_file:
+      - ./.env
+
+  db:
+    image: postgres
+    container_name: wezolo_db
+    environment:
+      POSTGRES_DB: wezolo
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: localhost1234
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_server
+    ports:
+      - "6379:6379"
+
+  worker:
+    build: .
+    container_name: django_rq_worker
+    command: python manage.py rqworker
+    environment:
+      DJANGO_SETTINGS_MODULE: wezolo.settings
+    depends_on:
+      - redis
+
+volumes:
+  db-data:
+  dev-static-data4:
