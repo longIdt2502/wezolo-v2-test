@@ -39,9 +39,9 @@ services:
       - ZALO_OA_AUTH_DOMAIN=https://oauth.zaloapp.com/v4/oa/permission
       - ZALO_OA_ACCESS_TOKEN=q4AV5FC83ndHJf4Jym8B6TTEa1ho7rjkfXEQ0Ce2KtATAObatNjL6BDlotpdUZGlgpBQUCGW9Mw31Ua4z5Sv3D5Fl6UUUtnf_6-U5gDPM4hTGRe7Z0Pc1SmUbrYi96ONw2sbHSa-PngE7eLtrYXTEevWm6tCMqK_kKMQHzfhGJ6hOvfzvsX4SgjIlWR96t58h2QTIjzXLnQnKPHomaPFVVbWWYgvJ59Vn5kl9lznSrcdR98to7GNPh9Fs1dm1XDegmpGFyuz37VkCvCgkIL-AUaRWrMH0bzNoqIOE9ODSc3V5h43v2js3QOXxNZ36Wbwk23pSlSk71ko0_Lwy4uJU8zusGZtJ4X_b5-42lf766Y9KOXYhLuLCkn8wrEKNmevpalICB9iD6d5SEiXucW5Tg14n7zv5d-eE_8J11q
       - ZALO_OA_REFRESH_TOKEN=q4AV5FC83ndHJf4Jym8B6TTEa1ho7rjkfXEQ0Ce2KtATAObatNjL6BDlotpdUZGlgpBQUCGW9Mw31Ua4z5Sv3D5Fl6UUUtnf_6-U5gDPM4hTGRe7Z0Pc1SmUbrYi96ONw2sbHSa-PngE7eLtrYXTEevWm6tCMqK_kKMQHzfhGJ6hOvfzvsX4SgjIlWR96t58h2QTIjzXLnQnKPHomaPFVVbWWYgvJ59Vn5kl9lznSrcdR98to7GNPh9Fs1dm1XDegmpGFyuz37VkCvCgkIL-AUaRWrMH0bzNoqIOE9ODSc3V5h43v2js3QOXxNZ36Wbwk23pSlSk71ko0_Lwy4uJU8zusGZtJ4X_b5-42lf766Y9KOXYhLuLCkn8wrEKNmevpalICB9iD6d5SEiXucW5Tg14n7zv5d-eE_8J11q
-      - PAY_OS_CLIENT_ID=5a2c1b39-1217-442e-b933-20720bd0531c
-      - PAY_OS_API_KEY=8a0eeaf0-34ff-45b2-bed5-93008bf27441
-      - PAY_OS_CHECK_SUM_KEY=e9ef4634856e3175561da56eb63c7aba1621760aa84fe073629420f756a76174
+      - PAY_OS_CLIENT_ID='5a2c1b39-1217-442e-b933-20720bd0531c'
+      - PAY_OS_API_KEY='8a0eeaf0-34ff-45b2-bed5-93008bf27441'
+      - PAY_OS_CHECK_SUM_KEY='e9ef4634856e3175561da56eb63c7aba1621760aa84fe073629420f756a76174'
     env_file:
       - ./.env
 
@@ -57,7 +57,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: [ "CMD", "pg_isready" ]
+      test: [ "CMD", "pg_isready", "-U", "root", "-d", "wezolo" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -76,6 +76,7 @@ services:
       DJANGO_SETTINGS_MODULE: wezolo.settings
     depends_on:
       - redis
+      - server
 
 volumes:
   db-data:
