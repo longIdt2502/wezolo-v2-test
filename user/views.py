@@ -309,9 +309,9 @@ class UsersManage(APIView):
             is_active = True if is_active == 'true' else False
             users_query = users_query.filter(is_active=is_active)
 
-        package = data.get('package')
-        if package:
-            users_query = users_query.filter(package__code=package)
+        reward = data.get('reward')
+        if reward:
+            users_query = users_query.filter(level__name=reward)
 
         total_ws_subquery = Subquery(
             Workspace.objects.filter(created_by_id=OuterRef('id')).values('created_by').annotate(
@@ -345,3 +345,17 @@ class UsersManage(APIView):
             'data': users,
             'count': total_user
         })
+
+
+class UserManageAction(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        user = request.user
+        if not user.is_superuser:
+            return convert_response('Quyền truy cập bị hạn chế', 403)
+        user = User.objects.get(id=pk)
+        return convert_response('success', 200, data=user.to_json())
+
+    def put(self, request, pk):
+        pass

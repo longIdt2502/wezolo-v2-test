@@ -122,6 +122,80 @@ class ZaloOaAPI(APIView):
             return convert_response('success', 201, data=zalo_oa.id)
 
 
+class ZaloOaDetailAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        zalo_oa = ZaloOA.objects.filter(id=pk).values(
+            'code_ref', 'status', 'app_id', 'oa_id', 'oa_name', 'oa_avatar', 'oa_cover', 'cate_name',
+            'description', 'oa_type', 'num_follower', 'package_name', 'package_valid_through_date',
+            'package_auto_renew_date'
+        ).first()
+        return convert_response('success', 200, data=zalo_oa)
+
+    def put(self, request, pk):
+        zalo_oa = ZaloOA.objects.get(id=pk)
+        if not zalo_oa:
+            return convert_response('Dữ liệu không tồn tại', 400)
+        if zalo_oa.status != ZaloOA.Status.PENDING:
+            return convert_response('Thông tin đã được gửi lên Zalo, không thể chỉnh sửa', 400)
+        data = json.loads(request.POST.get('data'))
+        zalo_oa.cate_name = data.get('cate_name', zalo_oa.cate_name)
+        zalo_oa.description = data.get('description', zalo_oa.description)
+        zalo_oa.oa_name = data.get('oa_name', zalo_oa.oa_name)
+        zalo_oa.cate_name = data.get('cate_name', zalo_oa.cate_name)
+        zalo_oa.cate_name = data.get('cate_name', zalo_oa.cate_name)
+        zalo_oa.save()
+
+        address_data = json.loads(request.POST.get('address'))
+        if address_data:
+            if zalo_oa.address:
+                zalo_oa.address.update_from_json(address_data)
+                zalo_oa.address.save()
+
+        # handle file upload
+        image_avatar = request.FILES.get('image_avatar')
+        if image_avatar:
+            url = zalo_oa.upload_file(image_avatar, f'image_avatar{get_file_extension(image_avatar.name)}')
+            zalo_oa.oa_avatar = url
+
+        image_cover = request.FILES.get('image_cover')
+        if image_cover:
+            url = zalo_oa.upload_file(image_cover, f'image_cover{get_file_extension(image_cover.name)}')
+            zalo_oa.oa_cover = url
+
+        giay_dang_ky = request.FILES.get('giay_dang_ky')
+        if giay_dang_ky:
+            url = zalo_oa.upload_file(giay_dang_ky, f'giay_dang_ky{get_file_extension(giay_dang_ky.name)}')
+            zalo_oa.giay_dang_ky = url
+
+        cccd_truoc = request.FILES.get('cccd_truoc')
+        cccd_sau = request.FILES.get('cccd_sau')
+        if cccd_truoc and cccd_sau:
+            url_front = zalo_oa.upload_file(cccd_truoc, f'cccd_truoc{get_file_extension(cccd_truoc.name)}')
+            url_back = zalo_oa.upload_file(cccd_sau, f'cccd_sau{get_file_extension(cccd_sau.name)}')
+            zalo_oa.cccd_truoc = url_front
+            zalo_oa.cccd_sau = url_back
+
+        ho_chieu = request.FILES.get('ho_chieu')
+        if ho_chieu:
+            url = zalo_oa.upload_file(ho_chieu, f'ho_chieu{get_file_extension(ho_chieu.name)}')
+            zalo_oa.ho_chieu = url
+
+        cong_van = request.FILES.get('cong_van')
+        if cong_van:
+            url = zalo_oa.upload_file(cong_van, f'cccd_sau{get_file_extension(cong_van.name)}')
+            zalo_oa.cong_van = url
+        chung_minh = request.FILES.get('chung_minh')
+        if chung_minh:
+            url = zalo_oa.upload_file(chung_minh, f'cccd_sau{get_file_extension(chung_minh.name)}')
+            zalo_oa.chung_minh = url
+
+        zalo_oa.save()
+
+        return convert_response('success', 200, data=zalo_oa.id)
+
+
 class ZaloOaAcceptAuth(APIView):
     permission_classes = [AllowAny]
 
@@ -130,7 +204,7 @@ class ZaloOaAcceptAuth(APIView):
             with transaction.atomic():
                 data = request.GET.copy()
                 oa_id = data.get('oa_id_wezolo')
-                workspace = ZaloOA.objects.get(id=pk).company
+                workspace = Workspace.objects.get(id=pk).company
 
                 # wallet check
                 wallet = Wallet.objects.filter(owner=workspace.created_by).first()
@@ -175,21 +249,56 @@ class ZaloOaAcceptAuth(APIView):
                     zalo_oa.refresh_token = refresh_token
                     zalo_oa.save()
                 else:
-                    zalo_oa = ZaloOA.objects.create(
-                        oa_id=data_oa_info.get('oa_id'),
-                        oa_name=data_oa_info.get('name'),
-                        description=data_oa_info.get('description'),
-                        oa_type=data_oa_info.get('oa_type'),
-                        cate_name=data_oa_info.get('cate_name'),
-                        num_follower=data_oa_info.get('num_follower'),
-                        oa_avatar=data_oa_info.get('avatar'),
-                        oa_cover=data_oa_info.get('cover'),
-                        package_name=data_oa_info.get('package_name'),
-                        access_token=access_token,
-                        refresh_token=refresh_token,
-                        activate=True,
-                        status=ZaloOA.Status.CONNECTED,
-                    )
+                    zalo_oa = ZaloOA.objects.filter(oa_id=data_oa_info.get('oa_id')).first()
+                    if zalo_oa and zalo_oa.company != workspace:
+                        raise Exception('Zalo Oa đã được kết nối với Workspace khác')
+                    if zalo_oa:
+                        zalo_oa.oa_id = data_oa_info.get('oa_id')
+                        zalo_oa.oa_name = data_oa_info.get('name')
+                        zalo_oa.description = data_oa_info.get('description')
+                        zalo_oa.oa_type = data_oa_info.get('oa_type')
+                        zalo_oa.cate_name = data_oa_info.get('cate_name')
+                        zalo_oa.num_follower = data_oa_info.get('num_follower')
+                        zalo_oa.oa_avatar = data_oa_info.get('oa_avatar')
+                        zalo_oa.oa_cover = data_oa_info.get('oa_cover')
+                        zalo_oa.package_name = data_oa_info.get('package_name')
+                        zalo_oa.access_token = data_oa_info.get('access_token')
+                        zalo_oa.access_token = data_oa_info.get('access_token')
+                        zalo_oa.refresh_token = data_oa_info.get('refresh_token')
+                        zalo_oa.status = ZaloOA.Status.CONNECTED
+                        zalo_oa.package_valid_through_date = datetime.strptime(
+                            data_oa_info.get('package_valid_through_date'),
+                            "%d/%m/%Y"
+                        )
+                        zalo_oa.package_auto_renew_date = datetime.strptime(
+                            data_oa_info.get('package_auto_renew_date'),
+                            "%d/%m/%Y"
+                        )
+                        zalo_oa.save()
+                    else:
+                        zalo_oa = ZaloOA.objects.create(
+                            oa_id=data_oa_info.get('oa_id'),
+                            oa_name=data_oa_info.get('name'),
+                            description=data_oa_info.get('description'),
+                            oa_type=data_oa_info.get('oa_type'),
+                            cate_name=data_oa_info.get('cate_name'),
+                            num_follower=data_oa_info.get('num_follower'),
+                            oa_avatar=data_oa_info.get('avatar'),
+                            oa_cover=data_oa_info.get('cover'),
+                            package_name=data_oa_info.get('package_name'),
+                            access_token=access_token,
+                            refresh_token=refresh_token,
+                            activate=True,
+                            status=ZaloOA.Status.CONNECTED,
+                            package_valid_through_date=datetime.strptime(
+                                data_oa_info.get('package_valid_through_date'),
+                                "%d/%m/%Y"
+                            ),
+                            package_auto_renew_date=datetime.strptime(
+                                data_oa_info.get('package_auto_renew_date'),
+                                "%d/%m/%Y"
+                            )
+                        )
 
                 django_rq.enqueue(connect_oa_job, access_token, zalo_oa.id)
 
