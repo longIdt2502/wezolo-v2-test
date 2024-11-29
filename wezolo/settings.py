@@ -105,19 +105,20 @@ CHANNEL_LAYERS = {
 }
 
 # Redis
+HOST_REDIS = os.environ.get("HOST_REDIS")
 RQ_QUEUES = {
     'default': {
-        'HOST': 'localhost',
+        'HOST': 'redis_server',
         'PORT': 6379,
         'DB': 0,
     },
     'high': {
-        'HOST': 'localhost',
+        'HOST': 'redis_server',
         'PORT': 6379,
         'DB': 0,
     },
     'low': {
-        'HOST': 'localhost',
+        'HOST': 'redis_server',
         'PORT': 6379,
         'DB': 0,
     }

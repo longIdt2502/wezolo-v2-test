@@ -24,6 +24,7 @@ services:
       - DB_PASSWORD=localhost1234
       - DB_HOST=wezolo_db
       - DB_PORT=5432
+      - HOST_REDIS=redis_server
       - DOMAIN_URL=http://159.223.60.41
       - ZALO_OPENAPI=https://openapi.zalo.me
       - ZALO_OA_AUTH=https://oauth.zaloapp.com
