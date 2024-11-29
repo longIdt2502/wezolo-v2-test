@@ -43,6 +43,7 @@ class ZaloOaAPI(APIView):
 
                 data = json.loads(request.POST.get('data'))
                 code = random.randint(100000, 999999)
+                oa_ins = ZaloOA.objects.filter(created_by=user).first()
                 zalo_oa = ZaloOA.objects.create(
                     company_id=data.get('workspace'),
                     code_ref=code,
@@ -63,13 +64,11 @@ class ZaloOaAPI(APIView):
                 của User -> Lấy được Level (Reward_tiers) -> Dựa vào Reward_tier và Type -> tìm được Reward_benefit -> tìm được
                 Price tương ứng -> kiểm tra tiền trong ví và thực hiện tiếp thao tác
                 """
-                oa = ZaloOA.objects.filter(created_by=user).count()
-                if oa > 0:
+                if oa_ins:
                     can_transact, wallet, benefit = CheckFinancialCapacity(user, Price.Type.CREATE_OA)
+                    print(benefit)
                     if not can_transact:
                         raise Exception('Số dư ví không đủ để thực hiện thao tác')
-                    wallet.balance = wallet.balance - benefit.value.value
-                    wallet.save()
 
                     WalletTransaction.objects.create(
                         wallet=wallet,

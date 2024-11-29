@@ -5,9 +5,10 @@ from rest_framework.views import APIView
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db.models import Subquery, OuterRef
+from django.db.models import OuterRef, Count, Sum, IntegerField
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from common.core.subquery import *
 
 from utils.check_financial_capacity import CheckFinancialCapacity
 from utils.convert_response import convert_response
@@ -15,6 +16,8 @@ from workspace.models import Workspace, Role
 from wallet.models import Wallet, WalletTransaction
 from package.models import Package, Price
 from user.models import Address
+from zalo.models import ZaloOA
+from reward.models import RewardTier
 
 
 class Workspaces(APIView):
@@ -69,9 +72,11 @@ class Workspaces(APIView):
 
                 if ws_count == 0 and not user.package:
                     package = Package.objects.get(code='FREE_TRIAL')
+                    reward_tier = RewardTier.objects.get(code='BRONZE')
                     user.package = package
                     user.package_start = datetime.now()
                     user.package_active = True
+                    user.level = user.level if user.level else reward_tier
                     user.save()
                 else:
                     WalletTransaction.objects.create(
@@ -148,3 +153,67 @@ class RoleAPI(APIView):
     def get(self, _):
         roles = Role.objects.filter().values()
         return convert_response('success', 200, data=roles)
+
+
+class WorkspacesAdmin(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        data = request.GET.copy()
+        user = request.user
+        if not user.is_superuser:
+            return convert_response('Truy cập bị từ chối', 403)
+        page_size = int(data.get('page_size', 20))
+        offset = (int(data.get('page', 1)) - 1) * page_size
+        search = data.get('search', '')
+        user_query = data.get('user')
+
+        ws = Workspace.objects.filter()
+        total = ws.count()
+
+        if user_query:
+            ws = ws.filter(created_by_id=user_query)
+            total = ws.count()
+
+        ws = ws.filter(created_by=user, name__icontains=search)[offset: offset + page_size].values().annotate(
+            # total_money_spent=total_money_spent_query,
+            total_oa=Subquery(
+                ZaloOA.objects.filter(company_id=OuterRef('id')).values('id').annotate(
+                    total=Count('id')
+                ).values('total')[:1],
+                output_field=IntegerField()
+            ),
+            total_money_spent=Subquery(
+                WalletTransaction.objects.filter(
+                    oa_id__company=OuterRef('id')
+                ).values('total_amount').annotate(total=Sum('total_amount')).values('total')[:1],
+                output_field=IntegerField()
+            ),
+            total_money_spent_mmonth=Subquery(
+                WalletTransaction.objects.filter(
+                    oa_id__company=OuterRef('id'), created_at__gte=datetime.now().replace(day=1)
+                ).values('total_amount').annotate(total=Sum('total_amount')).values('total')[:1],
+                output_field=IntegerField()
+            ),
+        )
+
+        return convert_response('success', 200, data={
+            'data': ws,
+            'count': total
+        })
+
+
+class WorkspacesAdminAction(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, pk):
+        data = request.GET.copy()
+        user = request.user
+        if not user.is_superuser:
+            return convert_response('Truy cập bị từ chối', 403)
+
+        ws = Workspace.objects.get(id=pk)
+
+        ws.status = data.get('status', ws.status)
+        ws.save()
+        return convert_response('success', 200, data=ws.to_json())

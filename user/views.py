@@ -165,9 +165,11 @@ class ProfileView(APIView):
 
     def put(self, request):
         user = request.user
-        data = json.loads(request.POST.get('data'))
+        data = request.POST.get('data')
+        if data:
+            data = json.loads(request.POST.get('data'))
+            user.update_from_json(data)
         image = request.FILES.get('image')
-        user.update_from_json(data)
         if image:
             user.upload_image(image)
         res = user.to_json()

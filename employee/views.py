@@ -8,6 +8,7 @@ from utils.convert_response import convert_response
 from employee.models import Employee, EmployeeOa, EmployeeUserZalo
 from user.models import User
 from workspace.models import Role
+from zalo.models import ZaloOA
 
 
 class Employees(APIView):
@@ -30,10 +31,6 @@ class Employees(APIView):
             output_field=IntegerField()
         )
 
-        oa_query = SubqueryJsonAgg(
-            EmployeeOa.objects.filter(employee_id=OuterRef('id')).values(),
-        )
-
         employees_in_ws = Employee.objects.filter(workspace_id=workspace)
         data = request.GET.copy()
         # filter by Role
@@ -48,6 +45,11 @@ class Employees(APIView):
         if zalo_oa_query:
             employee_oa = EmployeeOa.objects.filter(oa_id=zalo_oa_query).values_list('employee_id', flat=True)
             employees_in_ws = employees_in_ws.filter(id__in=employee_oa)
+
+        oa_subquery = SubqueryJson(
+            ZaloOA.objects.filter(id=OuterRef('oa_id')).values('id', 'oa_name', 'oa_avatar')[:1]
+        )
+
         employees = employees_in_ws.filter(
             Q(account__full_name__icontains=search) |
             Q(account__phone__icontains=search)
@@ -62,8 +64,12 @@ class Employees(APIView):
             role_data=SubqueryJson(
                 Role.objects.filter(id=OuterRef('role')).values()[:1]
             ),
+            oa=SubqueryJsonAgg(
+                EmployeeOa.objects.filter(employee_id=OuterRef('id')).values().annotate(
+                    oa_data=oa_subquery
+                )
+            ),
             total_customer=total_customer_query,
-            oa_take_care=oa_query,
         )
 
         return convert_response('success', 200, data=employees, count=employees_in_ws.count())
