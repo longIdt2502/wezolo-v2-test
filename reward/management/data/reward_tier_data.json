@@ -1,18 +1,22 @@
 [
   {
-    "name": "Dùng thử",
+    "name": "Gói 1 - Đồng",
+    "code": "BRONZE",
     "min_points": 0
   },
   {
-    "name": "Gói 1 - Bạc",
-    "min_points": 0
-  },
-  {
-    "name": "Gói 2 - Vàng",
+    "name": "Gói 2 - Bạc",
+    "code": "SILVER",
     "min_points": 100000000
   },
   {
-    "name": "Gói 3 - Bạch kim",
+    "name": "Gói 3 - Vàng",
+    "code": "GOLD",
     "min_points": 1000000000
+  },
+  {
+    "name": "Gói 4 - Bạch kim",
+    "code": "PLATINUM",
+    "min_points": 5000000000
   }
 ]

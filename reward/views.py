@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import Sum, OuterRef
 from utils.convert_response import convert_response
 from common.core.subquery import SubqueryJson
@@ -54,3 +54,11 @@ class RewardsApi(APIView):
         user = request.user
         data = request.data.copy()
         pass
+
+
+class RewardsTierApi(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, _):
+        rewards_tier = RewardTier.objects.filter().values()
+        return convert_response('success', 200, data=rewards_tier)

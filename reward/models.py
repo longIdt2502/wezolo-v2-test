@@ -40,12 +40,14 @@ class RewardTier(models.Model):
         db_table = 'reward_tier'
 
     class Name(models.TextChoices):
+        BRONZE = 'BRONZE', 'Đồng'
         SILVER = 'SILVER', 'Bạc'
         GOLD = 'GOLD', 'Vàng'
         PLATINUM = 'PLATINUM', 'Bạch kim'
 
     name = models.CharField(max_length=255, choices=Name.choices, null=True, blank=True)
-    min_points = models.IntegerField(default=0, null=False, blank=False)
+    code = models.CharField(max_length=255, null=True, blank=True)
+    min_points = models.BigIntegerField(default=0, null=False, blank=False)
     benefit_description = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True, blank=True)
@@ -53,6 +55,7 @@ class RewardTier(models.Model):
     def from_json(self, data):
         RewardTier.objects.create(
             name=data.get('name'),
+            code=data.get('code'),
             min_points=data.get('min_points'),
         )
 
@@ -68,4 +71,4 @@ class RewardBenefit(models.Model):
     type = models.CharField(max_length=255, choices=Price.Type.choices, null=True, blank=True)
     value = models.ForeignKey(Price, on_delete=models.CASCADE, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField()
+    updated_at = models.DateTimeField(null=True)

@@ -9,10 +9,11 @@ from django.db.models import Subquery, OuterRef
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
+from utils.check_financial_capacity import CheckFinancialCapacity
 from utils.convert_response import convert_response
 from workspace.models import Workspace, Role
 from wallet.models import Wallet, WalletTransaction
-from package.models import Package
+from package.models import Package, Price
 from user.models import Address
 
 
@@ -51,8 +52,13 @@ class Workspaces(APIView):
                 user = request.user
                 wallet = Wallet.objects.filter(owner=user).first()
                 ws_count = Workspace.objects.filter(created_by=user).count()
-                if ws_count > 0 and wallet.balance < 1500000:
-                    raise ValidationError('Đã sở hữu và không đủ tiền trong tài khoản ví')
+                if ws_count > 0:
+                    can_transact, wallet, benefit = CheckFinancialCapacity(user, Price.Type.CREATE_WS)
+                    if not can_transact:
+                        raise Exception('Số dư ví không đủ để thực hiện thao tác')
+                    # wallet.balance = wallet.balance - benefit.value.value
+                    # wallet.save()
+
                 data['created_by'] = user.id
                 ws = Workspace().from_json(data)
                 files = request.FILES.get('image')

@@ -9,5 +9,7 @@ class Command(BaseCommand):
         self.stdout.write('Creating role...')
         data = json.loads(open("workspace/management/data/roles.json").read())
         for item in data:
-            Role().from_json(item)
+            role = Role.objects.filter(code=item.get('code')).first()
+            if not role:
+                Role().from_json(item)
         self.stdout.write(self.style.SUCCESS('Create role!'))

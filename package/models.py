@@ -11,7 +11,7 @@ class Package(models.Model):
     description = models.TextField(null=False, blank=False)
     price = models.IntegerField(default=0, null=False, blank=False)
     date_validity = models.IntegerField(null=True, blank=True)
-    points_reward = models.IntegerField(default=0, null=False, blank=False)
+    points_reward = models.BigIntegerField(default=0, null=False, blank=False)
 
     def from_json(self, data):
         Package.objects.create(
@@ -45,8 +45,10 @@ class Price(models.Model):
         CONNECT_OA = 'CONNECT_OA', 'Kết nối zalo OA'
         CREATE_WS = 'CREATE_WS', 'Tạo wordspace'
         OA_PREMIUM = 'OA_PREMIUM', 'Nâng cấp OA Premium'
+        MESS = 'MESS', 'Tin nhắn vượt khung'
+        START = 'START', 'Phí khởi tạo'
 
     type = models.CharField(max_length=255, choices=Type.choices, default=Type.ZNS, null=False, blank=False)
     value = models.IntegerField(default=0, null=False, blank=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField()
+    updated_at = models.DateTimeField(null=True)
