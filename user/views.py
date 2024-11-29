@@ -360,7 +360,15 @@ class UserManageAction(APIView):
         if not user.is_superuser:
             return convert_response('Quyền truy cập bị hạn chế', 403)
         user = User.objects.get(id=pk)
-        return convert_response('success', 200, data=user.to_json())
+
+        user = user.to_json()
+        total_ws = Workspace.objects.filter().count()
+        total_oa = ZaloOA.objects.filter().count()
+
+        user['total_ws'] = total_ws
+        user['total_oa'] = total_oa
+
+        return convert_response('success', 200, data=user)
 
     def put(self, request, pk):
         try:
@@ -373,7 +381,7 @@ class UserManageAction(APIView):
 
             password = data.get('password')
             if password:
-                user.password = user.set_password(password)
+                user.set_password(password)
 
             active = data.get('active')
             if active:
