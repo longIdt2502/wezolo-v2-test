@@ -49,6 +49,11 @@ class ZaloOA(models.Model):
         INACTIVE = 'INACTIVE', 'Không hoạt động'
         EXPIRED = 'EXPIRED', 'Hết hạn gói'
 
+    class SynsStatus(models.TextChoices):
+        SYNC = 'SYNC', 'Đang đồng bộ'
+        ERROR = 'ERROR', 'Ngưng đồng bộ'
+        DONE = 'DONE', 'Đã đồng bộ'
+
     company = models.ForeignKey(
         Workspace,
         on_delete=models.SET_NULL,
@@ -71,6 +76,7 @@ class ZaloOA(models.Model):
     ho_chieu = models.URLField(max_length=200, blank=True, null=True)
     cong_van = models.URLField(max_length=200, blank=True, null=True)
     chung_minh = models.URLField(max_length=200, blank=True, null=True)
+    sync_status = models.CharField(max_length=255, choices=SynsStatus.choices, default=SynsStatus.SYNC, null=False)
     oa_type = models.IntegerField(default=2)
     expiry_date = models.DateTimeField(null=True)
     pause_date = models.DateTimeField(null=True)
