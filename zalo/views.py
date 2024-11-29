@@ -43,14 +43,16 @@ class ZaloOaAPI(APIView):
             return convert_response('Yêu cầu thông tin địa chỉ', 400)
 
         # check money in wallet user
-        wallet = Wallet.objects.filter(owner=user).first()
-        if not wallet:
-            return convert_response('Ví không tồn tại', 400)
-        reward_benefit = RewardBenefit.objects.filter(tier_id=user.level, type=Price.Type.CREATE_OA).first()
-        if not reward_benefit:
-            return convert_response('Không tìm thấy gói lợi ích giá phù hợp', 400)
-        if wallet.balance < reward_benefit.value.value:
-            return convert_response('Số dư ví không đủ để thực hiện thao tác', 400)
+        oa = ZaloOA.objects.filter(created_by=user).count()
+        if oa > 0:
+            wallet = Wallet.objects.filter(owner=user).first()
+            if not wallet:
+                return convert_response('Ví không tồn tại', 400)
+            reward_benefit = RewardBenefit.objects.filter(tier_id=user.level, type=Price.Type.CREATE_OA).first()
+            if not reward_benefit:
+                return convert_response('Không tìm thấy gói lợi ích giá phù hợp', 400)
+            if wallet.balance < reward_benefit.value.value:
+                return convert_response('Số dư ví không đủ để thực hiện thao tác', 400)
 
         # handle file upload
         image_avatar = request.FILES.get('image_avatar')

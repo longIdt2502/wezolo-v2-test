@@ -9,5 +9,7 @@ class Command(BaseCommand):
         self.stdout.write('Creating package...')
         data = json.loads(open("package/management/data/package_data.json").read())
         for item in data:
-            Package().from_json(item)
+            package = Package.objects.filter(code=item.get('code')).first()
+            if not package:
+                Package().from_json(item)
         self.stdout.write(self.style.SUCCESS('Create package!'))

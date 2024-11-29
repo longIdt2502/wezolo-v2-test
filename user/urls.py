@@ -17,5 +17,5 @@ urlpatterns = [
     path("users/find", views.UserApi.as_view()),
     #
     path('admin/users_manage', views.UsersManage.as_view()),
-    path('admin/users_manage/<int:pk>', views.UsersManage.as_view())
+    path('admin/users_manage/<int:pk>', views.UserManageAction.as_view())
 ]

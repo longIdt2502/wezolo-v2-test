@@ -22,6 +22,7 @@ from user.models import User, Verify, City, District, Ward
 from wallet.models import Wallet
 from workspace.models import Workspace
 from zalo.models import ZaloOA
+from reward.models import RewardTier
 
 
 class RegisterView(APIView):
@@ -320,8 +321,6 @@ class UsersManage(APIView):
             output_field=IntegerField()
         )
 
-        print(Workspace.objects.filter(created_by_id=13).count())
-
         total_oa_subquery = Subquery(
             ZaloOA.objects.filter(created_by_id=OuterRef('id')).values('created_by').annotate(
                 oa_count=Count('id')
@@ -336,6 +335,9 @@ class UsersManage(APIView):
                 Wallet.objects.filter(id=OuterRef('wallet')).values(
                     'id', 'wallet_uid', 'balance'
                 )[:1]
+            ),
+            reward=SubqueryJson(
+                RewardTier.objects.filter(id=OuterRef('level_id')).values()[:1]
             ),
             total_ws=total_ws_subquery,
             total_oa=total_oa_subquery
@@ -358,4 +360,25 @@ class UserManageAction(APIView):
         return convert_response('success', 200, data=user.to_json())
 
     def put(self, request, pk):
-        pass
+        try:
+            user = request.user
+            data = request.data.copy()
+            if not user.is_superuser:
+                raise Exception('Quyền truy cập bị hạn chế')
+
+            user = User.objects.get(id=pk)
+
+            password = data.get('password')
+            if password:
+                user.password = user.set_password(password)
+
+            active = data.get('active')
+            if active:
+                user.is_active = True if active == 'true' else False
+
+            user.save()
+            return convert_response('success', 200, data=user.to_json())
+
+        except Exception as e:
+            return convert_response(str(e), 400)
+

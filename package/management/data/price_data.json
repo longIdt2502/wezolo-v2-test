@@ -1,0 +1,74 @@
+[
+  {
+    "type": "START",
+    "value": 1500000
+  },
+  {
+    "type": "START",
+    "value": 1000000
+  },
+  {
+    "type": "START",
+    "value": 0
+  },
+  {
+    "type": "ZNS",
+    "value": 350
+  },
+  {
+    "type": "ZNS",
+    "value": 330
+  },
+  {
+    "type": "ZNS",
+    "value": 300
+  },
+  {
+    "type": "CREATE_OA",
+    "value": 1500000
+  },
+  {
+    "type": "CREATE_OA",
+    "value": 1000000
+  },
+  {
+    "type": "CREATE_OA",
+    "value": 0
+  },
+  {
+    "type": "CONNECT_OA",
+    "value": 1500000
+  },
+  {
+    "type": "CONNECT_OA",
+    "value": 1000000
+  },
+  {
+    "type": "CONNECT_OA",
+    "value": 0
+  },
+  {
+    "type": "CREATE_WS",
+    "value": 1500000
+  },
+  {
+    "type": "CREATE_WS",
+    "value": 1000000
+  },
+  {
+    "type": "CREATE_WS",
+    "value": 0
+  },
+  {
+    "type": "OA_PREMIUM",
+    "value": 2400000
+  },
+  {
+    "type": "OA_PREMIUM",
+    "value": 0
+  },
+  {
+    "type": "MESS",
+    "value": 55
+  }
+]

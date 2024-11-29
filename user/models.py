@@ -122,6 +122,11 @@ class User(AbstractUser):
         wallet_ins = wallet.objects.filter(
             owner_id=self.id
         ).values('id', 'wallet_uid', 'balance').first()
+
+        reward = apps.get_model('reward', 'RewardTier')
+        reward_ins = reward.objects.filter(
+            id=self.level_id
+        ).values().first()
         return {
             "uid": str(self.uid),
             "phone": self.phone,
@@ -132,6 +137,7 @@ class User(AbstractUser):
             "is_active": self.is_active,
             "is_superuser": self.is_superuser,
             "wallet": wallet_ins,
+            "reward": reward_ins,
             "package": self.package.to_json() if self.package else None,
             "package_start": self.package_start,
             "package_active": self.package_active,

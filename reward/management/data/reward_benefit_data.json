@@ -1,0 +1,200 @@
+[
+  {
+    "tier_name": "BRONZE",
+    "benefit_name": "Đơn giá gửi ZNS",
+    "type": "ZNS",
+    "value": 350
+  },
+  {
+    "tier_name": "BRONZE",
+    "benefit_name": "Phí khởi tạo",
+    "type": "START",
+    "value": 1500000
+  },
+  {
+    "tier_name": "BRONZE",
+    "benefit_name": "Tạo OA lần đầu",
+    "type": "CREATE_OA",
+    "value": 0
+  },
+  {
+    "tier_name": "BRONZE",
+    "benefit_name": "Tạo OA lần sau",
+    "type": "CREATE_OA",
+    "value": 1500000
+  },
+  {
+    "tier_name": "BRONZE",
+    "benefit_name": "Kết nối OA lần đầu",
+    "type": "CONNECT_OA",
+    "value": 0
+  },
+  {
+    "tier_name": "BRONZE",
+    "benefit_name": "Kết nối OA lần sau",
+    "type": "CONNECT_OA",
+    "value": 150000
+  },
+  {
+    "tier_name": "BRONZE",
+    "benefit_name": "Tạo workspace lần đầu",
+    "type": "CREATE_WS",
+    "value": 0
+  },
+  {
+    "tier_name": "BRONZE",
+    "benefit_name": "Tạo workspace lần sau",
+    "type": "CREATE_WS",
+    "value": 150000
+  },
+  {
+    "tier_name": "BRONZE",
+    "benefit_name": "Nâng cấp premium lần đầu",
+    "type": "OA_PREMIUM",
+    "value": 0
+  },
+  {
+    "tier_name": "BRONZE",
+    "benefit_name": "Nâng cấp premium lần sau",
+    "type": "OA_PREMIUM",
+    "value": 2400000
+  },
+  {
+    "tier_name": "BRONZE",
+    "benefit_name": "Tin nhắn vượt khung",
+    "type": "MESS",
+    "value": 55
+  },
+  {
+    "tier_name": "SILVER",
+    "benefit_name": "Đơn giá gửi ZNS",
+    "type": "ZNS",
+    "value": 330
+  },
+  {
+    "tier_name": "SILVER",
+    "benefit_name": "Phí khởi tạo",
+    "type": "START",
+    "value": 1000000
+  },
+  {
+    "tier_name": "SILVER",
+    "benefit_name": "Tạo OA lần đầu",
+    "type": "CREATE_OA",
+    "value": 0
+  },
+  {
+    "tier_name": "SILVER",
+    "benefit_name": "Tạo OA lần sau",
+    "type": "CREATE_OA",
+    "value": 1500000
+  },
+  {
+    "tier_name": "SILVER",
+    "benefit_name": "Kết nối OA lần đầu",
+    "type": "CONNECT_OA",
+    "value": 0
+  },
+  {
+    "tier_name": "SILVER",
+    "benefit_name": "Kết nối OA lần sau",
+    "type": "CONNECT_OA",
+    "value": 150000
+  },
+  {
+    "tier_name": "SILVER",
+    "benefit_name": "Tạo workspace lần đầu",
+    "type": "CREATE_WS",
+    "value": 0
+  },
+  {
+    "tier_name": "SILVER",
+    "benefit_name": "Tạo workspace lần sau",
+    "type": "CREATE_WS",
+    "value": 150000
+  },
+  {
+    "tier_name": "SILVER",
+    "benefit_name": "Nâng cấp premium lần đầu",
+    "type": "OA_PREMIUM",
+    "value": 0
+  },
+  {
+    "tier_name": "SILVER",
+    "benefit_name": "Nâng cấp premium lần sau",
+    "type": "OA_PREMIUM",
+    "value": 2400000
+  },
+  {
+    "tier_name": "SILVER",
+    "benefit_name": "Tin nhắn vượt khung",
+    "type": "MESS",
+    "value": 55
+  },
+  {
+    "tier_name": "GOLD",
+    "benefit_name": "Đơn giá gửi ZNS",
+    "type": "ZNS",
+    "value": 330
+  },
+  {
+    "tier_name": "GOLD",
+    "benefit_name": "Phí khởi tạo",
+    "type": "START",
+    "value": 0
+  },
+  {
+    "tier_name": "GOLD",
+    "benefit_name": "Tạo OA lần đầu",
+    "type": "CREATE_OA",
+    "value": 0
+  },
+  {
+    "tier_name": "GOLD",
+    "benefit_name": "Tạo OA lần sau",
+    "type": "CREATE_OA",
+    "value": 1500000
+  },
+  {
+    "tier_name": "GOLD",
+    "benefit_name": "Kết nối OA lần đầu",
+    "type": "CONNECT_OA",
+    "value": 0
+  },
+  {
+    "tier_name": "GOLD",
+    "benefit_name": "Kết nối OA lần sau",
+    "type": "CONNECT_OA",
+    "value": 150000
+  },
+  {
+    "tier_name": "GOLD",
+    "benefit_name": "Tạo workspace lần đầu",
+    "type": "CREATE_WS",
+    "value": 0
+  },
+  {
+    "tier_name": "GOLD",
+    "benefit_name": "Tạo workspace lần sau",
+    "type": "CREATE_WS",
+    "value": 150000
+  },
+  {
+    "tier_name": "GOLD",
+    "benefit_name": "Nâng cấp premium lần đầu",
+    "type": "OA_PREMIUM",
+    "value": 0
+  },
+  {
+    "tier_name": "GOLD",
+    "benefit_name": "Nâng cấp premium lần sau",
+    "type": "OA_PREMIUM",
+    "value": 2400000
+  },
+  {
+    "tier_name": "GOLD",
+    "benefit_name": "Tin nhắn vượt khung",
+    "type": "MESS",
+    "value": 55
+  }
+]
