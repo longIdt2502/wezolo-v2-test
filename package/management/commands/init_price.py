@@ -11,7 +11,7 @@ class Command(BaseCommand):
         for item in data:
             price = Price.objects.filter(type=item.get('type'), value=item.get('value')).first()
             if not price:
-                Price().objects.create(
+                Price.objects.create(
                     type=item.get('type'),
                     value=item.get('value')
                 )

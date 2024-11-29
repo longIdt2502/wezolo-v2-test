@@ -47,7 +47,7 @@ class RewardTier(models.Model):
 
     name = models.CharField(max_length=255, choices=Name.choices, null=True, blank=True)
     code = models.CharField(max_length=255, null=True, blank=True)
-    min_points = models.IntegerField(default=0, null=False, blank=False)
+    min_points = models.BigIntegerField(default=0, null=False, blank=False)
     benefit_description = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True, blank=True)

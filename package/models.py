@@ -11,7 +11,7 @@ class Package(models.Model):
     description = models.TextField(null=False, blank=False)
     price = models.IntegerField(default=0, null=False, blank=False)
     date_validity = models.IntegerField(null=True, blank=True)
-    points_reward = models.IntegerField(default=0, null=False, blank=False)
+    points_reward = models.BigIntegerField(default=0, null=False, blank=False)
 
     def from_json(self, data):
         Package.objects.create(

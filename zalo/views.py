@@ -10,12 +10,14 @@ import django_rq
 
 from common.redis.config import task_queue
 from django.db import transaction
+from django.db.models import OuterRef
 from rest_framework.views import APIView
 from utils.convert_response import convert_response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from common.file_ext import get_file_extension
 from common.pref_keys import PrefKeys
-
+from common.core.subquery import SubqueryJson
+from utils.check_financial_capacity import CheckFinancialCapacity
 from common.redis.connect_oa_job import connect_oa_job
 from .utils import get_token_from_code, get_oa_info
 from .models import ZaloOA, CodeVerifier, UserZalo, Message
@@ -42,17 +44,19 @@ class ZaloOaAPI(APIView):
         if not address_data:
             return convert_response('Yêu cầu thông tin địa chỉ', 400)
 
-        # check money in wallet user
+        # TODO: CHECK money in wallet user
+        """
+        Check Logic: Kiểm tra người dùng đã có Oa chưa -> Chưa có thì cho tạo với giá 0đ -> Có rồi thì check tài khoản 
+        của User -> Lấy được Level (Reward_tiers) -> Dựa vào Reward_tier và Type -> tìm được Reward_benefit -> tìm được
+        Price tương ứng -> kiểm tra tiền trong ví và thực hiện tiếp thao tác
+        """
         oa = ZaloOA.objects.filter(created_by=user).count()
         if oa > 0:
-            wallet = Wallet.objects.filter(owner=user).first()
-            if not wallet:
-                return convert_response('Ví không tồn tại', 400)
-            reward_benefit = RewardBenefit.objects.filter(tier_id=user.level, type=Price.Type.CREATE_OA).first()
-            if not reward_benefit:
-                return convert_response('Không tìm thấy gói lợi ích giá phù hợp', 400)
-            if wallet.balance < reward_benefit.value.value:
+            can_transact, wallet, benefit = CheckFinancialCapacity(user, Price.Type.CREATE_OA)
+            if not can_transact:
                 return convert_response('Số dư ví không đủ để thực hiện thao tác', 400)
+            wallet.balance = wallet.balance - benefit.value.value
+            wallet.save()
 
         # handle file upload
         image_avatar = request.FILES.get('image_avatar')
@@ -128,11 +132,12 @@ class ZaloOaDetailAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        zalo_oa = ZaloOA.objects.filter(id=pk).values(
-            'code_ref', 'status', 'app_id', 'oa_id', 'oa_name', 'oa_avatar', 'oa_cover', 'cate_name',
-            'description', 'oa_type', 'num_follower', 'package_name', 'package_valid_through_date',
-            'package_auto_renew_date'
-        ).first()
+        zalo_oa = ZaloOA.objects.filter(id=pk).values().first()
+        address = Address.objects.filter(id=zalo_oa['address_id']).first()
+        if address:
+            zalo_oa['address_data'] = address.to_json()
+        zalo_oa.pop('access_token', None)
+        zalo_oa.pop('refresh_token', None)
         return convert_response('success', 200, data=zalo_oa)
 
     def put(self, request, pk):

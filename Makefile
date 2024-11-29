@@ -1,5 +1,2 @@
-compose_up:
-    docker-compose up --build
-
-compose_down:
-    docker-compose down
+runserver:
+	python manage.py makemigrations && python manage.py migrate && python manage.py insert_data && python manage.py init_reward_tier && python manage.py init_package && python manage.py init_role && python manage.py init_price && python manage.py init_benefit && python manage.py runserver 0.0.0.0:8000

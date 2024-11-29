@@ -33,7 +33,7 @@
     "tier_name": "BRONZE",
     "benefit_name": "Kết nối OA lần sau",
     "type": "CONNECT_OA",
-    "value": 150000
+    "value": 1500000
   },
   {
     "tier_name": "BRONZE",
@@ -45,7 +45,7 @@
     "tier_name": "BRONZE",
     "benefit_name": "Tạo workspace lần sau",
     "type": "CREATE_WS",
-    "value": 150000
+    "value": 1500000
   },
   {
     "tier_name": "BRONZE",
@@ -99,7 +99,7 @@
     "tier_name": "SILVER",
     "benefit_name": "Kết nối OA lần sau",
     "type": "CONNECT_OA",
-    "value": 150000
+    "value": 1500000
   },
   {
     "tier_name": "SILVER",
@@ -111,7 +111,7 @@
     "tier_name": "SILVER",
     "benefit_name": "Tạo workspace lần sau",
     "type": "CREATE_WS",
-    "value": 150000
+    "value": 1500000
   },
   {
     "tier_name": "SILVER",
@@ -165,7 +165,7 @@
     "tier_name": "GOLD",
     "benefit_name": "Kết nối OA lần sau",
     "type": "CONNECT_OA",
-    "value": 150000
+    "value": 1500000
   },
   {
     "tier_name": "GOLD",
@@ -177,7 +177,7 @@
     "tier_name": "GOLD",
     "benefit_name": "Tạo workspace lần sau",
     "type": "CREATE_WS",
-    "value": 150000
+    "value": 1500000
   },
   {
     "tier_name": "GOLD",

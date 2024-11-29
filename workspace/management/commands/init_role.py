@@ -6,9 +6,10 @@ from workspace.models import Role
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        if Role().objects.filter().count() == 0:
-            self.stdout.write('Creating role...')
-            data = json.loads(open("workspace/management/data/roles.json").read())
-            for item in data:
+        self.stdout.write('Creating role...')
+        data = json.loads(open("workspace/management/data/roles.json").read())
+        for item in data:
+            role = Role.objects.filter(code=item.get('code')).first()
+            if not role:
                 Role().from_json(item)
-            self.stdout.write(self.style.SUCCESS('Create role!'))
+        self.stdout.write(self.style.SUCCESS('Create role!'))
