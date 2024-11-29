@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta, datetime
 
 from django.shortcuts import render
 from rest_framework.views import APIView
@@ -79,6 +80,7 @@ class WalletReceiveHookPayment(APIView):
             customer_id=wallet_trans.user,
             event=wallet_trans,
             points_earned=wallet_trans.total_amount,
+            expiration_date=datetime.now() + timedelta(seconds=90)
         )
         wallet = Wallet.objects.get(owner=wallet_trans.user)
         channel_layer = get_channel_layer()
