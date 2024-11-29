@@ -377,7 +377,7 @@ class UserManageAction(APIView):
 
             active = data.get('active')
             if active:
-                user.is_active = True if active == 'true' else False
+                user.is_active = active
 
             user.save()
             return convert_response('success', 200, data=user.to_json())

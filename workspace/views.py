@@ -175,7 +175,7 @@ class WorkspacesAdmin(APIView):
             ws = ws.filter(created_by_id=user_query)
             total = ws.count()
 
-        ws = ws.filter(created_by=user, name__icontains=search)[offset: offset + page_size].values().annotate(
+        ws = ws.filter(name__icontains=search)[offset: offset + page_size].values().annotate(
             # total_money_spent=total_money_spent_query,
             total_oa=Subquery(
                 ZaloOA.objects.filter(company_id=OuterRef('id')).values('id').annotate(
