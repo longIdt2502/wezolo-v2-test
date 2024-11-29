@@ -37,95 +37,94 @@ class ZaloOaAPI(APIView):
         return convert_response('success', 200, data=zalo_oa)
 
     def post(self, request):
-        user = request.user
+        try:
+            with transaction.atomic():
+                user = request.user
 
-        data = json.loads(request.POST.get('data'))
-        address_data = json.loads(request.POST.get('address'))
-        if not address_data:
-            return convert_response('Yêu cầu thông tin địa chỉ', 400)
+                data = json.loads(request.POST.get('data'))
+                code = random.randint(100000, 999999)
+                zalo_oa = ZaloOA.objects.create(
+                    company_id=data.get('workspace'),
+                    code_ref=code,
+                    status=ZaloOA.Status.PENDING,
+                    description=f"[{code}] {data.get('description')}",
+                    oa_name=data.get('oa_name'),
+                    cate_name=data.get('cate_name'),
+                    created_by=user,
+                )
 
-        # TODO: CHECK money in wallet user
-        """
-        Check Logic: Kiểm tra người dùng đã có Oa chưa -> Chưa có thì cho tạo với giá 0đ -> Có rồi thì check tài khoản 
-        của User -> Lấy được Level (Reward_tiers) -> Dựa vào Reward_tier và Type -> tìm được Reward_benefit -> tìm được
-        Price tương ứng -> kiểm tra tiền trong ví và thực hiện tiếp thao tác
-        """
-        oa = ZaloOA.objects.filter(created_by=user).count()
-        if oa > 0:
-            can_transact, wallet, benefit = CheckFinancialCapacity(user, Price.Type.CREATE_OA)
-            if not can_transact:
-                return convert_response('Số dư ví không đủ để thực hiện thao tác', 400)
-            wallet.balance = wallet.balance - benefit.value.value
-            wallet.save()
+                address_data = json.loads(request.POST.get('address'))
+                if not address_data:
+                    raise Exception('Yêu cầu thông tin địa chỉ')
 
-        # handle file upload
-        image_avatar = request.FILES.get('image_avatar')
-        if not image_avatar:
-            return convert_response('Cần ảnh đại diện OA', 400)
-        image_cover = request.FILES.get('image_cover')
-        if not image_cover:
-            return convert_response('Cần ảnh bìa OA', 400)
-        giay_dang_ky = request.FILES.get('giay_dang_ky')
-        cccd_truoc = request.FILES.get('cccd_truoc')
-        cccd_sau = request.FILES.get('cccd_sau')
-        ho_chieu = request.FILES.get('ho_chieu')
-        cong_van = request.FILES.get('cong_van')
-        chung_minh = request.FILES.get('chung_minh')
-        if (not giay_dang_ky or not cccd_truoc or not cccd_sau) and (not cong_van or not chung_minh):
-            return convert_response('Thiếu tài liệu tạo OA', 400)
+                # TODO: CHECK money in wallet user
+                """
+                Check Logic: Kiểm tra người dùng đã có Oa chưa -> Chưa có thì cho tạo với giá 0đ -> Có rồi thì check tài khoản 
+                của User -> Lấy được Level (Reward_tiers) -> Dựa vào Reward_tier và Type -> tìm được Reward_benefit -> tìm được
+                Price tương ứng -> kiểm tra tiền trong ví và thực hiện tiếp thao tác
+                """
+                oa = ZaloOA.objects.filter(created_by=user).count()
+                if oa > 0:
+                    can_transact, wallet, benefit = CheckFinancialCapacity(user, Price.Type.CREATE_OA)
+                    if not can_transact:
+                        raise Exception('Số dư ví không đủ để thực hiện thao tác')
+                    wallet.balance = wallet.balance - benefit.value.value
+                    wallet.save()
 
-        check = True
-        while check:
-            code = random.randint(100000, 999999)
-            zalo_oa_ins = ZaloOA.objects.filter(code_ref=code).first()
-            if zalo_oa_ins:
-                continue
-            zalo_oa = ZaloOA.objects.create(
-                company_id=data.get('workspace'),
-                code_ref=code,
-                status=ZaloOA.Status.PENDING,
-                description=f"[{code}] {data.get('description')}",
-                oa_name=data.get('oa_name'),
-                cate_name=data.get('cate_name'),
-                created_by=user,
-            )
-            address_ins = Address().create_from_json(address_data)
-            zalo_oa.address = address_ins
-            url = zalo_oa.upload_file(image_avatar, f'image_avatar{get_file_extension(image_avatar.name)}')
-            zalo_oa.oa_avatar = url
-            url = zalo_oa.upload_file(image_cover, f'image_cover{get_file_extension(image_cover.name)}')
-            zalo_oa.oa_cover = url
-            if giay_dang_ky:
-                url = zalo_oa.upload_file(giay_dang_ky, f'giay_dang_ky{get_file_extension(giay_dang_ky.name)}')
-                zalo_oa.giay_dang_ky = url
-            if cccd_truoc and cccd_sau:
-                url_front = zalo_oa.upload_file(cccd_truoc, f'cccd_truoc{get_file_extension(cccd_truoc.name)}')
-                url_back = zalo_oa.upload_file(cccd_sau, f'cccd_sau{get_file_extension(cccd_sau.name)}')
-                zalo_oa.cccd_truoc = url_front
-                zalo_oa.cccd_sau = url_back
-            if cong_van:
-                url = zalo_oa.upload_file(cong_van, f'cccd_sau{get_file_extension(cong_van.name)}')
-                zalo_oa.cong_van = url
-            if chung_minh:
-                url = zalo_oa.upload_file(chung_minh, f'cccd_sau{get_file_extension(chung_minh.name)}')
-                zalo_oa.chung_minh = url
-            if ho_chieu:
-                url = zalo_oa.upload_file(ho_chieu, f'ho_chieu{get_file_extension(ho_chieu.name)}')
-                zalo_oa.ho_chieu = url
-            zalo_oa.save()
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        user=user,
+                        type=WalletTransaction.Type.EXPENDITURE,
+                        method=WalletTransaction.Method.TRANSFER,
+                        amount=benefit.value.value,
+                        total_amount=benefit.value.value,
+                        oa=zalo_oa,
+                    )
 
-            WalletTransaction.objects.create(
-                wallet=wallet,
-                user=user,
-                type=WalletTransaction.Type.EXPENDITURE,
-                method=WalletTransaction.Method.TRANSFER,
-                amount=reward_benefit.value.value,
-                total_amount=reward_benefit.value.value,
-                oa=zalo_oa,
-            )
+                # handle file upload
+                image_avatar = request.FILES.get('image_avatar')
+                if not image_avatar:
+                    raise Exception('Cần ảnh đại diện OA')
+                image_cover = request.FILES.get('image_cover')
+                if not image_cover:
+                    raise Exception('Cần ảnh bìa OA')
+                giay_dang_ky = request.FILES.get('giay_dang_ky')
+                cccd_truoc = request.FILES.get('cccd_truoc')
+                cccd_sau = request.FILES.get('cccd_sau')
+                ho_chieu = request.FILES.get('ho_chieu')
+                cong_van = request.FILES.get('cong_van')
+                chung_minh = request.FILES.get('chung_minh')
+                if (not giay_dang_ky or not cccd_truoc or not cccd_sau) and (not cong_van or not chung_minh):
+                    raise Exception('Thiếu tài liệu tạo OA')
 
-            check = False
-            return convert_response('success', 201, data=zalo_oa.id)
+                address_ins = Address().create_from_json(address_data)
+                zalo_oa.address = address_ins
+                url = zalo_oa.upload_file(image_avatar, f'image_avatar{get_file_extension(image_avatar.name)}')
+                zalo_oa.oa_avatar = url
+                url = zalo_oa.upload_file(image_cover, f'image_cover{get_file_extension(image_cover.name)}')
+                zalo_oa.oa_cover = url
+                if giay_dang_ky:
+                    url = zalo_oa.upload_file(giay_dang_ky, f'giay_dang_ky{get_file_extension(giay_dang_ky.name)}')
+                    zalo_oa.giay_dang_ky = url
+                if cccd_truoc and cccd_sau:
+                    url_front = zalo_oa.upload_file(cccd_truoc, f'cccd_truoc{get_file_extension(cccd_truoc.name)}')
+                    url_back = zalo_oa.upload_file(cccd_sau, f'cccd_sau{get_file_extension(cccd_sau.name)}')
+                    zalo_oa.cccd_truoc = url_front
+                    zalo_oa.cccd_sau = url_back
+                if cong_van:
+                    url = zalo_oa.upload_file(cong_van, f'cccd_sau{get_file_extension(cong_van.name)}')
+                    zalo_oa.cong_van = url
+                if chung_minh:
+                    url = zalo_oa.upload_file(chung_minh, f'cccd_sau{get_file_extension(chung_minh.name)}')
+                    zalo_oa.chung_minh = url
+                if ho_chieu:
+                    url = zalo_oa.upload_file(ho_chieu, f'ho_chieu{get_file_extension(ho_chieu.name)}')
+                    zalo_oa.ho_chieu = url
+                zalo_oa.save()
+
+                return convert_response('success', 201, data=zalo_oa.id)
+        except Exception as e:
+            return convert_response(str(e), 400)
 
 
 class ZaloOaDetailAPI(APIView):
