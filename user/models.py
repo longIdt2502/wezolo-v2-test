@@ -174,21 +174,22 @@ class Verify(models.Model):
         verbose_name = "Verify"
         db_table = "verify"
 
+    # default = timezone.now() + timedelta(seconds=90)
     email = models.CharField(max_length=255, blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=False, null=False)
     otp = models.CharField(max_length=6, blank=False, null=False)
     status = models.BooleanField(default=False, blank=False, null=False)
     type = models.CharField(choices=VerifyType, null=True, blank=True)
-    expired_at = models.DateTimeField(default=timezone.now() + timedelta(seconds=90))
+    expired_at = models.DateTimeField(null=True)
 
 
 class Sessions(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    login_time = models.DateTimeField(default=timezone.now())
+    login_time = models.DateTimeField(auto_now_add=True)
     logout_time = models.DateTimeField()
     ip_address = models.CharField(max_length=255, null=False, blank=False)
     user_agent = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=20)
     token = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(timezone.now())
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField()

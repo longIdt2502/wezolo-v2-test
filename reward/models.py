@@ -14,10 +14,11 @@ class Reward(models.Model):
         verbose_name = 'Reward'
         db_table = 'reward'
 
+    # default = timezone.now() + timedelta(days=180)
     customer_id = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
     event = models.ForeignKey(WalletTransaction, on_delete=models.SET_NULL, null=True, blank=True)
     points_earned = models.IntegerField(default=0, null=False, blank=False)
-    expiration_date = models.DateTimeField(default=timezone.now() + timedelta(days=180))
+    expiration_date = models.DateTimeField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
 
