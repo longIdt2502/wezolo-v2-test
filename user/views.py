@@ -54,7 +54,8 @@ class RegisterView(APIView):
                 email=data.get('email'),
                 phone_number=username,
                 otp=otp,
-                type='REGISTER'
+                type='REGISTER',
+                expired_at=datetime.now() + timedelta(seconds=90)
             )
             # send_verify_otp(username, otp)
             return convert_response('success', 200, data={"verify_id": verify.id})
