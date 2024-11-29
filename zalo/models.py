@@ -44,6 +44,11 @@ class ZaloOA(models.Model):
         CONNECTED = 'CONNECTED', 'Đã kết nối'
         DISCONNECTED = 'DISCONNECTED', 'Ngừng kết nối'
 
+    class Active(models.TextChoices):
+        ACTIVE = 'ACTIVE', 'Hoạt động'
+        INACTIVE = 'INACTIVE', 'Không hoạt động'
+        EXPIRED = 'EXPIRED', 'Hết hạn gói'
+
     company = models.ForeignKey(
         Workspace,
         on_delete=models.SET_NULL,
@@ -52,7 +57,7 @@ class ZaloOA(models.Model):
         related_name="zalo_company")
     code_ref = models.CharField(max_length=255, null=True, blank=True)
     status = models.CharField(max_length=255, choices=Status.choices, default=Status.PENDING)
-    active = models.BooleanField(default=True, null=False)
+    active = models.CharField(max_length=255, choices=Active.choices, default=Active.ACTIVE, null=True)
     app_id = models.CharField(max_length=255, null=True, blank=True)
     oa_id = models.CharField(max_length=255, null=True, blank=True)
     oa_name = models.CharField(max_length=255, null=True, blank=True)
@@ -67,9 +72,17 @@ class ZaloOA(models.Model):
     cong_van = models.URLField(max_length=200, blank=True, null=True)
     chung_minh = models.URLField(max_length=200, blank=True, null=True)
     oa_type = models.IntegerField(default=2)
+    expiry_date = models.DateTimeField(null=True)
+    pause_date = models.DateTimeField(null=True)
+    dev_note = models.CharField(max_length=255, null=True, blank=True)
+    message_remain = models.IntegerField(null=True)
+    message_quota = models.IntegerField(null=True)
+    message_expired = models.FloatField(null=True)
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True)
     num_follower = models.IntegerField(default=0)
     package_name = models.CharField(max_length=255, null=True, blank=True)
+    package_valid_through_date = models.DateField(null=True)
+    package_auto_renew_date = models.DateField(null=True)
     activate = models.BooleanField(default=False)
     refresh_token = models.TextField(null=True, blank=True)
     access_token = models.TextField(null=True, blank=True)

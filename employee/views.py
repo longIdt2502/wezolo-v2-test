@@ -72,6 +72,7 @@ class Employees(APIView):
         user_req = request.user
         data = request.data.copy()
         phone = data.get('phone')
+        oa_assign = data.get('oa_assign', [])
         if not phone:
             return convert_response('Vui lòng nhập số điện thoại', 400)
         workspace = data.get('workspace')
@@ -93,6 +94,12 @@ class Employees(APIView):
                 workspace_id=workspace,
                 role_id=role,
             )
+            for item in oa_assign:
+                EmployeeOa.objects.create(
+                    employee=employee,
+                    oa_id=item
+                )
+
         except Exception as e:
             return convert_response(str(e), 400)
         return convert_response('success', 200, data=employee.id)

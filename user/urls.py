@@ -16,5 +16,6 @@ urlpatterns = [
     path("wards", views.WardListAPIView.as_view()),
     path("users/find", views.UserApi.as_view()),
     #
-    path('admin/users_manage', views.UsersManage.as_view())
+    path('admin/users_manage', views.UsersManage.as_view()),
+    path('admin/users_manage/<int:pk>', views.UsersManage.as_view())
 ]

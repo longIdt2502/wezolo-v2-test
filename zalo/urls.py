@@ -3,6 +3,7 @@ from .views import *
 
 urlpatterns = [
     path('zalo_oa', ZaloOaAPI.as_view()),
+    path('zalo_oa/<int:pk>', ZaloOaDetailAPI.as_view()),
     path('zalo_oa_url_connection', ZaloOaUrlConnection.as_view()),
     path('zalo_oa_accept_auth/hook/<int:pk>', ZaloOaAcceptAuth.as_view()),
 
