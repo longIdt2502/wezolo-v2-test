@@ -19,8 +19,8 @@ from common.pref_keys import PrefKeys
 from common.core.subquery import *
 from utils.check_financial_capacity import CheckFinancialCapacity
 from common.redis.connect_oa_job import connect_oa_job
-from .utils import get_token_from_code, get_oa_info
-from .models import ZaloOA, CodeVerifier, UserZalo, Message
+from zalo.utils import get_token_from_code, get_oa_info
+from zalo.models import ZaloOA, CodeVerifier, UserZalo, Message
 from user.models import Address, User
 from wallet.models import WalletTransaction, Wallet
 from reward.models import RewardBenefit
@@ -374,23 +374,6 @@ class ZaloOaUrlConnection(APIView):
             return convert_response('success', 200, data=url)
         except Exception as e:
             return convert_response(str(e), 400)
-
-
-class ZaloUserCreate(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        data = request.data.copy()
-        user_zalo = UserZalo.objects.create(
-            name=data.get('name'),
-            phone=data.get('phone'),
-            user_zalo_id=data.get('user_zalo_id'),
-            avatar_small=data.get('avatar_small'),
-            avatar_big=data.get('avatar_big'),
-            oa_id=data.get('oa_id'),
-            is_follower=data.get('is_follower')
-        )
-        return convert_response('success', 200, data=user_zalo.id)
 
 
 class ZaloMessageCreate(APIView):

@@ -8,7 +8,7 @@ from utils.convert_response import convert_response
 from employee.models import Employee, EmployeeOa, EmployeeUserZalo
 from user.models import User
 from workspace.models import Role
-from zalo.models import ZaloOA
+from zalo.models import ZaloOA, UserZalo
 
 
 class Employees(APIView):
@@ -134,6 +134,22 @@ class EmployeeDetail(APIView):
             return convert_response('Nhân viên không tồn tại', 404)
         employee.role_id = data.get('role', employee.role_id)
         employee.status = data.get('status', employee.status)
+
+        customers = data.get('customers', [])
+        if len(customers) > 0:
+            customer_assigned = EmployeeUserZalo.objects.filter(employee=employee)
+
+            customer_remove = customer_assigned.exclude(id__in=customers)
+            for item in customer_remove:
+                item.delete()
+            customer_assigned = customer_assigned.values_list('id', flat=True)
+            for item in customers:
+                if item not in customer_assigned:
+                    EmployeeUserZalo.objects.create(
+                        employee=employee,
+                        customer_id=item
+                    )
+
         employee.save()
         return convert_response('success', 200)
 
