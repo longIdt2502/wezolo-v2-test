@@ -12,11 +12,11 @@ from rest_framework.authtoken.models import Token
 from common.pref_keys import PrefKeys
 from common.core.subquery import *
 
-from user.util import send_verify_otp
 from utils.convert_response import convert_response
 from user.serializers import UserSerializer
 from rest_framework.permissions import AllowAny
 from django.utils import timezone
+from zalo.utils import send_zns_otp
 
 from user.models import User, Verify, City, District, Ward
 from wallet.models import Wallet
@@ -33,20 +33,19 @@ class RegisterView(APIView):
         username = request.data.get("phone", None)
         password = request.data.get("password", None)
         if not (username and password):
-            return convert_response("Required username and password", 400)
+            return convert_response("Yêu cầu số điện thoại và mật khẩu", 400)
         digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
         otp = ''.join(random.choice(digits) for i in range(6))
-        otp = '123456'
         try:
             user = User.objects.get(phone=username)
             if user.is_active:
-                return convert_response('username already exist', 400)
+                return convert_response('Số điện thoại đã tồn tại', 400)
             else:
                 verify = Verify.objects.get(phone_number=username)
                 verify.otp = otp
                 verify.expired_at = datetime.now() + timedelta(seconds=90)
                 verify.save()
-                # send_verify_otp(username, otp)
+                send_zns_otp(otp, username)
                 return convert_response('success', 200, data={"verify_id": verify.id})
         except Exception:
             User().fromJson(data)
@@ -57,7 +56,7 @@ class RegisterView(APIView):
                 type='REGISTER',
                 expired_at=datetime.now() + timedelta(seconds=90)
             )
-            # send_verify_otp(username, otp)
+            send_zns_otp(otp, username)
             return convert_response('success', 200, data={"verify_id": verify.id})
 
 
@@ -127,10 +126,10 @@ class VerifyOTPAPIView(APIView):
                 user.save()
                 token, _ = Token.objects.get_or_create(user=user)
                 return convert_response('success', 200, data={
-                                    "token": token.key,
-                                    "user": user.to_json(),
-                                    # "workspaces": user.workspace_account.all().count()
-                                    })
+                    "token": token.key,
+                    "user": user.to_json(),
+                    # "workspaces": user.workspace_account.all().count()
+                })
             else:
                 return convert_response('OTP invalid or expired', 400)
         except Exception as e:

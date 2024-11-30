@@ -193,3 +193,12 @@ class Sessions(models.Model):
     token = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField()
+
+
+class WeZoloAppConfig(models.Model):
+    zalo_app_id = models.CharField(max_length=255, null=True, blank=True)
+    zalo_sercret_app = models.CharField(max_length=255, blank=True, null=True)
+    access_token = models.TextField(null=True)
+    refresh_token = models.TextField(null=True)
+    expires_in = models.CharField(max_length=255, null=True)
+    is_active = models.BooleanField(default=True, null=False)
