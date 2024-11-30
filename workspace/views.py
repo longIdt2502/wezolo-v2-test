@@ -215,5 +215,6 @@ class WorkspacesAdminAction(APIView):
         ws = Workspace.objects.get(id=pk)
 
         ws.status = data.get('status', ws.status)
+        ws.dev_note = data.get('dev_note', ws.dev_note)
         ws.save()
         return convert_response('success', 200, data=ws.to_json())
