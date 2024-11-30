@@ -27,6 +27,10 @@ class ZaloAdminList(APIView):
         if search:
             oa = oa.filter(Q(oa_name__icontains=search))
 
+        status = data.get('status')
+        if status:
+            oa = oa.filter(status=status)
+
         oa = oa[offset: offset + page_size].values().annotate(
             customer_contact=Subquery(
                 UserZalo.objects.filter(oa_id=OuterRef('id')).values('id').annotate(
@@ -42,3 +46,29 @@ class ZaloAdminList(APIView):
             "data": oa,
             "total": total
         })
+
+
+class ZaloAdminActionOa(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, pk):
+        data = request.data.copy()
+        oa = ZaloOA.objects.get(id=pk)
+
+        status = data.get('status')
+        if status:
+            status = dict(ZaloOA.Status.choices).get(status)
+            oa.status = status
+
+        active = data.get('active')
+        if status:
+            active = dict(ZaloOA.Active.choices).get(active)
+            oa.active = active
+
+        sync_status = data.get('sync_status')
+        if sync_status:
+            sync_status = dict(ZaloOA.SynsStatus.choices).get(sync_status)
+            oa.status = sync_status
+
+        return convert_response('success', 200, data=oa.to_json())
+        pass

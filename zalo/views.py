@@ -16,16 +16,17 @@ from utils.convert_response import convert_response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from common.file_ext import get_file_extension
 from common.pref_keys import PrefKeys
-from common.core.subquery import SubqueryJson
+from common.core.subquery import *
 from utils.check_financial_capacity import CheckFinancialCapacity
 from common.redis.connect_oa_job import connect_oa_job
 from .utils import get_token_from_code, get_oa_info
 from .models import ZaloOA, CodeVerifier, UserZalo, Message
-from user.models import Address
+from user.models import Address, User
 from wallet.models import WalletTransaction, Wallet
 from reward.models import RewardBenefit
 from package.models import Price
-from workspace.models import Workspace
+from workspace.models import Workspace, Role
+from employee.models import EmployeeOa, Employee
 
 
 class ZaloOaAPI(APIView):
@@ -33,7 +34,33 @@ class ZaloOaAPI(APIView):
 
     def get(self, request):
         user = request.user
-        zalo_oa = ZaloOA.objects.filter().order_by('-id').values()
+
+        role_subquery = SubqueryJson(
+            Role.objects.filter(id=OuterRef('role_id')).values(
+                'code', 'title', 'note'
+            )[:1]
+        )
+
+        user_subquery = SubqueryJson(
+            User.objects.filter(id=OuterRef('account_id')).values(
+                'full_name', 'avatar', 'phone'
+            )
+        )
+
+        employee_subquery = SubqueryJson(
+            Employee.objects.filter(id=OuterRef('employee_id')).values().annotate(
+                role_data=role_subquery,
+                user_data=user_subquery
+            ).values('user_data', 'role_data')[:1]
+        )
+
+        zalo_oa = ZaloOA.objects.filter().order_by('-id').values().annotate(
+            employees=SubqueryJsonAgg(
+                EmployeeOa.objects.filter(oa_id=OuterRef('id')).values().annotate(
+                    employee_data=employee_subquery
+                )
+            )
+        ).values('id', 'status', 'sync_status', 'active', 'oa_name', 'oa_avatar', 'num_follower', 'employees')
         return convert_response('success', 200, data=zalo_oa)
 
     def post(self, request):
