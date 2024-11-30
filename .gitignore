@@ -13,3 +13,4 @@ backup
 
 pharmago/settings.py
 media/
+certs/
