@@ -16,7 +16,7 @@ services:
     environment:
       - DJANGO_SECRET_KEY=123
       - ENV_ALLOWED_HOSTS=159.223.60.41,localhost
-      - ENV_ALLOWED_CORS=http://localhost,http://159.223.60.41
+      - ENV_ALLOWED_CORS=http://localhost,http://159.223.60.41,
       - ENV_ALLOWED_ORIGIN_REGEXES='https?://([\w.-]+\.)?kafa\.pro,http?://([\w.-]+\.)?localhost:8000'
       - ENV_DOMAIN=http://159.223.60.41
       - DB_NAME=wezolo

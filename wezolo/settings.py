@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-a0wr3klx3qi9i-=9&(r5atsm8c*q^fa#@4pcdg0i!!+8gui5am
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://5b80-222-252-18-38.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['https://5b80-222-252-18-38.ngrok-free.app', 'https://wezolo-admin-v2.wezolo-admin-fe.pages.dev']
 
 
 # Application definition
