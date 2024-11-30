@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import *
+from zalo.views.views import *
 from zalo.admins.views import *
+from zalo.views.zalo_user_views import *
 
 urlpatterns = [
     path('zalo_oa', ZaloOaAPI.as_view()),
@@ -9,6 +10,7 @@ urlpatterns = [
     path('zalo_oa_accept_auth/hook/<int:pk>', ZaloOaAcceptAuth.as_view()),
 
     path('zalo_user/create', ZaloUserCreate.as_view()),
+    path('zalo_user/list', ZaloUserList.as_view()),
     path('zalo_message/create_multi', ZaloMessageCreate.as_view()),
 
     path('admin/list', ZaloAdminList.as_view()),

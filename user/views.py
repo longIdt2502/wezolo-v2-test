@@ -312,9 +312,9 @@ class UsersManage(APIView):
             is_active = True if is_active == 'true' else False
             users_query = users_query.filter(is_active=is_active)
 
-        reward = data.get('reward')
-        if reward:
-            users_query = users_query.filter(level__name=reward)
+        reward_tier = data.get('reward_tier')
+        if reward_tier:
+            users_query = users_query.filter(level__code=reward_tier)
 
         total_ws_subquery = Subquery(
             Workspace.objects.filter(created_by_id=OuterRef('id')).values('created_by').annotate(
