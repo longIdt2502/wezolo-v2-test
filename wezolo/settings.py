@@ -78,10 +78,6 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "https://wezolo-admin-v2.wezolo-admin-fe.pages.dev"
 ]
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True  # Redirect mọi truy cập HTTP sang HTTPS
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
 
 ROOT_URLCONF = 'wezolo.urls'
 

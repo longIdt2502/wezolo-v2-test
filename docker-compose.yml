@@ -77,6 +77,18 @@ services:
       - redis
       - server
 
+  nginx:
+    image: nginx
+    container_name: django_nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./certs:/etc/ssl/certs
+      - ./certs:/etc/ssl/private
+    ports:
+      - "443:443"
+      - "80:80"
+    depends_on:
+      - server
 volumes:
   db-data:
   dev-static-data4:
