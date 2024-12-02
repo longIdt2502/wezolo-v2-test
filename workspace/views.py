@@ -207,7 +207,7 @@ class WorkspacesAdminAction(APIView):
     permission_classes = [IsAuthenticated]
 
     def put(self, request, pk):
-        data = request.GET.copy()
+        data = request.data.copy()
         user = request.user
         if not user.is_superuser:
             return convert_response('Truy cập bị từ chối', 403)
