@@ -82,8 +82,8 @@ services:
     container_name: django_nginx
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./certs:/etc/ssl/certs
-      - ./certs:/etc/ssl/private
+      - ./certs/fullchain.pem:/etc/ssl/certs/fullchain.pem:ro
+      - ./certs/privkey.pem:/etc/ssl/private/privkey.pem:ro
     ports:
       - "443:443"
       - "80:80"
