@@ -41,6 +41,28 @@ class ZaloUserCreate(APIView):
         return convert_response('success', 200, data=user_zalo.id)
 
 
+class ZaloUserSendSyncProcess(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        oa_id = request.data.get('oa_id')
+        if not oa_id:
+            return convert_response('yêu cầu oa id', 400)
+        total_user = request.data.get('total_user', 0)
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'oa_{str(oa_id)}',
+            {
+                'type': 'message_handler',
+                'message': {
+                    'total_sync': total_user,
+                }
+            },
+        )
+        return convert_response('success', 200)
+        pass
+
+
 class ZaloUserList(APIView):
     permission_classes = [IsAuthenticated]
 

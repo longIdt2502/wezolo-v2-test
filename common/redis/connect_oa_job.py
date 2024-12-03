@@ -21,6 +21,7 @@ def list_message_oa_job(access_token, user_zalo_oa: str):
         item_count = 10
         while item_count == 10:
             res = oa_list_message_in_conversation(access_token, user_zalo_oa, 0)
+            print(res)
             if res.get('error') != 0:
                 break
             messages_valid = []
@@ -51,7 +52,7 @@ def detail_customer_oa_job(access_token, user_id, oa: int):
                 "avatar_small": customer['avatars']['120'],
                 "avatar_big": customer['avatars']['240'],
                 "oa_id": oa,
-                "is_follower": customer['user_is_follower']
+                "is_follower": customer['user_is_follower'],
             }
             res_cus = requests.post(url, data=payload)
             res_cus_json = res_cus.json()
@@ -65,6 +66,7 @@ def connect_oa_job(access_token, oa: int):
     try:
         offset = 0
         item_count = 50
+        total_user = 0
         while item_count == 50:
             res = oa_list_customer(access_token, 0)
             offset += 50
@@ -72,16 +74,14 @@ def connect_oa_job(access_token, oa: int):
             for item in items:
                 django_rq.enqueue(detail_customer_oa_job, access_token, item['user_id'], oa)
             item_count = res['data']['total']
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f'oa_{str(oa)}',
-            {
-                'type': 'message_handler',
-                'message': {
-                    'sync_done': 0,
-                    'total_sync': offset + item_count
-                }
-            },
-        )
+            total_user += item_count
+
+        # Send message total user need sync process by socket
+        url = f'{domain}/v1/zalo/zalo_user/send_sync_process'
+        payload = {
+            "oa_id": oa,
+            "total_user": total_user,
+        }
+        requests.post(url, data=payload)
     except Exception as e:
         print(str(e))
