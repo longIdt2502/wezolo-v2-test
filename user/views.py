@@ -76,7 +76,7 @@ class LoginView(APIView):
         token, _ = Token.objects.get_or_create(user=user)
         user.last_login = datetime.now()
         user.save()
-        return convert_response('Success',200, data={
+        return convert_response('Success', 200, data={
                 "token": token.key,
                 "user": user.to_json(),
                 # "workspaces": user.workspace_account.all().count()
