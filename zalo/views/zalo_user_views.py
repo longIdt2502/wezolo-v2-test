@@ -9,6 +9,7 @@ from utils.convert_response import convert_response
 from zalo.models import UserZalo
 from employee.models import EmployeeUserZalo, ZaloOA
 from user.models import User
+from customer.models import Customer, CustomerImport
 
 
 class ZaloUserCreate(APIView):
@@ -16,15 +17,31 @@ class ZaloUserCreate(APIView):
 
     def post(self, request):
         data = request.data.copy()
+        phone = data.get('phone')
         user_zalo = UserZalo.objects.create(
             name=data.get('name'),
-            phone=data.get('phone'),
+            phone=phone if phone != 0 else None,
             user_zalo_id=data.get('user_zalo_id'),
             avatar_small=data.get('avatar_small'),
             avatar_big=data.get('avatar_big'),
             oa_id=data.get('oa_id'),
             is_follower=data.get('is_follower')
         )
+
+        oa = ZaloOA.objects.get(id=data.get('oa_id'))
+
+        if phone != 0:
+            customer = Customer.objects.create(
+                prefix_name=data.get('name'),
+                phone=phone,
+                address=data.get('address'),
+                workspace=oa.company,
+            )
+            CustomerImport.objects.create(
+                user_zalo=user_zalo,
+                oa=oa,
+                customer=customer
+            )
 
         oa_id = data.get('oa_id')
         total_user = UserZalo.objects.filter(oa_id=oa_id).count()
@@ -84,7 +101,7 @@ class ZaloUserList(APIView):
 
             search = data.get('search')
             if search:
-                customers = customers.filter(Q(name__icontains=search), Q(phone__icontains=search))
+                customers = customers.filter(Q(name__icontains=search) | Q(phone__icontains=search))
 
             user_subquery = SubqueryJson(
                 User.objects.filter(id=OuterRef('employee__account_id')).values(
@@ -101,9 +118,6 @@ class ZaloUserList(APIView):
             customers = customers.values()[offset: offset + page_size].annotate(
                 employee=employee_subquery
             )
-            return convert_response('success', 200, data={
-                "data": customers,
-                "total": total
-            })
+            return convert_response('success', 200, data=customers, total=total)
         except Exception as e:
             return convert_response(str(e), 400)

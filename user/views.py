@@ -341,10 +341,7 @@ class UsersManage(APIView):
             total_oa=total_oa_subquery
         )
 
-        return convert_response('success', 200, data={
-            'data': users,
-            'count': total_user
-        })
+        return convert_response('success', 200, data=users, total=total_user)
 
 
 class UserManageAction(APIView):

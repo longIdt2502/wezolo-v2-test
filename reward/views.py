@@ -43,12 +43,9 @@ class RewardsApi(APIView):
         point_near_expiry = rewards.filter(expiration_date__gte=current_time, expiration_date__lt=future_time).aggregate(
             total_point=Sum('points_earned')
         )['total_point'] or 0
-        return convert_response('success', 200, data={
-            'detail': detail,
-            'total': total_point,
-            'point_to_next_level': point_to_next_level,
-            'point_near_expiry': point_near_expiry,
-        })
+        return convert_response('success', 200, data=detail,
+                                total=total_point, point_to_next_level=point_to_next_level,
+                                point_near_expiry=point_near_expiry)
 
     def post(self, request):
         user = request.user
