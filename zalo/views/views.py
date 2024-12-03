@@ -274,14 +274,14 @@ class ZaloOaAcceptAuth(APIView):
                     if not zalo_oa:
                         raise Exception('Zalo Oa không tồn tại')
                     oa_id_zalo = data_oa_info.get('oa_id')
-                    if zalo_oa.oa_id and zalo_oa.oa_id != oa_id_zalo:
+                    if zalo_oa.uid_zalo_oa and zalo_oa.uid_zalo_oa != oa_id_zalo:
                         raise Exception('Zalo Oa đã được kết nối trước đó')
-                    zalo_oa.oa_id = oa_id_zalo
+                    zalo_oa.uid_zalo_oa = oa_id_zalo
                     zalo_oa.access_token = access_token
                     zalo_oa.refresh_token = refresh_token
                     zalo_oa.save()
                 else:
-                    zalo_oa = ZaloOA.objects.filter(oa_id=data_oa_info.get('oa_id')).first()
+                    zalo_oa = ZaloOA.objects.filter(uid_zalo_oa=data_oa_info.get('oa_id')).first()
                     if zalo_oa and zalo_oa.company != workspace:
                         raise Exception('Zalo Oa đã được kết nối với Workspace khác')
                     if zalo_oa:
