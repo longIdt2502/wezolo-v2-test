@@ -197,10 +197,7 @@ class WorkspacesAdmin(APIView):
             ),
         )
 
-        return convert_response('success', 200, data={
-            'data': ws,
-            'count': total
-        })
+        return convert_response('success', 200, data=ws, count=total)
 
 
 class WorkspacesAdminAction(APIView):

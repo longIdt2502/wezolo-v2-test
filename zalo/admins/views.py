@@ -42,10 +42,7 @@ class ZaloAdminList(APIView):
             )
         )
 
-        return convert_response('success', 200, data={
-            "data": oa,
-            "total": total
-        })
+        return convert_response('success', 200, data=oa, total=total)
 
 
 class ZaloAdminActionOa(APIView):

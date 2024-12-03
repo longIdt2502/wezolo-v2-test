@@ -48,6 +48,7 @@ def detail_customer_oa_job(access_token, user_id, oa: int):
             payload = {
                 "name": customer['display_name'],
                 "phone": customer['shared_info']['phone'],
+                "address": customer['shared_info']['address'],
                 "user_zalo_id": user_id,
                 "avatar_small": customer['avatars']['120'],
                 "avatar_big": customer['avatars']['240'],
@@ -69,12 +70,12 @@ def connect_oa_job(access_token, oa: int):
         total_user = 0
         while item_count == 50:
             res = oa_list_customer(access_token, 0)
-            offset += 50
             items = res['data']['users']
             for item in items:
                 django_rq.enqueue(detail_customer_oa_job, access_token, item['user_id'], oa)
             item_count = res['data']['total']
             total_user += item_count
+            offset += item_count
 
         # Send message total user need sync process by socket
         url = f'{domain}/v1/zalo/zalo_user/send_sync_process'

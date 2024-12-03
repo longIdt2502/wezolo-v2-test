@@ -15,5 +15,5 @@ urlpatterns = [
     path('zalo_message/create_multi', ZaloMessageCreate.as_view()),
 
     path('admin/list', ZaloAdminList.as_view()),
-    path('admin/oa/<int:pk>', ZaloAdminList.as_view())
+    path('admin/oa/<int:pk>', ZaloAdminActionOa.as_view())
 ]
