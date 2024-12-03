@@ -18,14 +18,14 @@ services:
       - ENV_ALLOWED_HOSTS=159.223.60.41,localhost
       - ENV_ALLOWED_CORS=http://localhost,http://159.223.60.41,
       - ENV_ALLOWED_ORIGIN_REGEXES='https?://([\w.-]+\.)?kafa\.pro,http?://([\w.-]+\.)?localhost:8000'
-      - ENV_DOMAIN=http://159.223.60.41
+      - ENV_DOMAIN=https://apiv2.wezolo.com
       - DB_NAME=wezolo
       - DB_USERNAME=root
       - DB_PASSWORD=localhost1234
       - DB_HOST=wezolo_db
       - DB_PORT=5432
       - HOST_REDIS=redis_server
-      - DOMAIN_URL=http://159.223.60.41
+      - DOMAIN_URL=https://apiv2.wezolo.com
       - ZALO_OPENAPI=https://openapi.zalo.me
       - ZALO_OA_AUTH=https://oauth.zaloapp.com
       - ZALO_ZNS_URL=https://business.openapi.zalo.me/message/template
@@ -41,8 +41,6 @@ services:
       - PAY_OS_CLIENT_ID='5a2c1b39-1217-442e-b933-20720bd0531c'
       - PAY_OS_API_KEY='8a0eeaf0-34ff-45b2-bed5-93008bf27441'
       - PAY_OS_CHECK_SUM_KEY='e9ef4634856e3175561da56eb63c7aba1621760aa84fe073629420f756a76174'
-    env_file:
-      - ./.env
 
   db:
     image: postgres
