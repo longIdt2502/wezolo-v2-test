@@ -69,23 +69,19 @@ class LoginView(APIView):
         if not (username and password):
             return convert_response("Required username and password", 400)
         user = User.objects.filter(phone=username).first()
-        if not user:
-            return convert_response(f"User not found with username {username}", 400)
-        if not user.check_password(password):
-            return convert_response("Password is wrong", 400)
+        if not user or not user.check_password(password):
+            return convert_response("Tài khoản hoặc mật khẩu không đúng", 400)
         if not user.is_active:
-            return convert_response("User not verify", 400)
+            return convert_response("Tài khoản chưa được xác thực", 400)
         token, _ = Token.objects.get_or_create(user=user)
         user.last_login = datetime.now()
         user.save()
-        return convert_response('Success',
-                                200,
-                                data={
-                                    "token": token.key,
-                                    "user": user.to_json(),
-                                    # "workspaces": user.workspace_account.all().count()
-                                    }
-                                )
+        return convert_response('Success',200, data={
+                "token": token.key,
+                "user": user.to_json(),
+                # "workspaces": user.workspace_account.all().count()
+            }
+        )
 
 
 class VerifyOTPAPIView(APIView):

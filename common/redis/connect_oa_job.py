@@ -7,6 +7,7 @@ import requests
 
 from common.pref_keys import PrefKeys
 from zalo.utils import oa_list_customer, oa_detail_customer, oa_list_message_in_conversation
+from channels.layers import get_channel_layer
 
 
 def list_message_oa_job(access_token, user_zalo_oa: str):
