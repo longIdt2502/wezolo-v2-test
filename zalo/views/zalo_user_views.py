@@ -1,3 +1,5 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from django.db.models import OuterRef, Q
@@ -5,7 +7,7 @@ from django.db.models import OuterRef, Q
 from common.core.subquery import *
 from utils.convert_response import convert_response
 from zalo.models import UserZalo
-from employee.models import EmployeeUserZalo
+from employee.models import EmployeeUserZalo, ZaloOA
 from user.models import User
 
 
@@ -22,6 +24,19 @@ class ZaloUserCreate(APIView):
             avatar_big=data.get('avatar_big'),
             oa_id=data.get('oa_id'),
             is_follower=data.get('is_follower')
+        )
+
+        oa_id = data.get('oa_id')
+        total_user = UserZalo.objects.filter(oa_id=oa_id).count()
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'oa_{str(oa_id)}',
+            {
+                'type': 'message_handler',
+                'message': {
+                    'sync_done': total_user,
+                }
+            },
         )
         return convert_response('success', 200, data=user_zalo.id)
 
