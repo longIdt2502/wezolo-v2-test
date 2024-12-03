@@ -4,7 +4,7 @@ from channels.generic.websocket import WebsocketConsumer
 from django.shortcuts import get_object_or_404
 from asgiref.sync import async_to_sync
 
-from .models import Wallet, WalletTransaction
+from wallet.models import Wallet, WalletTransaction
 
 
 class WalletConsumer(WebsocketConsumer):
