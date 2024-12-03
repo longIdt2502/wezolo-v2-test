@@ -368,7 +368,7 @@ class ZaloOaUrlConnection(APIView):
             oa_auth_domain = os.getenv(PrefKeys.ZALO_OA_AUTH_DOMAIN)
             app_id = os.getenv(PrefKeys.ZALO_APP_ID)
             # redirect_uri = f'https%3A%2F%2F5b80-222-252-18-38.ngrok-free.app%2Fv1%2Fzalo%2Fzalo_oa_accept_auth%2Fhook%2F{workspace_id}%3Fcode_challenge%3D{code_challenge}%26oa_id_wezolo%3D{zalo_oa_id}%0A'
-            redirect_uri = 'https%3A%2F%2Fwezolo-admin-v2.wezolo-admin-fe.pages.dev%2F%23%2Fzalo-oa%2Favailable-connect'
+            redirect_uri = f'https%3A%2F%2Fwezolo-admin-v2.wezolo-admin-fe.pages.dev%2F%23%2Fzalo-oa%2Favailable-connect%3Fworkspace%3D{workspace_id}'
             url = f"{oa_auth_domain}?app_id={app_id}&code_challenge={code_challenge}&redirect_uri={redirect_uri}"
             # url = f"{oa_auth_domain}?app_id={app_id}&code_challenge={code_challenge}&redirect_uri=replace_uri"
             return convert_response('success', 200, data=url)
