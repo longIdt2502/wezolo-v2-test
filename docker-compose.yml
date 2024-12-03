@@ -71,6 +71,7 @@ services:
     command: python manage.py rqworker
     environment:
       DJANGO_SETTINGS_MODULE: wezolo.settings
+      DOMAIN_URL: https://apiv2.wezolo.com
     depends_on:
       - redis
       - server
