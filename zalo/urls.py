@@ -10,6 +10,7 @@ urlpatterns = [
     path('zalo_oa_accept_auth/hook/<int:pk>', ZaloOaAcceptAuth.as_view()),
 
     path('zalo_user/create', ZaloUserCreate.as_view()),
+    path('zalo_user/send_sync_process', ZaloUserSendSyncProcess.as_view()),
     path('zalo_user/list', ZaloUserList.as_view()),
     path('zalo_message/create_multi', ZaloMessageCreate.as_view()),
 

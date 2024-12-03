@@ -20,17 +20,6 @@ class SyncOaConnectConsumer(WebsocketConsumer):
 
         self.accept()
 
-        event = {
-            'type': 'message_handler',
-            'message': {
-                'sync_done': 0,
-                'total_sync': 100
-            }
-        }
-        async_to_sync(self.channel_layer.group_send)(
-            f'oa_{self.oa_id}', event
-        )
-
     def disconnect(self, code):
         async_to_sync(self.channel_layer.group_discard)(
             f'oa_{self.oa_id}', self.channel_name
