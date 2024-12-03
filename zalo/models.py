@@ -138,6 +138,7 @@ class ZaloOA(models.Model):
 
     def to_json(self):
         return {
+            'id': self.id,
             'uid_zalo_oa': self.uid_zalo_oa,
             'oa_name': self.oa_name,
             'cate_name': self.cate_name,
