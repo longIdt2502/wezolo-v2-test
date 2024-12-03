@@ -35,7 +35,7 @@ class ZaloAdminList(APIView):
             customer_contact=Subquery(
                 UserZalo.objects.filter(oa_id=OuterRef('id')).values('id').annotate(
                     total=Count('id')
-                ).values('total')
+                ).values('total')[:1]
             ),
             workspace=SubqueryJson(
                 Workspace.objects.filter(id=OuterRef('company_id')).values()[:1]

@@ -60,7 +60,7 @@ class ZaloOaAPI(APIView):
                     employee_data=employee_subquery
                 )
             )
-        ).values('id', 'status', 'sync_status', 'active', 'oa_id', 'oa_name', 'oa_avatar', 'num_follower', 'employees')
+        ).values('id', 'status', 'sync_status', 'active', 'uid_zalo_oa', 'oa_name', 'oa_avatar', 'num_follower', 'employees')
         return convert_response('success', 200, data=zalo_oa)
 
     def post(self, request):
@@ -236,7 +236,7 @@ class ZaloOaAcceptAuth(APIView):
             with transaction.atomic():
                 data = request.GET.copy()
                 oa_id = data.get('oa_id_wezolo')
-                workspace = Workspace.objects.get(id=pk).company
+                workspace = Workspace.objects.get(id=pk)
 
                 # wallet check
                 wallet = Wallet.objects.filter(owner=workspace.created_by).first()
@@ -285,7 +285,7 @@ class ZaloOaAcceptAuth(APIView):
                     if zalo_oa and zalo_oa.company != workspace:
                         raise Exception('Zalo Oa đã được kết nối với Workspace khác')
                     if zalo_oa:
-                        zalo_oa.oa_id = data_oa_info.get('oa_id')
+                        zalo_oa.uid_zalo_oa = data_oa_info.get('oa_id')
                         zalo_oa.oa_name = data_oa_info.get('name')
                         zalo_oa.description = data_oa_info.get('description')
                         zalo_oa.oa_type = data_oa_info.get('oa_type')
@@ -309,7 +309,7 @@ class ZaloOaAcceptAuth(APIView):
                         zalo_oa.save()
                     else:
                         zalo_oa = ZaloOA.objects.create(
-                            oa_id=data_oa_info.get('oa_id'),
+                            uid_zalo_oa=data_oa_info.get('oa_id'),
                             oa_name=data_oa_info.get('name'),
                             description=data_oa_info.get('description'),
                             oa_type=data_oa_info.get('oa_type'),

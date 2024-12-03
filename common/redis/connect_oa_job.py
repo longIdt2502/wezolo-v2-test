@@ -4,6 +4,7 @@ import os
 import django_rq
 
 import requests
+from asgiref.sync import async_to_sync
 
 from common.pref_keys import PrefKeys
 from zalo.utils import oa_list_customer, oa_detail_customer, oa_list_message_in_conversation
@@ -70,5 +71,16 @@ def connect_oa_job(access_token, oa: int):
             for item in items:
                 django_rq.enqueue(detail_customer_oa_job, access_token, item['user_id'], oa)
             item_count = res['data']['total']
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'oa_{str(oa)}',
+            {
+                'type': 'message_handler',
+                'message': {
+                    'sync_done': 0,
+                    'total_sync': offset + item_count
+                }
+            },
+        )
     except Exception as e:
         print(str(e))

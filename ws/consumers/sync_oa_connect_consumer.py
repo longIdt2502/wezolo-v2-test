@@ -11,7 +11,7 @@ class SyncOaConnectConsumer(WebsocketConsumer):
     def connect(self):
         self.user = self.scope['user']
         self.oa_id = self.scope['url_route']['kwargs']['oa_id']
-        self.oa = get_object_or_404(ZaloOA, oa_id=self.oa_id)
+        self.oa = get_object_or_404(ZaloOA, id=self.oa_id)
 
         # Đây là 1 hàm không đồng bộ nên cần thừa kế phương thức đồng bộ
         async_to_sync(self.channel_layer.group_add)(
