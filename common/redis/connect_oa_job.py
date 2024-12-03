@@ -11,9 +11,11 @@ from zalo.utils import oa_list_customer, oa_detail_customer, oa_list_message_in_
 from channels.layers import get_channel_layer
 
 
+domain = os.environ.get(PrefKeys.DOMAIN_URL)
+
+
 def list_message_oa_job(access_token, user_zalo_oa: str):
     try:
-        domain = os.environ.get(PrefKeys.DOMAIN_URL)
         url = f'{domain}/v1/zalo/zalo_message/create_multi'
         offset = 0
         item_count = 10
@@ -41,7 +43,6 @@ def detail_customer_oa_job(access_token, user_id, oa: int):
         res = oa_detail_customer(access_token, user_id)
         if res['error'] == 0:
             customer = res['data']
-            domain = os.environ.get(PrefKeys.DOMAIN_URL)
             url = f'{domain}/v1/zalo/zalo_user/create'
             payload = {
                 "name": customer['display_name'],
