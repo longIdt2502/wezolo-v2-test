@@ -269,7 +269,7 @@ class ZaloOaAcceptAuth(APIView):
 
                 # update zalo_oa in wezolo db
                 # zalo_oa = ZaloOA()
-                if oa_id != 'None':
+                if oa_id:
                     zalo_oa = ZaloOA.objects.filter(id=oa_id).first()
                     if not zalo_oa:
                         raise Exception('Zalo Oa không tồn tại')
