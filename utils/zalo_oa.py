@@ -232,7 +232,7 @@ def send_message_v2(oa, user_id, message, tracking_id, attachments=None):
     log = ZaloOaLog()
     log.data = {
         "res": json_response,
-        "event": "socket chat"
+        "event": "ws chat"
     }
     log.save()
     SendMessageLog.objects.create(tracking_id=tracking_id)
