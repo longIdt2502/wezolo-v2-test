@@ -24,4 +24,5 @@ urlpatterns = [
     path('v1/wallet/', include('wallet.urls')),
     path('v1/reward/', include('reward.urls')),
     path('v1/zalo/', include('zalo.urls')),
+    path('v1/customer/', include('customer.urls')),
 ]

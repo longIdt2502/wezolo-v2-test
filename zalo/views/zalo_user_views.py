@@ -92,7 +92,6 @@ class ZaloUserList(APIView):
             if not oa:
                 raise Exception('thiếu thông tin Oa')
             customers = UserZalo.objects.filter(oa_id=oa)
-            total = customers.count()
 
             is_follow = data.get('is_follow')
             if is_follow:
@@ -102,6 +101,12 @@ class ZaloUserList(APIView):
             search = data.get('search')
             if search:
                 customers = customers.filter(Q(name__icontains=search) | Q(phone__icontains=search))
+
+            employee = data.get('employee')
+            if employee:
+                employee_customer = EmployeeUserZalo.objects.filter(employee_id=employee)
+                customers_id = employee_customer.values_list('customer_id', flat=True)
+                customers = customers.filter(id__in=customers_id)
 
             user_subquery = SubqueryJson(
                 User.objects.filter(id=OuterRef('employee__account_id')).values(
@@ -115,6 +120,7 @@ class ZaloUserList(APIView):
                 )
             )
 
+            total = customers.count()
             customers = customers.values()[offset: offset + page_size].annotate(
                 employee=employee_subquery
             )
