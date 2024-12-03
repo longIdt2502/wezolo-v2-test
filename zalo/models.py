@@ -64,7 +64,7 @@ class ZaloOA(models.Model):
     status = models.CharField(max_length=255, choices=Status.choices, default=Status.PENDING)
     active = models.CharField(max_length=255, choices=Active.choices, default=Active.ACTIVE, null=True)
     app_id = models.CharField(max_length=255, null=True, blank=True)
-    oa_id = models.CharField(max_length=255, null=True, blank=True)
+    uid_zalo_oa = models.CharField(max_length=255, null=True, blank=True)
     oa_name = models.CharField(max_length=255, null=True, blank=True)
     oa_avatar = models.URLField(max_length=200, blank=True, null=True)
     oa_cover = models.URLField(max_length=200, blank=True, null=True)
@@ -138,7 +138,7 @@ class ZaloOA(models.Model):
 
     def to_json(self):
         return {
-            'oa_id': self.oa_id,
+            'uid_zalo_oa': self.uid_zalo_oa,
             'oa_name': self.oa_name,
             'cate_name': self.cate_name,
             'oa_avatar': self.oa_avatar,
