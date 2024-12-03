@@ -329,7 +329,8 @@ class ZaloOaAcceptAuth(APIView):
                             package_auto_renew_date=datetime.strptime(
                                 data_oa_info.get('package_auto_renew_date'),
                                 "%d/%m/%Y"
-                            )
+                            ),
+                            company=workspace
                         )
 
                 django_rq.enqueue(connect_oa_job, access_token, zalo_oa.id)

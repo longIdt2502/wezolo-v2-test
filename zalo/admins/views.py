@@ -58,7 +58,7 @@ class ZaloAdminActionOa(APIView):
             oa.status = status
 
         active = data.get('active')
-        if status:
+        if active:
             active = dict(ZaloOA.Active.choices).get(active)
             oa.active = active
 
