@@ -9,7 +9,7 @@ from utils.convert_response import convert_response
 from zalo.models import UserZalo
 from employee.models import EmployeeUserZalo, ZaloOA
 from user.models import User
-from customer.models import Customer, CustomerImport
+from customer.models import Customer, CustomerUserZalo
 
 
 class ZaloUserCreate(APIView):
@@ -37,7 +37,7 @@ class ZaloUserCreate(APIView):
                 address=data.get('address'),
                 workspace=oa.company,
             )
-            CustomerImport.objects.create(
+            CustomerUserZalo.objects.create(
                 user_zalo=user_zalo,
                 oa=oa,
                 customer=customer
