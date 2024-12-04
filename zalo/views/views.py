@@ -411,3 +411,10 @@ class ZaloMessageCreate(APIView):
             return convert_response('success', 200)
         except Exception as e:
             return convert_response(str(e), 400)
+
+
+class ZaloHook(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        pass

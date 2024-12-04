@@ -8,6 +8,7 @@ urlpatterns = [
     path('zalo_oa/<int:pk>', ZaloOaDetailAPI.as_view()),
     path('zalo_oa_url_connection', ZaloOaUrlConnection.as_view()),
     path('zalo_oa_accept_auth/hook/<int:pk>', ZaloOaAcceptAuth.as_view()),
+    path('hook', ZaloHook.as_view()),
 
     path('zalo_user/create', ZaloUserCreate.as_view()),
     path('zalo_user/send_sync_process', ZaloUserSendSyncProcess.as_view()),
