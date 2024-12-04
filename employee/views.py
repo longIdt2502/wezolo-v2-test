@@ -72,7 +72,7 @@ class Employees(APIView):
             total_customer=total_customer_query,
         )
 
-        return convert_response('success', 200, data=employees, count=employees_in_ws.count())
+        return convert_response('success', 200, data=employees, total=employees_in_ws.count())
 
     def post(self, request):
         user_req = request.user
