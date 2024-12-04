@@ -135,20 +135,24 @@ class EmployeeDetail(APIView):
         employee.role_id = data.get('role', employee.role_id)
         employee.status = data.get('status', employee.status)
 
-        customers = data.get('customers', [])
-        if len(customers) > 0:
-            customer_assigned = EmployeeUserZalo.objects.filter(employee=employee)
-
-            customer_remove = customer_assigned.exclude(id__in=customers)
-            for item in customer_remove:
-                item.delete()
-            customer_assigned = customer_assigned.values_list('id', flat=True)
-            for item in customers:
+        customers_add = data.get('customers_add', [])
+        if len(customers_add) > 0:
+            customer_assigned = EmployeeUserZalo.objects.filter(
+                employee=employee,
+                customer_id__in=customers_add
+            ).values_list('customer_id', flat=True)
+            for item in customers_add:
                 if item not in customer_assigned:
                     EmployeeUserZalo.objects.create(
                         employee=employee,
                         customer_id=item
                     )
+
+        customers_remove = data.get('customer_remove', [])
+        if len(customers_remove) > 0:
+            customer = EmployeeUserZalo.objects.filter(customer_id__in=customers_remove, employee=employee)
+            for item in customer:
+                item.delete()
 
         employee.save()
         return convert_response('success', 200)
