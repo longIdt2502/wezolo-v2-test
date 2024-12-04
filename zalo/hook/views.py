@@ -35,13 +35,9 @@ class ZaloHook(APIView):
         if signature != mac:
             return convert_response('Invalid Signature', 403)
 
-        # Xử lý logic khi nhận được sự kiện
         event_type = request.data.get('event_name')
-        user_id = request.data.get('follower').get('id')
-        uid_zalo_oa = request.data.get('oa_id')
 
         if event_type == ZaloEventName.follow or event_type == ZaloEventName.un_follow:
-            is_follow = True if event_type == ZaloEventName.follow else False
-            handle_follow_event(is_follow)
+            handle_follow_event(request.data.copy())
 
         return convert_response('success', 200)
