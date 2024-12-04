@@ -119,6 +119,7 @@ def send_zns_otp(otp: str, phone: str):
     url = os.environ.get('ZALO_ZNS_URL')
     response = requests.post(url, headers=headers, data=payload)
     response = response.json()
+    print(response)
     if response.get('error') == -124:
         new_access_token, new_refresh_token = get_token_from_refresh(refresh_token)
         if new_access_token and new_refresh_token:

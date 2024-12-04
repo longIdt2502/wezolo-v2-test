@@ -54,18 +54,14 @@ class ZaloAdminActionOa(APIView):
 
         status = data.get('status')
         if status:
-            status = dict(ZaloOA.Status.choices).get(status)
             oa.status = status
 
         active = data.get('active')
         if active:
-            active = dict(ZaloOA.Active.choices).get(active)
             oa.active = active
 
         sync_status = data.get('sync_status')
         if sync_status:
-            sync_status = dict(ZaloOA.SynsStatus.choices).get(sync_status)
             oa.status = sync_status
-
+        oa.save()
         return convert_response('success', 200, data=oa.to_json())
-        pass
