@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import hmac
 import json
 import os
 import random
@@ -12,6 +13,8 @@ from common.redis.config import task_queue
 from django.db import transaction
 from django.db.models import OuterRef
 from rest_framework.views import APIView
+
+from common.zalo.event_name import ZaloEventName
 from utils.convert_response import convert_response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from common.file_ext import get_file_extension
@@ -411,10 +414,3 @@ class ZaloMessageCreate(APIView):
             return convert_response('success', 200)
         except Exception as e:
             return convert_response(str(e), 400)
-
-
-class ZaloHook(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request, *args, **kwargs):
-        pass

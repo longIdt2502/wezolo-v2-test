@@ -2,6 +2,7 @@ from django.urls import path
 from zalo.views.views import *
 from zalo.admins.views import *
 from zalo.views.zalo_user_views import *
+from zalo.hook.views import *
 
 urlpatterns = [
     path('zalo_oa', ZaloOaAPI.as_view()),
