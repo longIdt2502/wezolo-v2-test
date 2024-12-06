@@ -39,5 +39,7 @@ class ZaloHook(APIView):
 
         if event_type == ZaloEventName.follow or event_type == ZaloEventName.un_follow:
             handle_follow_event(request.data.copy())
+        if event_type == ZaloEventName.user_submit_info:
+            handle_user_submit_info(request.data.copy())
 
         return convert_response('success', 200)

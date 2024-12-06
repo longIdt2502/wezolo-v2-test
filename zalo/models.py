@@ -150,16 +150,24 @@ class ZaloOA(models.Model):
 class UserZalo(models.Model):
     name = models.CharField(
         max_length=100, blank=True, null=True, verbose_name=('zname'))
+    prefix_name = models.CharField(max_length=255, null=True, blank=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
     user_zalo_id = models.CharField(
         max_length=300, blank=True, null=True, verbose_name=('UID'))
     avatar_small = models.URLField(max_length=200, blank=True, null=True)
     avatar_big = models.URLField(max_length=200, blank=True, null=True)
     last_message_time = models.DateTimeField(null=True, blank=True)
+    birthday = models.DateField(null=True, blank=True)
     gender = models.CharField(
         max_length=10, blank=True, null=True, verbose_name='gender')
     oa = models.ForeignKey(ZaloOA, on_delete=models.CASCADE, null=True)
     is_follower = models.BooleanField(default=False, null=False)
+    # address = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL)
+    address = models.TextField(null=True, blank=True)
+    message_quota_type = models.CharField(max_length=255, null=True, blank=True)
+    message_remain = models.IntegerField(null=True, blank=True)
+    message_quota = models.IntegerField(null=True, blank=True)
+    chatbot = models.BooleanField(default=False, null=False)
     created_at = created_at_field
     updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
 

@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'reward',
     'employee',
     'customer',
+    'tags',
 ]
 
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")

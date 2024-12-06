@@ -1,3 +1,5 @@
+import datetime
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -30,7 +32,7 @@ class ZaloUserCreate(APIView):
 
         oa = ZaloOA.objects.get(id=data.get('oa_id'))
 
-        if phone != 0:
+        if len(phone) > 10:
             customer = Customer.objects.create(
                 prefix_name=data.get('name'),
                 phone=phone,
@@ -125,5 +127,27 @@ class ZaloUserList(APIView):
                 employee=employee_subquery
             )
             return convert_response('success', 200, data=customers, total=total)
+        except Exception as e:
+            return convert_response(str(e), 400)
+
+
+class ZaloUserDetail(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, pk):
+        user = request.user
+        data = request.data.copy()
+        try:
+            user_zalo = UserZalo.objects.get(id=pk)
+            user_zalo.name = data.get('name', user_zalo.name)
+            user_zalo.phone = data.get('phone', user_zalo.phone)
+            user_zalo.prefix_name = data.get('prefix_name', user_zalo.prefix_name)
+            user_zalo.address = data.get('address', user_zalo.address)
+            user_zalo.gender = data.get('gender', user_zalo.gender)
+            user_zalo.birthday = datetime.datetime.strptime(data.get('birthday'), "%d/%M/%y") if data.get('birthday') else None
+            user_zalo.updated_at = datetime.datetime.now()
+
+            user_zalo.save()
+            return convert_response('success', 200)
         except Exception as e:
             return convert_response(str(e), 400)
