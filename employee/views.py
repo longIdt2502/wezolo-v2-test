@@ -154,6 +154,19 @@ class EmployeeDetail(APIView):
             for item in customer:
                 item.delete()
 
+        oa_assign = data.get('oa_assign')
+        if oa_assign:
+            for oa in oa_assign:
+                employee_oa = EmployeeOa.objects.filter(oa_id=oa, employee=employee).first()
+                if not employee_oa:
+                    EmployeeOa.objects.create(
+                        employee=employee,
+                        oa_id=oa
+                    )
+            oas_delete = EmployeeOa.objects.filter(employee=employee).exclude(oa_id__in=oa_assign)
+            for item in oas_delete:
+                item.delete()
+
         employee.save()
         return convert_response('success', 200)
 

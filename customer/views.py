@@ -85,7 +85,7 @@ class CustomerList(APIView):
         if not ws:
             raise Exception('Yêu cầu thông tin Workspace')
         customer = Customer.objects.filter(workspace_id=ws)
-        total = customer.count()
+
         oa_id = data.get('oa')
         if oa_id:
             customer_user_zalo = CustomerUserZalo.objects.filter(oa_id=oa_id).values_list('customer_id', flat=True)
@@ -94,6 +94,10 @@ class CustomerList(APIView):
         gender = data.get('gender')
         if gender:
             customer = customer.filter(customer__gender=gender)
+
+        search = data.get('search')
+        if search:
+            customer = customer.filter(Q(prefix_name__icontains=search) | Q(phone__icontains=search))
 
         oa_subquery = SubqueryJsonAgg(
             CustomerUserZalo.objects.filter(user_zalo__is_follower=True, customer_id=OuterRef('id')).exclude(oa_id=None).values().annotate(
@@ -115,6 +119,11 @@ class CustomerList(APIView):
             )
         )
 
+        tag_id = data.get('tag')
+        if tag_id:
+            customer = customer.filter(tagcustomer__tag_id=tag_id)
+
+        total = customer.count()
         customer = customer[offset: offset + page_size].values().annotate(
             oa_follow=oa_subquery,
             oa_unfollow=oa_unfollow_subquery,
