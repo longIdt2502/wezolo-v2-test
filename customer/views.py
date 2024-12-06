@@ -415,50 +415,53 @@ class UploadFileImport(APIView):
         customer_duplicate = 0
         customer_err = 0
         customer_success = 0
+        customer_total = 0
         # Xử lý dữ liệu từ file Excel
         data = []
         for row in ws.iter_rows(min_row=7, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
             phone = row[2].value
-            if row[2].value:
-                customer = Customer.objects.filter(phone=phone).first()
-                if customer:
-                    customer_duplicate += 1
-                else:
-                    try:
-                        customer = Customer.objects.create(
-                            phone=phone,
-                            prefix_name=row[1].value,
-                            # birthday=datetime.strptime(row[3].value, "%d/%m/%Y").strftime("%Y-%m-%d") if row[3].value else None,
-                            address=row[4].value,
-                            email=row[5].value,
-                            gender='MALE' if row[6].value == 1 else 'FEMALE',
-                            file_import=customer_import,
-                            workspace_id=workspace,
-                            created_by=user
-                        )
-                        customer_success += 1
-                        for row_tag in ws.iter_rows(min_row=5, max_row=5, min_col=8, max_col=ws.max_column + 1):
-                            for i in list(range(0, ws.max_column - 8)):
-                                id_tag = row_tag[i].value
-                                if row[row_tag[i].col_idx - 1].value == 1.0:
-                                    tag = Tag.objects.get(id=id_tag)
-                                    cuz = CustomerUserZalo.objects.filter(customer=customer, oa=tag.oa).first()
-                                    if not cuz:
-                                        CustomerUserZalo.objects.create(
-                                            customer=customer,
-                                            oa=tag.oa
-                                        )
-                                    TagCustomer.objects.create(
-                                        created_by=user,
+            customer_total += 1
+            if len(row[2].value) == 10:
+                customer = Customer()
+                try:
+                    customer = Customer.objects.get(phone=phone)
+                except Exception as e:
+                    customer = Customer.objects.create(
+                        phone=phone,
+                        prefix_name=row[1].value,
+                        # birthday=datetime.strptime(row[3].value, "%d/%m/%Y").strftime("%Y-%m-%d") if row[3].value else None,
+                        address=row[4].value,
+                        email=row[5].value,
+                        gender='MALE' if row[6].value == 1 else 'FEMALE',
+                        file_import=customer_import,
+                        workspace_id=workspace,
+                        created_by=user
+                    )
+                finally:
+                    for row_tag in ws.iter_rows(min_row=5, max_row=5, min_col=8, max_col=ws.max_column + 1):
+                        is_duplicate = True
+                        for i in list(range(0, ws.max_column - 8)):
+                            id_tag = row_tag[i].value
+                            if row[row_tag[i].col_idx - 1].value == 1.0:
+                                tag = Tag.objects.get(id=id_tag)
+                                cuz = CustomerUserZalo.objects.filter(customer=customer, oa=tag.oa).first()
+                                if not cuz:
+                                    CustomerUserZalo.objects.create(
                                         customer=customer,
-                                        tag=tag,
+                                        oa=tag.oa
                                     )
+                                    is_duplicate = False
+                                TagCustomer.objects.create(
+                                    created_by=user,
+                                    customer=customer,
+                                    tag=tag,
+                                )
+                        if is_duplicate:
+                            customer_duplicate += 1
+                        else:
+                            customer_success += 1
 
-                    except Exception as e:
-                        print(str(e))
-                        customer_err += 1
-
-        customer_import.customer_total = customer_success + customer_err + customer_duplicate
+        customer_import.customer_total = customer_total
         customer_import.customer_success = customer_success
         customer_import.customer_double = customer_duplicate
         customer_import.status = CustomerImport.Status.SUCCESS
