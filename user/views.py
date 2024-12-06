@@ -309,7 +309,7 @@ class UsersManage(APIView):
             users_query = users_query.filter(is_active=is_active)
 
         reward_tier = data.get('reward_tier')
-        if reward_tier:
+        if reward_tier != 'all':
             users_query = users_query.filter(level__code=reward_tier)
 
         total_ws_subquery = Subquery(

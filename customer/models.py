@@ -44,6 +44,12 @@ class Customer(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def to_json(self):
+        return {
+            "prefix_name": self.prefix_name,
+
+        }
+
 
 class CustomerUserZalo(models.Model):
     class Meta:

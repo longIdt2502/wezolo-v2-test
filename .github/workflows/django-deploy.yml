@@ -36,13 +36,13 @@ jobs:
       - name: Add SSH Key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_KEY_VN }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.SSH_HOST_VN }} >> ~/.ssh/known_hosts
 
       - name: Deploy to server
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER_VN }}@${{ secrets.SSH_HOST_VN }} << 'EOF'
             cd wezolo-v2-test/
             git pull
             docker-compose down

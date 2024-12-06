@@ -120,6 +120,7 @@ class WorkspaceDetail(APIView):
             else:
                 address_ins = Address().create_from_json(address_data)
                 ws.address = address_ins
+        ws.save()
 
         return convert_response('success', 200, data=ws.to_json())
 
