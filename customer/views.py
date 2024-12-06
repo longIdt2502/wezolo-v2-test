@@ -179,201 +179,203 @@ class ExportFileImportCustomer(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
+        try:
+            data = request.GET.copy()
+            workspace = data.get('workspace')
+            if not workspace:
+                return convert_response('Cần thông tin workspace', 400)
+            workspace = Workspace.objects.get(id=workspace)
+            oa = ZaloOA.objects.filter(company=workspace)
 
-        data = request.GET.copy()
-        workspace = data.get('workspace')
-        if not workspace:
-            return convert_response('Cần thông tin workspace', 400)
-        workspace = Workspace.objects.get(id=workspace)
-        oa = ZaloOA.objects.filter(company=workspace)
+            list_header = ["STT", "Họ tên khách hàng *\n(2-30)", "Số điện thoại *\n(10)",
+                           "Ngày sinh\n(DD/MM/YYYY)", "Địa chỉ\n(500)", "Email (100)",
+                           "Giới tính\n(1: nam; 2: nữ)"]
+            list_tag_id = [None, None, None, None, None, None, None]
+            list_tag = [None, None, None, None, None, None, None]
+            list_count_tag_by_oa = []
+            for item in oa:
+                tags = Tag.objects.filter(oa=item)
+                list_count_tag_by_oa.append(tags.count())
+                for tag in tags:
+                    list_header.append(item.oa_name)
+                    list_tag_id.append(tag.id)
+                    list_tag.append(tag.title)
 
-        list_header = ["STT", "Họ tên khách hàng *\n(2-30)", "Số điện thoại *\n(10)",
-                       "Ngày sinh\n(DD/MM/YYYY)", "Địa chỉ\n(500)", "Email (100)",
-                       "Giới tính\n(1: nam; 2: nữ)"]
-        list_tag_id = [None, None, None, None, None, None, None]
-        list_tag = [None, None, None, None, None, None, None]
-        list_count_tag_by_oa = []
-        for item in oa:
-            tags = Tag.objects.filter(oa=item)
-            list_count_tag_by_oa.append(tags.count())
-            for tag in tags:
-                list_header.append(item.oa_name)
-                list_tag_id.append(tag.id)
-                list_tag.append(tag.title)
+            # Tạo workbook và worksheet
+            wb = openpyxl.Workbook()
 
-        # Tạo workbook và worksheet
-        wb = openpyxl.Workbook()
+            # Sheet "Danh sách"
+            ws1 = wb.active
+            ws1.title = "Danh sách"
 
-        # Sheet "Danh sách"
-        ws1 = wb.active
-        ws1.title = "Danh sách"
+            # Dữ liệu mẫu từ tệp ban đầu
+            data_danhsach = [
+                [f"[{workspace.name}]"],
+                [None, None, None, "DANH SÁCH KHÁCH HÀNG"],
+                [],
+                list_header,
+                list_tag_id,
+                list_tag,
+            ]
 
-        # Dữ liệu mẫu từ tệp ban đầu
-        data_danhsach = [
-            [f"[{workspace.name}]"],
-            [None, None, None, "DANH SÁCH KHÁCH HÀNG"],
-            [],
-            list_header,
-            list_tag_id,
-            list_tag,
-        ]
+            # Thêm dữ liệu vào "Danh sách"
+            for row in data_danhsach:
+                ws1.append(row)
 
-        # Thêm dữ liệu vào "Danh sách"
-        for row in data_danhsach:
-            ws1.append(row)
+            # Gộp các cột tag có cùng OA vào làm 1 ô đối với hàng chứa OA Name
+            index = 8
+            for count in list_count_tag_by_oa:
+                ws1.merge_cells(start_row=4, end_row=4, start_column=index, end_column=index + count - 1)
+                index += count
 
-        # Gộp các cột tag có cùng OA vào làm 1 ô đối với hàng chứa OA Name
-        index = 8
-        for count in list_count_tag_by_oa:
-            ws1.merge_cells(start_row=4, end_row=4, start_column=index, end_column=index + count - 1)
-            index += count
+            # Gộp ô (Merge Cells)
+            ws1.merge_cells('A1:B2')
+            ws1['A1'].alignment = Alignment(horizontal="center", vertical="center")
+            ws1['A1'].font = Font(name='Times New Roman', bold=True, size=11)
+            ws1['A1'].fill = PatternFill("solid", fgColor="FFCC00")  # Màu vàng
+            ws1.column_dimensions['B'].width = 25
+            ws1.column_dimensions['C'].width = 20
+            ws1.column_dimensions['D'].width = 20
+            ws1.column_dimensions['E'].width = 20
+            ws1.column_dimensions['F'].width = 20
+            ws1.column_dimensions['G'].width = 15
+            ws1.row_dimensions[2].height = 30
+            ws1.row_dimensions[4].height = 20
+            ws1.row_dimensions[5].height = 20
+            ws1.row_dimensions[6].height = 20
 
-        # Gộp ô (Merge Cells)
-        ws1.merge_cells('A1:B2')
-        ws1['A1'].alignment = Alignment(horizontal="center", vertical="center")
-        ws1['A1'].font = Font(name='Times New Roman', bold=True, size=11)
-        ws1['A1'].fill = PatternFill("solid", fgColor="FFCC00")  # Màu vàng
-        ws1.column_dimensions['B'].width = 25
-        ws1.column_dimensions['C'].width = 20
-        ws1.column_dimensions['D'].width = 20
-        ws1.column_dimensions['E'].width = 20
-        ws1.column_dimensions['F'].width = 20
-        ws1.column_dimensions['G'].width = 15
-        ws1.row_dimensions[2].height = 30
-        ws1.row_dimensions[4].height = 20
-        ws1.row_dimensions[5].height = 20
-        ws1.row_dimensions[6].height = 20
+            ws1.merge_cells('D2:G2')
+            ws1['D2'].alignment = Alignment(horizontal="center", vertical="center")
+            ws1['D2'].font = Font(name='Times New Roman', bold=True, size=11)
 
-        ws1.merge_cells('D2:G2')
-        ws1['D2'].alignment = Alignment(horizontal="center", vertical="center")
-        ws1['D2'].font = Font(name='Times New Roman', bold=True, size=11)
+            ws1.merge_cells('A4:A6')
+            ws1.merge_cells('B4:B6')
+            ws1.merge_cells('C4:C6')
+            ws1.merge_cells('D4:D6')
+            ws1.merge_cells('E4:E6')
+            ws1.merge_cells('F4:F6')
+            ws1.merge_cells('G4:G6')
 
-        ws1.merge_cells('A4:A6')
-        ws1.merge_cells('B4:B6')
-        ws1.merge_cells('C4:C6')
-        ws1.merge_cells('D4:D6')
-        ws1.merge_cells('E4:E6')
-        ws1.merge_cells('F4:F6')
-        ws1.merge_cells('G4:G6')
+            header_fill = PatternFill('solid', fgColor="FFF2CC")
+            thin_border = Border(
+                left=Side(style='thin'),
+                right=Side(style='thin'),
+                top=Side(style='thin'),
+                bottom=Side(style='thin')
+            )
 
-        header_fill = PatternFill('solid', fgColor="FFF2CC")
-        thin_border = Border(
-            left=Side(style='thin'),
-            right=Side(style='thin'),
-            top=Side(style='thin'),
-            bottom=Side(style='thin')
-        )
+            # Định dạng ô trong sheet "Danh sách"
+            for row in ws1.iter_rows(min_row=4, max_row=6):
+                for cell in row:
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+                    cell.font = Font(name='Times New Roman', bold=False, size=11, color="000000")
+                    cell.fill = header_fill
+                    cell.border = thin_border
+            # Định dạng ô trong sheet "Danh sách"
+            for row in ws1.iter_rows(min_row=4, max_row=10):
+                for cell in row:
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+                    cell.font = Font(name='Times New Roman', bold=False, size=11, color="000000")
+                    cell.border = thin_border
 
-        # Định dạng ô trong sheet "Danh sách"
-        for row in ws1.iter_rows(min_row=4, max_row=6):
-            for cell in row:
-                cell.alignment = Alignment(horizontal="center", vertical="center")
-                cell.font = Font(name='Times New Roman', bold=False, size=11, color="000000")
-                cell.fill = header_fill
-                cell.border = thin_border
-        # Định dạng ô trong sheet "Danh sách"
-        for row in ws1.iter_rows(min_row=4, max_row=10):
-            for cell in row:
-                cell.alignment = Alignment(horizontal="center", vertical="center")
-                cell.font = Font(name='Times New Roman', bold=False, size=11, color="000000")
-                cell.border = thin_border
+            # Sheet "Hướng dẫn"
+            ws2 = wb.create_sheet(title="Hướng dẫn")
 
-        # Sheet "Hướng dẫn"
-        ws2 = wb.create_sheet(title="Hướng dẫn")
+            # Dữ liệu mẫu từ tệp ban đầu
+            data_danhsach = [
+                [f"{workspace.name}"],
+                [None, None, None, "DANH SÁCH KHÁCH HÀNG"],
+                [],
+                list_header,
+                list_tag_id,
+                list_tag,
+                [],
+                [],
+                [],
+                [],
+                [],
+                [None,
+                 "Bắt buộc nhập\nTối thiểu 2 ký tự và tối đa 30 ký tự",
+                 "Bắt buộc nhập\nCần thiết lập định dạng văn bản để hiển thị được số 0\nSố điện thoại định dạng 10 số",
+                 "Không bắt buộc nhập\nCần nhập đúng định dạng quy định: DD/MM/YYYY = Ngày/Tháng/Năm",
+                 "Không bắt buộc nhập\nTối đa 500 ký tự",
+                 "Không bắt buộc nhập\nTối đa 100 ký tự",
+                 "Không bắt buộc nhập\nChỉ nhập mã tương ứng của giới tính là 1 (Nam) hoặc 2 (Nữ). Không có thông tin, không cần nhập trường này",
+                 "Không bắt buộc nhập\nNhập '1' để đánh tag cho khách hàng tương ứng.\nNếu đánh tag của OA nào thì sẽ tự động đánh dấu khách thuộc OA tương ứng",
+                 ],
+            ]
 
-        # Dữ liệu mẫu từ tệp ban đầu
-        data_danhsach = [
-            [f"[{workspace.name}]"],
-            [None, None, None, "DANH SÁCH KHÁCH HÀNG"],
-            [],
-            list_header,
-            list_tag_id,
-            list_tag,
-            [],
-            [],
-            [],
-            [],
-            [],
-            [None,
-             "Bắt buộc nhập\nTối thiểu 2 ký tự và tối đa 30 ký tự",
-             "Bắt buộc nhập\nCần thiết lập định dạng văn bản để hiển thị được số 0\nSố điện thoại định dạng 10 số",
-             "Không bắt buộc nhập\nCần nhập đúng định dạng quy định: DD/MM/YYYY = Ngày/Tháng/Năm",
-             "Không bắt buộc nhập\nTối đa 500 ký tự",
-             "Không bắt buộc nhập\nTối đa 100 ký tự",
-             "Không bắt buộc nhập\nChỉ nhập mã tương ứng của giới tính là 1 (Nam) hoặc 2 (Nữ). Không có thông tin, không cần nhập trường này",
-             "Không bắt buộc nhập\nNhập '1' để đánh tag cho khách hàng tương ứng.\nNếu đánh tag của OA nào thì sẽ tự động đánh dấu khách thuộc OA tương ứng",
-             ],
-        ]
+            # Thêm dữ liệu vào "Danh sách"
+            for row in data_danhsach:
+                ws2.append(row)
 
-        # Thêm dữ liệu vào "Danh sách"
-        for row in data_danhsach:
-            ws2.append(row)
+            # Gộp các cột tag có cùng OA vào làm 1 ô đối với hàng chứa OA Name
+            index = 8
+            for count in list_count_tag_by_oa:
+                ws2.merge_cells(start_row=4, end_row=4, start_column=index, end_column=index + count - 1)
+                index += count
+            ws2.merge_cells(start_row=12, end_row=12, start_column=8, end_column=index - 1)
 
-        # Gộp các cột tag có cùng OA vào làm 1 ô đối với hàng chứa OA Name
-        index = 8
-        for count in list_count_tag_by_oa:
-            ws2.merge_cells(start_row=4, end_row=4, start_column=index, end_column=index + count - 1)
-            index += count
-        ws2.merge_cells(start_row=12, end_row=12, start_column=8, end_column=index - 1)
+            # Gộp ô (Merge Cells)
+            ws2.merge_cells('A1:B2')
+            ws2['A1'].alignment = Alignment(horizontal="center", vertical="center")
+            ws2['A1'].font = Font(name='Times New Roman', bold=True, size=11)
+            ws2['A1'].fill = PatternFill("solid", fgColor="FFCC00")  # Màu vàng
+            ws2.column_dimensions['B'].width = 25
+            ws2.column_dimensions['C'].width = 15
+            ws2.column_dimensions['D'].width = 15
+            ws2.column_dimensions['E'].width = 15
+            ws2.column_dimensions['F'].width = 15
+            ws2.column_dimensions['G'].width = 15
+            ws2.row_dimensions[2].height = 30
+            ws2.row_dimensions[4].height = 20
+            ws2.row_dimensions[5].height = 20
+            ws2.row_dimensions[6].height = 20
+            ws2.row_dimensions[12].height = 150
 
-        # Gộp ô (Merge Cells)
-        ws2.merge_cells('A1:B2')
-        ws2['A1'].alignment = Alignment(horizontal="center", vertical="center")
-        ws2['A1'].font = Font(name='Times New Roman', bold=True, size=11)
-        ws2['A1'].fill = PatternFill("solid", fgColor="FFCC00")  # Màu vàng
-        ws2.column_dimensions['B'].width = 25
-        ws2.column_dimensions['C'].width = 15
-        ws2.column_dimensions['D'].width = 15
-        ws2.column_dimensions['E'].width = 15
-        ws2.column_dimensions['F'].width = 15
-        ws2.column_dimensions['G'].width = 15
-        ws2.row_dimensions[2].height = 30
-        ws2.row_dimensions[4].height = 20
-        ws2.row_dimensions[5].height = 20
-        ws2.row_dimensions[6].height = 20
-        ws2.row_dimensions[12].height = 150
+            ws2.merge_cells('D2:G2')
+            ws2['D2'].alignment = Alignment(horizontal="center", vertical="center")
+            ws2['D2'].font = Font(name='Times New Roman', bold=True, size=11)
 
-        ws2.merge_cells('D2:G2')
-        ws2['D2'].alignment = Alignment(horizontal="center", vertical="center")
-        ws2['D2'].font = Font(name='Times New Roman', bold=True, size=11)
+            ws2.merge_cells('A4:A6')
+            ws2.merge_cells('B4:B6')
+            ws2.merge_cells('C4:C6')
+            ws2.merge_cells('D4:D6')
+            ws2.merge_cells('E4:E6')
+            ws2.merge_cells('F4:F6')
+            ws2.merge_cells('G4:G6')
 
-        ws2.merge_cells('A4:A6')
-        ws2.merge_cells('B4:B6')
-        ws2.merge_cells('C4:C6')
-        ws2.merge_cells('D4:D6')
-        ws2.merge_cells('E4:E6')
-        ws2.merge_cells('F4:F6')
-        ws2.merge_cells('G4:G6')
+            header_fill = PatternFill('solid', fgColor="FFF2CC")
+            thin_border = Border(
+                left=Side(style='thin'),
+                right=Side(style='thin'),
+                top=Side(style='thin'),
+                bottom=Side(style='thin')
+            )
 
-        header_fill = PatternFill('solid', fgColor="FFF2CC")
-        thin_border = Border(
-            left=Side(style='thin'),
-            right=Side(style='thin'),
-            top=Side(style='thin'),
-            bottom=Side(style='thin')
-        )
+            # Định dạng ô trong sheet "Hướng dẫn"
+            for row in ws2.iter_rows(min_row=12, max_row=12):
+                for cell in row:
+                    cell.alignment = Alignment(horizontal="left", vertical="top")
+                    cell.font = Font(name='Times New Roman', bold=False, size=11, color="4A86E9")
+                    cell.fill = header_fill
 
-        # Định dạng ô trong sheet "Hướng dẫn"
-        for row in ws2.iter_rows(min_row=12, max_row=12):
-            for cell in row:
-                cell.alignment = Alignment(horizontal="left", vertical="top")
-                cell.font = Font(name='Times New Roman', bold=False, size=11, color="4A86E9")
-                cell.fill = header_fill
+            # Định dạng ô trong sheet "Hướng dẫn"
+            for row in ws2.iter_rows(min_row=4, max_row=10):
+                for cell in row:
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+                    cell.font = Font(name='Times New Roman', bold=False, size=11, color="000000")
+                    cell.border = thin_border
 
-        # Định dạng ô trong sheet "Hướng dẫn"
-        for row in ws2.iter_rows(min_row=4, max_row=10):
-            for cell in row:
-                cell.alignment = Alignment(horizontal="center", vertical="center")
-                cell.font = Font(name='Times New Roman', bold=False, size=11, color="000000")
-                cell.border = thin_border
-
-        # Tạo phản hồi trả về tệp Excel
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        response['Content-Disposition'] = 'attachment; filename="exported_data.xlsx"'
-        wb.save(response)
-        return response
+            # Tạo phản hồi trả về tệp Excel
+            response = HttpResponse(
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = 'attachment; filename="exported_data.xlsx"'
+            wb.save(response)
+            return response
+        except Exception as e:
+            return convert_response(str(e), 400)
 
 
 class UploadFileImport(APIView):

@@ -40,8 +40,13 @@ class Workspaces(APIView):
         #     ).annotate(total=Sum('orders_in_wp__total_amount')).values('total')[:1],
         #     output_field=FloatField()
         # )
+        ws = Workspace.objects.filter(created_by=user, name__icontains=search)
 
-        ws = Workspace.objects.filter(created_by=user, name__icontains=search)[offset: offset + page_size].values().annotate(
+        status = data.get('status')
+        if status:
+            ws = ws.filter(status=status)
+
+        ws = ws[offset: offset + page_size].values().annotate(
             # total_money_spent=total_money_spent_query,
         )
 

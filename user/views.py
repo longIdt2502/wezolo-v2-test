@@ -177,6 +177,9 @@ class ForgotPasswordAPIView(APIView):
     def post(self, request):
         data = request.data.copy()
         phone = request.data.get("phone", None)
+        user = User.objects.filter(phone=phone).first()
+        if not user:
+            return convert_response('Số điện thoại không tồn tại', 400)
         digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
         otp = ''.join(random.choice(digits) for i in range(6))
         otp = '123456'
