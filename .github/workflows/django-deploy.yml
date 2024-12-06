@@ -45,6 +45,6 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER_VN }}@${{ secrets.SSH_HOST_VN }} << 'EOF'
             cd wezolo-v2-test/
             git pull
-            sudo docker-compose down
-            sudo docker-compose up --build -d
+            echo ${{ secrets.SSH_PASS }} | sudo -S docker-compose down
+            echo ${{ secrets.SSH_PASS }} | sudo -S docker-compose up --build -d
           EOF
