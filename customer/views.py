@@ -398,10 +398,10 @@ class UploadFileImport(APIView):
         r = random.randint(100000, 999999)
         file_name = f"{r}.xlsx"
         file = ContentFile(excel_file.read(), name=file_name)
-        # url_file = AwsS3.upload_file(file, 'import_customer_file/')
+        url_file = AwsS3.upload_file(file, 'import_customer_file/')
 
         customer_import = CustomerImport.objects.create(
-            # file_url=url_file,
+            file_url=url_file,
             file_name=file_name,
             status=CustomerImport.Status.IN_PROCESS,
             workspace_id=workspace,
@@ -464,4 +464,9 @@ class UploadFileImport(APIView):
         customer_import.status = CustomerImport.Status.SUCCESS
         customer_import.save()
 
-        return convert_response('success', 200, data=customer_import.id)
+        return convert_response('success', 200, data={
+            "id": customer_import.id,
+            "customer_total": customer_import.customer_total,
+            "customer_double": customer_import.customer_double,
+            "customer_success": customer_import.customer_success,
+        })
