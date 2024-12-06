@@ -1,11 +1,12 @@
 import json
 from datetime import datetime
 
+from django.db.models.functions import Coalesce
 from rest_framework.views import APIView
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db.models import OuterRef, Count, Sum, IntegerField
+from django.db.models import OuterRef, Count, Sum, IntegerField, FloatField, Value
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from common.core.subquery import *
@@ -17,7 +18,7 @@ from wallet.models import Wallet, WalletTransaction
 from package.models import Package, Price
 from user.models import Address
 from zalo.models import ZaloOA
-from reward.models import RewardTier
+from reward.models import RewardTier, RewardBenefit
 
 
 class Workspaces(APIView):
@@ -29,34 +30,53 @@ class Workspaces(APIView):
         page_size = int(data.get('page_size', 20))
         offset = (int(data.get('page', 1)) - 1) * page_size
         search = data.get('search', '')
-        # total_money_spent_query = Subquery(
-        #     WalletTransaction.objects.filter(
-        #
-        #     )
-        #     Workspace.objects.filter(
-        #         id=OuterRef('id'),
-        #         orders_in_wp__created_at__gte=last_filter_start,
-        #         orders_in_wp__created_at__lte=last_filter_end,
-        #     ).annotate(total=Sum('orders_in_wp__total_amount')).values('total')[:1],
-        #     output_field=FloatField()
-        # )
-        ws = Workspace.objects.filter(created_by=user, name__icontains=search)
+
+        ws = Workspace.objects.filter(created_by=user)
+
+        ws = ws.filter(name__icontains=search)
 
         status = data.get('status')
         if status:
             ws = ws.filter(status=status)
 
-        ws = ws[offset: offset + page_size].values().annotate(
-            # total_money_spent=total_money_spent_query,
+        category = data.get('category')
+        if category:
+            ws = ws.filter(category_id=category)
+
+        # "created_at" | "-created_at"
+        order_by_time = data.get('order_by_time')
+        if order_by_time:
+            ws = ws.order_by(order_by_time)
+
+        total_money_spent_query = Coalesce(
+            Subquery(
+                WalletTransaction.objects.filter(
+                    oa__company_id=OuterRef('id')
+                ).values('total_amount').annotate(
+                    total=Sum('total_amount')
+                ).values('total')[:1],
+                output_field=FloatField()
+            ),
+            Value(0),
+            output_field=FloatField()
+        )
+        ws = ws.values().annotate(
+            total_money_spent=total_money_spent_query,
         )
 
-        return convert_response('success', 200, data=ws)
+        order_by_money_spent = data.get('order_by_money_spent')
+        if order_by_money_spent:
+            ws = ws.order_by(order_by_money_spent)
+
+        total = ws.count()
+        ws = ws[offset: offset + page_size]
+
+        return convert_response('success', 200, data=ws, total=total)
 
     def post(self, request):
         try:
             with transaction.atomic():
                 data = json.loads(request.POST.get('data'))
-                address_data = json.loads(request.POST.get('address'))
                 user = request.user
                 wallet = Wallet.objects.filter(owner=user).first()
                 ws_count = Workspace.objects.filter(created_by=user).count()
@@ -71,7 +91,10 @@ class Workspaces(APIView):
                 ws = Workspace().from_json(data)
                 files = request.FILES.get('image')
                 ws = ws.save_image(files)
+
+                address_data = request.POST.get('address')
                 if address_data:
+                    address_data = json.loads(request.POST.get('address'))
                     address_ins = Address().create_from_json(address_data)
                     ws.address = address_ins
 
@@ -151,6 +174,30 @@ class WorkspaceCheck(APIView):
                 return convert_response('Không đủ điều kiện tạo thêm workspace', 200, data=False)
             return convert_response('success', 200, data=True)
         return convert_response('mã check không tồn tại (NAME_UNIQUE | CREATE)', 400)
+
+
+class WorkspacePriceCreate(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        ws = Workspace.objects.filter(created_by=user)
+        if len(ws) == 0:
+            return convert_response('success', 200, data={
+                "price": 0,
+                "discount": 1500000
+            })
+
+        rb = RewardBenefit.objects.filter(tier_id=user.level, type='CREATE_WS').exclude(value__value=0).first()
+        if not rb:
+            return convert_response('Không tim thấy gói giá phù hợp', 400)
+
+        return convert_response('success', 200, data={
+            "price": rb.value.value,
+            "discount": 0,
+            "tier": user.level.name
+        })
 
 
 class RoleAPI(APIView):

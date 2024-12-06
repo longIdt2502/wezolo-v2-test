@@ -16,7 +16,15 @@ class WorkspaceStatus(models.TextChoices):
     INACTIVE = 'INACTIVE', 'Dừng hoạt động'
 
 
-# Create your models here.
+class WorkspaceCategory(models.Model):
+    class Meta:
+        verbose_name = 'WorkspaceCategory'
+        db_table = 'workspace_category'
+
+    code = models.CharField(max_length=255, null=True, blank=True)
+    title = models.CharField(max_length=255, null=True, blank=True)
+
+
 class Workspace(models.Model):
     class Meta:
         verbose_name = 'Workspace'
@@ -30,7 +38,7 @@ class Workspace(models.Model):
     tax_number = models.CharField(max_length=255, null=True, blank=True)
     email = models.EmailField(_('email address'), null=True, blank=True)
     image = models.TextField(null=True, blank=True)
-    category = models.CharField(max_length=255, null=True, blank=True)
+    category = models.ForeignKey(WorkspaceCategory, null=True, on_delete=models.SET_NULL)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(null=True, blank=True)
@@ -86,15 +94,6 @@ class Workspace(models.Model):
         self.image = uploaded_file_name
         self.save()
         return self
-
-
-class WorkspaceCategory(models.Model):
-    class Meta:
-        verbose_name = 'WorkspaceCategory'
-        db_table = 'workspace_category'
-
-    code = models.CharField(max_length=255, null=True, blank=True)
-    title = models.CharField(max_length=255, null=True, blank=True)
 
 
 class Journey(models.Model):

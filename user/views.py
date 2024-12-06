@@ -307,7 +307,7 @@ class UsersManage(APIView):
         total_user = users_query.count()
 
         is_active = data.get('is_active')
-        if is_active is not None:
+        if is_active:
             is_active = True if is_active == 'true' else False
             users_query = users_query.filter(is_active=is_active)
 
