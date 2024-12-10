@@ -37,6 +37,16 @@ class ZaloOaAPI(APIView):
 
     def get(self, request):
         user = request.user
+        data = request.GET.copy()
+
+        zalo_oa = ZaloOA.objects.filter()
+
+        ws = Employee.objects.filter(account=user).values_list('workspace_id', flat=True)
+        zalo_oa = zalo_oa.filter(company_id__in=ws)
+
+        ws = data.get('workspace')
+        if ws:
+            zalo_oa = zalo_oa.filter(company_id=ws)
 
         role_subquery = SubqueryJson(
             Role.objects.filter(id=OuterRef('role_id')).values(
@@ -57,7 +67,7 @@ class ZaloOaAPI(APIView):
             ).values('user_data', 'role_data')[:1]
         )
 
-        zalo_oa = ZaloOA.objects.filter().order_by('-id').values().annotate(
+        zalo_oa = zalo_oa.filter().order_by('-id').values().annotate(
             employees=SubqueryJsonAgg(
                 EmployeeOa.objects.filter(oa_id=OuterRef('id')).values().annotate(
                     employee_data=employee_subquery
