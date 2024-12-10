@@ -8,4 +8,4 @@ dropdb:
 	docker exec -it postgres dropdb wezolo
 
 runserver:
-	python manage.py makemigrations && python manage.py migrate && python manage.py insert_data && python manage.py init_reward_tier && python manage.py init_package && python manage.py init_role && python manage.py init_price && python manage.py init_benefit && python manage.py runserver 0.0.0.0:8000
+	python manage.py makemigrations && python manage.py migrate && python manage.py init_banks && python manage.py init_zns_component && python manage.py insert_data && python manage.py init_reward_tier && python manage.py init_package && python manage.py init_role && python manage.py init_price && python manage.py init_benefit && python manage.py runserver 0.0.0.0:8000

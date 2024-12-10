@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Tiêu đề",
+    "type": "TITLE",
+    "layout": "BODY"
+  },
+  {
+    "name": "Đoạn văn bản",
+    "type": "PARAGRAPH",
+    "layout": "BODY"
+  },
+  {
+    "name": "Mã OTP",
+    "type": "OTP",
+    "layout": "BODY"
+  },
+  {
+    "name": "Bảng",
+    "type": "TABLE",
+    "layout": "BODY"
+  },
+  {
+    "name": "Logo",
+    "type": "LOGO",
+    "layout": "HEADER"
+  },
+  {
+    "name": "Ảnh",
+    "type": "IMAGES",
+    "layout": "HEADER"
+  },
+  {
+    "name": "Nút bấm",
+    "type": "BUTTONS",
+    "layout": "FOOTER"
+  },
+  {
+    "name": "Thanh toán",
+    "type": "PAYMENT",
+    "layout": "BODY"
+  },
+  {
+    "name": "Phiếu quà tặng",
+    "type": "VOUCHER",
+    "layout": "BODY"
+  }
+]
