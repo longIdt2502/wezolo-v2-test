@@ -84,7 +84,7 @@ class CustomerList(APIView):
         ws = data.get('workspace')
         if not ws:
             raise Exception('Yêu cầu thông tin Workspace')
-        customer = Customer.objects.filter(workspace_id=ws)
+        customer = Customer.objects.filter(workspace_id=ws).order_by('-id')
 
         oa_id = data.get('oa')
         if oa_id:
@@ -420,8 +420,10 @@ class UploadFileImport(APIView):
         data = []
         for row in ws.iter_rows(min_row=7, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
             phone = row[2].value
-            customer_total += 1
+            if not phone:
+                continue
             if len(row[2].value) == 10:
+                customer_total += 1
                 customer = Customer()
                 try:
                     customer = Customer.objects.get(phone=phone)
@@ -442,20 +444,23 @@ class UploadFileImport(APIView):
                         is_duplicate = True
                         for i in list(range(0, ws.max_column - 8)):
                             id_tag = row_tag[i].value
-                            if row[row_tag[i].col_idx - 1].value == 1.0:
-                                tag = Tag.objects.get(id=id_tag)
-                                cuz = CustomerUserZalo.objects.filter(customer=customer, oa=tag.oa).first()
-                                if not cuz:
-                                    CustomerUserZalo.objects.create(
+                            try:
+                                if row[row_tag[i].col_idx - 1].value == 1.0:
+                                    tag = Tag.objects.get(id=id_tag)
+                                    cuz = CustomerUserZalo.objects.filter(customer=customer, oa=tag.oa).first()
+                                    if not cuz:
+                                        CustomerUserZalo.objects.create(
+                                            customer=customer,
+                                            oa=tag.oa
+                                        )
+                                        is_duplicate = False
+                                    TagCustomer.objects.create(
+                                        created_by=user,
                                         customer=customer,
-                                        oa=tag.oa
+                                        tag=tag,
                                     )
-                                    is_duplicate = False
-                                TagCustomer.objects.create(
-                                    created_by=user,
-                                    customer=customer,
-                                    tag=tag,
-                                )
+                            except Exception as e:
+                                print(str(e))
                         if is_duplicate:
                             customer_duplicate += 1
                         else:

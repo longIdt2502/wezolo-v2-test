@@ -25,4 +25,8 @@ urlpatterns = [
     path('v1/reward/', include('reward.urls')),
     path('v1/zalo/', include('zalo.urls')),
     path('v1/customer/', include('customer.urls')),
+    path('v1/tags/', include('tags.urls')),
+    path('v1/progress/', include('progress.urls')),
+    path('v1/zns/', include('zns.urls')),
+    path('v1/bank/', include('bank.urls')),
 ]
