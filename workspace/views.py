@@ -10,6 +10,7 @@ from django.db.models import OuterRef, Count, Sum, IntegerField, FloatField, Val
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from common.core.subquery import *
+from employee.models import Employee
 
 from utils.check_financial_capacity import CheckFinancialCapacity
 from utils.convert_response import convert_response
@@ -89,6 +90,14 @@ class Workspaces(APIView):
 
                 data['created_by'] = user.id
                 ws = Workspace().from_json(data)
+                role = Role.objects.get(code=Role.Code.OWNER)
+                Employee.objects.create(
+                    status=Employee.Status.ACTIVE,
+                    account=user,
+                    created_by=user,
+                    role=role,
+                    workspace=ws
+                )
                 files = request.FILES.get('image')
                 ws = ws.save_image(files)
 
