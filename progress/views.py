@@ -161,7 +161,7 @@ class ProgressApi(APIView):
                         type=tag_type,
                         progress=progress,
                         oa=oa,
-                        order=item.get('order'),
+                        # order=item.get('order'),
                         created_by=user,
                     )
 
@@ -243,7 +243,7 @@ class ProgressDetail(APIView):
                         type=tag_type,
                         progress=progress,
                         oa=progress.oa,
-                        order=item.get('order'),
+                        # order=item.get('order'),
                         created_by=user,
                     )
 
