@@ -151,7 +151,7 @@ class ZnsDetail(APIView):
         component_subquery = SubqueryJsonAgg(
             ZnsComponentZns.objects.filter(
                 zns_id=OuterRef('id')
-            ).annotate(
+            ).order_by('order').annotate(
                 component_name=F('component__name'),
                 type=F('component__type'),
                 layout=F('component__layout'),
