@@ -2,7 +2,8 @@ import json
 from typing import Optional
 
 from django.db import transaction
-from django.db.models import OuterRef, Q
+from django.db.models import OuterRef, Q, F, Case, When, Value
+from django.db.models.functions import Coalesce
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
@@ -11,7 +12,7 @@ from common.core.subquery import *
 from employee.models import Employee
 from utils.convert_response import convert_response
 from zalo.models import ZaloOA
-from zns.models import Zns, ZnsComponentZns, ZnsComponent, ZnsParams
+from zns.models import *
 from zns.utils import (
     createZnsFieldTitle, createZnsFieldParagraph, createZnsFieldOTP,
     createZnsFieldTable, createZnsFieldLogo, createZnsFieldImage,
@@ -135,3 +136,96 @@ def create_zns_field(zns: Zns, data, files, logo_light, logo_dark) -> Optional[s
     elif type_field == 'VOUCHER':
         createZnsFieldVoucher(zns=zns, data=data)
     return None
+
+
+class ZnsDetail(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, _, pk):
+        zns = Zns.objects.filter(id=pk)
+        if not zns:
+            return convert_response('Không tìm thấy Zns', 404)
+        component_subquery = SubqueryJsonAgg(
+            ZnsComponentZns.objects.filter(
+                zns_id=OuterRef('id')
+            ).annotate(
+                component_name=F('component__name'),
+                type=F('component__type'),
+                layout=F('component__layout'),
+                component_data=Case(
+                    When(component__type='TITLE', then=SubqueryJson(
+                        ZnsFieldTitle.objects.filter(component_id=OuterRef('id')).values()[:1]
+                    )),
+                    When(component__type='PARAGRAPH', then=SubqueryJson(
+                        ZnsFieldParagraph.objects.filter(component_id=OuterRef('id')).values()[:1]
+                    )),
+                    When(component__type='OTP', then=SubqueryJson(
+                        ZnsFieldOTP.objects.filter(component_id=OuterRef('id')).values()[:1]
+                    )),
+                    When(component__type='TABLE', then=SubqueryJsonAgg(
+                        ZnsFieldTable.objects.filter(component_id=OuterRef('id')).values()
+                    )),
+                    When(component__type='LOGO', then=SubqueryJson(
+                        ZnsFieldLogo.objects.filter(component_id=OuterRef('id')).values()[:1]
+                    )),
+                    When(component__type='IMAGES', then=SubqueryJsonAgg(
+                        ZnsFieldImage.objects.filter(component_id=OuterRef('id')).values()
+                    )),
+                    When(component__type='BUTTONS', then=SubqueryJsonAgg(
+                        ZnsFieldButton.objects.filter(component_id=OuterRef('id')).values()
+                    )),
+                    When(component__type='PAYMENT', then=SubqueryJson(
+                        ZnsFieldPayment.objects.filter(component_id=OuterRef('id')).values()[:1]
+                    )),
+                    When(component__type='VOUCHER', then=SubqueryJson(
+                        ZnsFieldVoucher.objects.filter(component_id=OuterRef('id')).values()[:1]
+                    )),
+                    default=Value(None),
+                    output_field=JSONField()
+                )
+            )
+        )
+        params_subquery = SubqueryJsonAgg(
+            ZnsParams.objects.filter(zns_id=OuterRef('id'))
+        )
+        zns = zns.values().annotate(
+            components=component_subquery,
+            params=params_subquery
+        )[:1]
+        return convert_response('success', 200, data=zns[0])
+
+    def put(self, request, pk):
+        user = request.user
+        data = json.loads(request.POST.get('data'))
+        files = request.FILES.getlist('images', None)
+        logo_light = request.FILES.get('logo_light', None)
+        logo_dark = request.FILES.get('logo_dark', None)
+
+        try:
+            with transaction.atomic():
+                zns = Zns.objects.get(id=pk)
+
+                components = data.get('components', [])
+                for item in components:
+                    err = create_zns_field(zns, item, files, logo_light, logo_dark)
+                    if err:
+                        raise Exception(err)
+
+                params = data.get('params', [])
+                params_in_zns = ZnsParams.objects.filter(zns=zns)
+                for item in params_in_zns:
+                    item.delete()
+                for item in params:
+                    ZnsParams.objects.create(
+                        zns=zns,
+                        name=item.get('name'),
+                        type=item.get('type'),
+                        sample_value=item.get('sample_value')
+                    )
+
+                return convert_response('success', 201, data=zns.id)
+        except Exception as e:
+            return convert_response(str(e), 400)
+
+    def delete(self, _, pk):
+        pass
