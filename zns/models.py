@@ -237,11 +237,21 @@ class ZnsParams(models.Model):
     sample_value = models.CharField(max_length=200, null=True, blank=True)
 
 
-class ZnsRejectLog(models.Model):
+class ZnsLog(models.Model):
     class Meta:
-        verbose_name = 'ZnsRejectLog'
-        db_table = 'zns_reject_log'
+        verbose_name = 'ZnsLog'
+        db_table = 'zns_log'
+
+    class Type(models.TextChoices):
+        CREATE = 'CREATE', 'Tạo mới'
+        UPDATE = 'UPDATE', 'Cập nhật'
+        DELETE = 'DELETE', 'Xoá'
+        REJECT = 'REJECT', 'Từ chối'
+        LOCK = 'LOCK', 'Khoá'
+        APPROVE = 'APPROVE', 'Đã duyệt'
 
     zns = models.ForeignKey(Zns, on_delete=models.CASCADE, null=False)
-    reject_date = models.DateField(auto_now_add=True)
-    reject_reason = models.TextField(null=True, blank=True)
+    type = models.CharField(max_length=100, choices=Type.choices, null=False)
+    content = models.TextField(null=True)
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    action_at = models.DateTimeField(auto_now_add=True)
