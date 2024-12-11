@@ -66,8 +66,21 @@ class ProgressApi(APIView):
             #     output_field=IntegerField()
             # )
 
+            customers_query =Coalesce(
+                Subquery(
+                    ProgressTagCustomer.objects.filter(tag_id=OuterRef('id')).values('tag_id').annotate(
+                        total=Count('tag_id')
+                    ).values('total')[:1],
+                    output_field=IntegerField()
+                ),
+                Value(0),
+                output_field=IntegerField()
+            )
+
             tags_subquery = SubqueryJsonAgg(
-                ProgressTag.objects.filter(progress_id=OuterRef('id')).values()
+                ProgressTag.objects.filter(progress_id=OuterRef('id')).values().annotate(
+                    customers=customers_query
+                )
             )
 
             oa_subquery = SubqueryJson(
