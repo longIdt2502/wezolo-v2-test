@@ -128,9 +128,9 @@ class ZnsFieldTable(models.Model):
     ]
 
     component = models.ForeignKey(ZnsComponentZns, on_delete=models.CASCADE, null=False)
-    row_order = models.IntegerField(null=False)
     title = models.CharField(max_length=36, null=False, blank=False)
     value = models.CharField(max_length=90, null=False, blank=False)
+    row_type = models.IntegerField(choices=TYPE_CHOICES, null=True)
 
 
 class ZnsFieldLogo(models.Model):
