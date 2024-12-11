@@ -65,6 +65,10 @@ class ProgressApi(APIView):
             #     output_field=IntegerField()
             # )
 
+            tags_subquery = SubqueryJsonAgg(
+                ProgressTag.objects.filter(progress_id=OuterRef('id')).order_by('order').values()
+            )
+
             oa_subquery = SubqueryJson(
                 ZaloOA.objects.filter(id=OuterRef('oa_id')).values(
                     'oa_name', 'oa_avatar'
@@ -84,6 +88,7 @@ class ProgressApi(APIView):
                 # tag_customer=tag_customer_query,
                 oa_data=oa_subquery,
                 user_create=user_create_subquery,
+                tags=tags_subquery,
             )
 
             return convert_response('success', 200, total=total, data=progress)
@@ -134,15 +139,15 @@ class ProgressApi(APIView):
                 tag_middle = 0
                 tag_end = 0
                 for item in tags:
-                    tag_dup = ProgressTag.objects.filter(title=item.get('title'), progress=progress).first()
-                    if tag_dup:
+                    tag_dup = ProgressTag.objects.filter(title=item.get('title'), progress=progress)
+                    if len(tag_dup) > 1:
                         raise Exception(f'Tag {tag_dup.title} đã tồn tại')
                     tag_type = item.get('type')
-                    if tag_type == ProgressTag.Type.BEGIN.title():
+                    if tag_type == ProgressTag.Type.BEGIN:
                         tag_begin += 1
-                    elif tag_type == ProgressTag.Type.MIDDLE.title():
+                    elif tag_type == ProgressTag.Type.MIDDLE:
                         tag_middle += 1
-                    elif tag_type == ProgressTag.Type.END.title():
+                    elif tag_type == ProgressTag.Type.END:
                         tag_end += 1
                     else:
                         raise Exception('Loại tag tiến trình không đúng')
@@ -185,14 +190,62 @@ class ProgressDetail(APIView):
                 if not employee:
                     raise Exception('Không có quyền chỉnh sửa')
 
-            tag_duplicate = Tag.objects.filter(title=data.get('title')).first()
-            if tag_duplicate:
+            tag_duplicate = Tag.objects.filter(title=data.get('title'))
+            if len(tag_duplicate) > 1:
                 raise Exception('Tên Tag đã tồn tại')
 
             progress.title = data.get('title', progress.title)
-            progress.updated_by = user,
+            progress.updated_by = user
             progress.updated_at = datetime.datetime.now()
             progress.save()
+
+            tags_delete = data.get('tags_delete', [])
+            tags_delete = ProgressTag.objects.filter(id__in=tags_delete)
+            for item in tags_delete:
+                item.delete()
+
+            tags = data.get('tags', [])
+            tag_begin = 0
+            tag_middle = 0
+            tag_end = 0
+            for item in tags:
+                tag_dup = ProgressTag.objects.filter(title=item.get('title'), progress=progress)
+                if len(tag_dup) > 1:
+                    raise Exception(f'Tag {tag_dup.title} đã tồn tại')
+                tag_type = item.get('type')
+                if tag_type == ProgressTag.Type.BEGIN:
+                    tag_begin += 1
+                elif tag_type == ProgressTag.Type.MIDDLE:
+                    tag_middle += 1
+                elif tag_type == ProgressTag.Type.END:
+                    tag_end += 1
+                else:
+                    raise Exception('Loại tag tiến trình không đúng')
+                if tag_begin > 1 or tag_middle > 5 or tag_end > 4:
+                    raise Exception('Số lượng tag tiến trình không đúng')
+
+                if item.get('id'):
+                    progress_tag = ProgressTag.objects.get(id=item.get('id'))
+                    progress_tag.title = item.get('title', progress_tag.title)
+                    progress_tag.color_text = item.get('color_text', progress_tag.color_text)
+                    progress_tag.color_fill = item.get('color_fill', progress_tag.color_fill)
+                    progress_tag.type = tag_type
+                    progress_tag.title = item.get('title', progress_tag.title)
+                    progress_tag.updated_by = user
+                    progress_tag.updated_at = datetime.datetime.now()
+
+                else:
+                    ProgressTag.objects.create(
+                        title=item.get('title'),
+                        color_text=item.get('color_text'),
+                        color_fill=item.get('color_fill'),
+                        color_border=item.get('color_border'),
+                        type=tag_type,
+                        progress=progress,
+                        oa=progress.oa,
+                        order=item.get('order'),
+                        created_by=user,
+                    )
 
             return convert_response('Chỉnh sửa tiến trình thành công', 200, data=progress.id)
 

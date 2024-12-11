@@ -115,7 +115,6 @@ def createZnsFieldTable(zns, data) -> Optional[str]:
                 zns_field.value = item.get('value'),
                 zns_field.index = item.get('index'),
                 zns_field.title = item.get('title'),
-                zns_field.row_type = item.get('row_type'),
                 zns_field.save()
         else:
             ZnsFieldTable.objects.create(
@@ -123,7 +122,6 @@ def createZnsFieldTable(zns, data) -> Optional[str]:
                 component=zns_component_zns,
                 row_order=item.get('index'),
                 title=item.get('title'),
-                row_type=item.get('row_type'),
             )
     return None
 
