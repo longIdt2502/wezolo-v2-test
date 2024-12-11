@@ -10,6 +10,7 @@ __pycache__
 db-data
 compose.yaml
 backup
+**/migrations/
 
 pharmago/settings.py
 media/

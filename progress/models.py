@@ -36,7 +36,7 @@ class ProgressTag(models.Model):
     type = models.CharField(max_length=255, choices=Type.choices, null=True)
     progress = models.ForeignKey(Progress, null=False, on_delete=models.CASCADE)
     oa = models.ForeignKey(ZaloOA, null=True, on_delete=models.SET_NULL)
-    order = models.IntegerField(default=1, null=False)
+    # order = models.IntegerField(default=1, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
     created_by = models.ForeignKey(User, null=False, on_delete=models.CASCADE, related_name='user_create_progress_tag')
