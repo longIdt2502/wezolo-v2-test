@@ -13,6 +13,7 @@ class Zns(models.Model):
 
     STATUS_CHOICES = [
         ('DRAFT', 'Nháp'),
+        ('PENDING_WZL', 'Chờ duyệt'),
         ('PENDING_REVIEW', 'Đang duyệt'),
         ('APPROVED', 'Đã duyệt'),
         ('REJECTED', 'Đã từ chối'),
@@ -235,3 +236,13 @@ class ZnsParams(models.Model):
     name = models.CharField(max_length=60, null=True, blank=True)
     type = models.CharField(max_length=10, null=False, choices=TYPE)
     sample_value = models.CharField(max_length=200, null=True, blank=True)
+
+
+class ZnsRejectLog(models.Model):
+    class Meta:
+        verbose_name = 'ZnsRejectLog'
+        db_table = 'zns_reject_log'
+
+    zns = models.ForeignKey(Zns, on_delete=models.CASCADE, null=False)
+    reject_date = models.DateField(auto_now_add=True)
+    reject_reason = models.TextField(null=True, blank=True)

@@ -160,7 +160,7 @@ def createZnsFieldImage(zns, data, files) -> Optional[str]:
     components = data.get('component_data')
     if components:
         for item in components:
-            if item.get('action') == 'delete' and data.get('id'):
+            if item.get('action') == 'delete':
                 zns_field = ZnsFieldImage.objects.get(id=item.get('id'))
                 zns_field.delete()
                 return 'delete success'

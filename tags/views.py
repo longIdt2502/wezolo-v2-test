@@ -155,8 +155,8 @@ class TagDetail(APIView):
                 if not employee:
                     raise Exception('Không có quyền chỉnh sửa')
 
-            tag_duplicate = Tag.objects.filter(title=data.get('title')).first()
-            if tag_duplicate:
+            tag_duplicate = Tag.objects.filter(title=data.get('title'))
+            if len(tag_duplicate) > 1:
                 raise Exception('Tên Tag đã tồn tại')
 
             tag.title = data.get('title', tag.title)
