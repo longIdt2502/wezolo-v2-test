@@ -112,15 +112,16 @@ def createZnsFieldTable(zns, data) -> Optional[str]:
             if data.get('action') == 'delete':
                 zns_field.delete()
             else:
-                zns_field.value = item.get('value'),
-                zns_field.index = item.get('index'),
-                zns_field.title = item.get('title'),
+                zns_field.value = item.get('value', zns_field.value),
+                zns_field.index = item.get('index', zns_field.index),
+                zns_field.title = item.get('title', zns_field.title),
+                zns_field.row_type = item.get('row_type', zns_field.row_type),
                 zns_field.save()
         else:
             ZnsFieldTable.objects.create(
                 value=item.get('value'),
                 component=zns_component_zns,
-                row_order=item.get('index'),
+                row_type=item.get('row_type'),
                 title=item.get('title'),
             )
     return None
