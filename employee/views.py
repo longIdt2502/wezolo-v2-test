@@ -92,7 +92,12 @@ class Employees(APIView):
             return convert_response('Số điện thoại chưa được đăng ký tài khoản', 400)
         employee = Employee.objects.filter(account=user, workspace_id=workspace).first()
         if employee:
-            return convert_response('Tài khoản đã là nhân viên của Workspace', 400)
+            if employee.status == 'TERMINATED':
+                employee.status = 'ACTIVE'
+                employee.save()
+                return convert_response('success', 200, data=employee.id)
+            else:
+                return convert_response('Tài khoản đã là nhân viên của Workspace', 400)
         try:
             employee = Employee.objects.create(
                 created_by=user_req,
