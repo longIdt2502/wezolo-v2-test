@@ -131,7 +131,6 @@ class ZnsFieldTable(models.Model):
     row_order = models.IntegerField(null=False)
     title = models.CharField(max_length=36, null=False, blank=False)
     value = models.CharField(max_length=90, null=False, blank=False)
-    row_type = models.IntegerField(choices=TYPE_CHOICES, null=True)
 
 
 class ZnsFieldLogo(models.Model):
