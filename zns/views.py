@@ -217,6 +217,7 @@ class ZnsDetail(APIView):
                 zns.name = data.get('name', zns.name)
                 zns.type = data.get('type', zns.type)
                 zns.tag = data.get('tag', zns.tag)
+                zns.note = data.get('note', zns.note)
                 zns.save()
 
                 components = data.get('components', [])
