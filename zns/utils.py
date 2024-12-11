@@ -92,10 +92,7 @@ def createZnsFieldOTP(zns, data) -> Optional[str]:
 
 
 def createZnsFieldTable(zns, data) -> Optional[str]:
-    pk = data.get('id')
-    zns_component_zns = ZnsComponentZns.objects.filter(id=pk).first()
-    if not pk:
-        zns_component_zns = createZnsComponent(zns, data)
+    zns_component_zns = createZnsComponent(zns, data)
     if data.get('action') == 'delete':
         zns_component_zns.delete()
         zns_fields = ZnsFieldTable.objects.filter(component=zns_component_zns)
