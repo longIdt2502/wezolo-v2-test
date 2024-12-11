@@ -11,6 +11,8 @@ from rest_framework.views import APIView
 from common.core.subquery import *
 
 from employee.models import Employee
+from package.models import Price
+from reward.models import RewardBenefit
 from utils.convert_response import convert_response
 from zalo.models import ZaloOA
 from zns.models import *
@@ -276,3 +278,17 @@ class ZnsDetail(APIView):
             return convert_response('success', 200)
         except Exception as e:
             return convert_response(str(e), 400)
+
+
+class ZnsTypePrice(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        price_subquery = SubqueryJson(
+            Price.objects.filter(id=OuterRef('value'))
+        )
+        reward_benefit = RewardBenefit.objects.filter(tier_id=user.level, type='ZNS').values().annotate(
+            price=price_subquery
+        )
+        return convert_response('success', 200, data=reward_benefit)

@@ -161,7 +161,7 @@ def createZnsFieldImage(zns, data, files) -> Optional[str]:
             if item.get('action') == 'delete':
                 zns_field = ZnsFieldImage.objects.get(id=item.get('id'))
                 zns_field.delete()
-                return 'delete success'
+                return None
 
     for file in files:
         r = random.randint(100000, 999999)
@@ -178,7 +178,7 @@ def createZnsFieldImage(zns, data, files) -> Optional[str]:
     if zns_fields.count() == 0:
         zns_component_zns.delete()
 
-    return 'success'
+    return None
 
 
 def createZnsFieldButton(zns, data) -> Optional[str]:
