@@ -247,6 +247,7 @@ class ProgressDetail(APIView):
                     progress_tag.title = item.get('title', progress_tag.title)
                     progress_tag.updated_by = user
                     progress_tag.updated_at = datetime.datetime.now()
+                    progress_tag.save()
 
                 else:
                     ProgressTag.objects.create(
