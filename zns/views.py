@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from typing import Optional
 
 from django.db import transaction
@@ -129,7 +130,7 @@ def create_zns_field(zns: Zns, data, files, logo_light, logo_dark) -> Optional[s
         if not files or len(files) == 0:
             return 'Thiếu trường ảnh'
         return createZnsFieldImage(zns=zns, data=data, files=files)
-    elif type_field == 'BUTTON':
+    elif type_field == 'BUTTONS':
         return createZnsFieldButton(zns=zns, data=data)
     elif type_field == 'PAYMENT':
         return createZnsFieldPayment(zns=zns, data=data)
@@ -204,6 +205,17 @@ class ZnsDetail(APIView):
         try:
             with transaction.atomic():
                 zns = Zns.objects.get(id=pk)
+                if not user.is_superuser:
+                    employee = Employee.objects.filter(account=user, workspace=zns.oa.company).first()
+                    if not employee or employee.role.code == 'SALE':
+                        raise Exception('Từ chối quyền truy cập')
+                if zns.status != 'DRAFT' and zns.status != 'REJECTED':
+                    raise Exception('Trạng thái ZNS không thể chỉnh sửa')
+
+                zns.name = data.get('name', zns.name)
+                zns.type = data.get('type', zns.type)
+                zns.tag = data.get('tag', zns.tag)
+                zns.save()
 
                 components = data.get('components', [])
                 for item in components:
@@ -227,5 +239,40 @@ class ZnsDetail(APIView):
         except Exception as e:
             return convert_response(str(e), 400)
 
-    def delete(self, _, pk):
-        pass
+    def patch(self, request, pk):
+        try:
+            user = request.user
+            data = request.data.copy()
+            zns = Zns.objects.get(id=pk)
+
+            if not user.is_superuser:
+                employee = Employee.objects.filter(account=user, workspace=zns.oa.company).first()
+                if not employee or employee.role.code == 'SALE':
+                    raise Exception('Từ chối quyền truy cập')
+
+            zns.status = data.get('status', zns.status)
+            zns.template = data.get('template', zns.template)
+            zns.updated_by = user
+            zns.updated_at = datetime.now()
+            zns.save()
+            return convert_response('success', 203, data=zns.id)
+        except Exception as e:
+            return convert_response(str(e), 400)
+
+    def delete(self, request, pk):
+        user = request.user
+        zns = Zns.objects.get(id=pk)
+
+        try:
+            if not user.is_superuser:
+                employee = Employee.objects.filter(account=user, workspace=zns.oa.company).first()
+                if not employee or employee.role.code == 'SALE':
+                    raise Exception('Từ chối quyền truy cập')
+
+            if zns.status != 'DRAFT' and zns.status != 'REJECTED':
+                raise Exception('Trạng thái ZNS không thể chỉnh sửa')
+
+            zns.delete()
+            return convert_response('success', 200)
+        except Exception as e:
+            return convert_response(str(e), 400)
