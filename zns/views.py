@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from django.db import transaction
-from django.db.models import OuterRef, Q, F, Case, When, Value
+from django.db.models import OuterRef, Q, F, Case, When, Value, CharField
 from django.db.models.functions import Coalesce
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -188,12 +188,47 @@ class ZnsDetail(APIView):
                 )
             )
         )
+        price = SubqueryJson(
+            Price.objects.filter(id=OuterRef('value_id')).values()[:1]
+        )
+        price_query = SubqueryJson(
+            RewardBenefit.objects.filter(tier_id=OuterRef('created_by__level'), type='ZNS').values().annotate(
+                price=price
+            )[:1]
+        )
         params_subquery = SubqueryJsonAgg(
-            ZnsParams.objects.filter(zns_id=OuterRef('id'))
+            ZnsParams.objects.filter(zns_id=OuterRef('id')).annotate(
+                type_label=Case(
+                    When(type='1', then=Value('Tên khách hàng (30)')),
+                    When(type='2', then=Value('Số điện thoại (15)')),
+                    When(type='3', then=Value('Địa chỉ (200)')),
+                    When(type='4', then=Value('Mã số (30)')),
+                    When(type='5', then=Value('Nhãn tùy chỉnh (30)')),
+                    When(type='6', then=Value('Trạng thái giao dịch (30)')),
+                    When(type='7', then=Value('Thông tin liên hệ (50)')),
+                    When(type='8', then=Value('Giới tính / Danh xưng (5)')),
+                    When(type='9', then=Value('Tên sản phẩm / Thương hiệu (200)')),
+                    When(type='10', then=Value('Số lượng / Số tiền (20)')),
+                    When(type='11', then=Value('Thời gian (20)')),
+                    When(type='12', then=Value('OTP (10)')),
+                    When(type='13', then=Value('URL (200)')),
+                    When(type='14', then=Value('Tiền tệ (VNĐ) (12)')),
+                    When(type='15', then=Value('Bank transfer note (90)')),
+                    default=Value(''),
+                    output_field=CharField()
+                )
+            )
+        )
+        oa_subquery = SubqueryJson(
+            ZaloOA.objects.filter(id=OuterRef('oa_id')).values(
+                'id', 'oa_name', 'oa_avatar',
+            )[:1]
         )
         zns = zns.values().annotate(
             components=component_subquery,
-            params=params_subquery
+            params=params_subquery,
+            price=price_query,
+            oa=oa_subquery,
         )[:1]
         return convert_response('success', 200, data=zns[0])
 
