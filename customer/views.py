@@ -115,7 +115,7 @@ class CustomerList(APIView):
 
         tag_subquery = SubqueryJsonAgg(
             TagCustomer.objects.filter(customer_id=OuterRef('id')).values(
-                'tag_id', 'tag__title', 'tag__color'
+                'tag_id', 'tag__title', 'tag__color_border', 'tag__color_border', 'tag__color_fill'
             )
         )
 

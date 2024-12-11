@@ -113,7 +113,7 @@ class TagsApi(APIView):
             if oa.company != ws:
                 raise Exception('Oa không thuộc Workspace')
 
-            if not data.get('title') or not data.get('oa') or not data.get('color'):
+            if not data.get('title') or not data.get('oa') or not data.get('color_fill') or not data.get('color_text') or not data.get('color_border'):
                 raise Exception('Thông tin không đúng')
 
             tag_duplicate = Tag.objects.filter(title=data.get('title')).first()
@@ -162,7 +162,8 @@ class TagDetail(APIView):
             tag.color_text = data.get('color_text', tag.color_text)
             tag.color_fill = data.get('color_fill', tag.color_fill)
             tag.color_border = data.get('color_border', tag.color_border)
-            tag.updated_by = user,
+            print(user.id)
+            tag.updated_by = user
             tag.updated_at = datetime.datetime.now()
             tag.save()
 
@@ -185,7 +186,7 @@ class TagDetail(APIView):
 
             tag.delete()
 
-            return convert_response('Chỉnh sửa tag thường thành công', 200)
+            return convert_response('Xoá tag thường thành công', 200)
 
         except Exception as e:
             return convert_response(str(e), 400)

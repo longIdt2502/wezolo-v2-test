@@ -13,21 +13,44 @@ def createZnsComponent(zns, data) -> ZnsComponentZns:
     )
     zns_component_zns = ZnsComponentZns.objects.create(
         zns=zns,
-        component=component
+        component=component,
+        order=data.get('index')
     )
     return zns_component_zns
 
 
 def createZnsFieldTitle(zns, data) -> str:
+    pk = data.get('id')
+    if pk:
+        zns_field = ZnsFieldTitle.objects.filter(id=pk).first()
+        if not zns_field:
+            return 'component không tồn tại'
+        if data.get('action') == 'delete':
+            zns_field.delete()
+            return 'delete success'
+        zns_field.value = data.get('value')
+        zns_field.save()
+        return 'update success'
     zns_component_zns = createZnsComponent(zns, data)
     ZnsFieldTitle.objects.create(
         value=data.get('value'),
         component=zns_component_zns,
     )
-    return 'success'
+    return 'create success'
 
 
 def createZnsFieldParagraph(zns, data) -> str:
+    pk = data.get('id')
+    if pk:
+        zns_field = ZnsFieldParagraph.objects.filter(id=pk).first()
+        if not zns_field:
+            return 'component không tồn tại'
+        if data.get('action') == 'delete':
+            zns_field.delete()
+            return 'delete success'
+        zns_field.value = data.get('value')
+        zns_field.save()
+        return 'success'
     zns_component_zns = createZnsComponent(zns, data)
     ZnsFieldParagraph.objects.create(
         value=data.get('value'),
@@ -37,6 +60,17 @@ def createZnsFieldParagraph(zns, data) -> str:
 
 
 def createZnsFieldOTP(zns, data) -> str:
+    pk = data.get('id')
+    if pk:
+        zns_field = ZnsFieldOTP.objects.filter(id=pk).first()
+        if not zns_field:
+            return 'component không tồn tại'
+        if data.get('action') == 'delete':
+            zns_field.delete()
+            return 'delete success'
+        zns_field.value = data.get('value')
+        zns_field.save()
+        return 'success'
     zns_component_zns = createZnsComponent(zns, data)
     ZnsFieldOTP.objects.create(
         value=data.get('value'),
@@ -45,30 +79,50 @@ def createZnsFieldOTP(zns, data) -> str:
     return 'success'
 
 
+# TODO: Khó
 def createZnsFieldTable(zns, data) -> str:
-    zns_component_zns = createZnsComponent(zns, data)
+    pk = data.get('id')
+    zns_component_zns = ZnsComponentZns.objects.get(id=pk)
+    if not pk:
+        zns_component_zns = createZnsComponent(zns, data)
     rows = data.get('rows', [])
     for item in rows:
-        ZnsFieldTable.objects.create(
-            value=item.get('value'),
-            component=zns_component_zns,
-            row_order=item.get('index'),
-            title=item.get('title'),
-            row_type=item.get('row_type'),
-        )
+        pk = data.get('id')
+        if pk:
+            zns_field = ZnsFieldTable.objects.get(id=pk)
+            zns_field.value = item.get('value'),
+            zns_field.index = item.get('index'),
+            zns_field.title = item.get('title'),
+            zns_field.row_type = item.get('row_type'),
+            zns_field.save()
+        else:
+            ZnsFieldTable.objects.create(
+                value=item.get('value'),
+                component=zns_component_zns,
+                row_order=item.get('index'),
+                title=item.get('title'),
+                row_type=item.get('row_type'),
+            )
     return 'success'
 
 
 def createZnsFieldLogo(zns, data, logo_light, logo_dark) -> str:
-    zns_component_zns = createZnsComponent(zns, data)
     r = random.randint(100000, 999999)
-    file_name = f"logo_light_{zns_component_zns.id}_{r}.png"
+    file_name = f"logo_light_{r}.png"
     image_file_light = ContentFile(logo_light.read(), name=file_name)
-    uploaded_file_name_light = AwsS3.upload_file(image_file_light, f'zns_image/{zns_component_zns.id}/')
+    uploaded_file_name_light = AwsS3.upload_file(image_file_light, f'zns_image/{zns.id}/')
 
-    file_name = f"logo_dark_{zns_component_zns.id}_{r}.png"
+    file_name = f"logo_dark_{r}.png"
     image_file_dark = ContentFile(logo_dark.read(), name=file_name)
-    uploaded_file_name_dark = AwsS3.upload_file(image_file_dark, f'zns_image/{zns_component_zns.id}/')
+    uploaded_file_name_dark = AwsS3.upload_file(image_file_dark, f'zns_image/{zns.id}/')
+    if data.get('id'):
+        zns_field = ZnsFieldLogo.objects.filter(id=data.get('id')).first()
+        zns_field.light = uploaded_file_name_light
+        zns_field.dark = uploaded_file_name_dark
+        zns_field.save()
+        return 'success'
+
+    zns_component_zns = createZnsComponent(zns, data)
     ZnsFieldLogo.objects.create(
         component=zns_component_zns,
         light=uploaded_file_name_light,
@@ -80,10 +134,17 @@ def createZnsFieldLogo(zns, data, logo_light, logo_dark) -> str:
 def createZnsFieldImage(zns, data, files) -> str:
     zns_component_zns = createZnsComponent(zns, data)
     for file in files:
+
         r = random.randint(100000, 999999)
         file_name = f"image_{zns_component_zns.id}_{r}.png"
         image_file_light = ContentFile(file.read(), name=file_name)
         uploaded_file_name = AwsS3.upload_file(image_file_light, f'zns_image/{zns_component_zns.id}/')
+
+        if data.get('id'):
+            zns_field = ZnsFieldImage.objects.filter(id=data.get('id')).first()
+            zns_field.item = uploaded_file_name
+            zns_field.save()
+            return 'success'
 
         ZnsFieldImage.objects.create(
             component=zns_component_zns,
