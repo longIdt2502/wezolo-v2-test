@@ -25,9 +25,14 @@ class TagsApi(APIView):
             data = request.GET.copy()
             page_size = int(data.get('page_size', 20))
             offset = (int(data.get('page', 1)) - 1) * page_size
+
             employee = Employee.objects.filter(account=user)
             ws = employee.values_list('workspace_id', flat=True)
             oas = ZaloOA.objects.filter(company_id__in=ws).values_list('id', flat=True)
+
+            ws_query = data.get('workspace')
+            if ws_query:
+                oas = oas = ZaloOA.objects.filter(company_id=ws_query).values_list('id', flat=True)
             oas = list(oas)
             tags = Tag.objects.filter()
 
