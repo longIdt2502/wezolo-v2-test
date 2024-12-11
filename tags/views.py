@@ -32,8 +32,9 @@ class TagsApi(APIView):
             tags = Tag.objects.filter()
 
             oa_query = data.get('oa')
-            if int(oa_query) not in oas and oa_query:
-                raise Exception('Không có quyền truy cập Oa đã chọn')
+            if oa_query:
+                if int(oa_query) not in oas:
+                    raise Exception('Không có quyền truy cập Oa đã chọn')
             if oa_query:
                 tags = tags.filter(oa_id=oa_query)
             else:
@@ -162,7 +163,6 @@ class TagDetail(APIView):
             tag.color_text = data.get('color_text', tag.color_text)
             tag.color_fill = data.get('color_fill', tag.color_fill)
             tag.color_border = data.get('color_border', tag.color_border)
-            print(user.id)
             tag.updated_by = user
             tag.updated_at = datetime.datetime.now()
             tag.save()

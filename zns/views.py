@@ -114,28 +114,28 @@ class ZnsCreateApi(APIView):
 def create_zns_field(zns: Zns, data, files, logo_light, logo_dark) -> Optional[str]:
     type_field = data.get('type')
     if type_field == 'TITLE':
-        createZnsFieldTitle(zns=zns, data=data)
+        return createZnsFieldTitle(zns=zns, data=data)
     elif type_field == 'PARAGRAPH':
-        createZnsFieldParagraph(zns=zns, data=data)
+        return createZnsFieldParagraph(zns=zns, data=data)
     elif type_field == 'OTP':
-        createZnsFieldOTP(zns=zns, data=data)
+        return createZnsFieldOTP(zns=zns, data=data)
     elif type_field == 'TABLE':
-        createZnsFieldTable(zns=zns, data=data)
+        return createZnsFieldTable(zns=zns, data=data)
     elif type_field == 'LOGO':
         if not logo_dark or not logo_light:
             return 'Thiếu trường ảnh Logo sáng/tối'
-        createZnsFieldLogo(zns=zns, data=data, logo_light=logo_light, logo_dark=logo_dark)
+        return createZnsFieldLogo(zns=zns, data=data, logo_light=logo_light, logo_dark=logo_dark)
     elif type_field == 'IMAGES':
         if not files or len(files) == 0:
             return 'Thiếu trường ảnh'
-        createZnsFieldImage(zns=zns, data=data, files=files)
+        return createZnsFieldImage(zns=zns, data=data, files=files)
     elif type_field == 'BUTTON':
-        createZnsFieldButton(zns=zns, data=data)
+        return createZnsFieldButton(zns=zns, data=data)
     elif type_field == 'PAYMENT':
-        createZnsFieldPayment(zns=zns, data=data)
+        return createZnsFieldPayment(zns=zns, data=data)
     elif type_field == 'VOUCHER':
-        createZnsFieldVoucher(zns=zns, data=data)
-    return None
+        return createZnsFieldVoucher(zns=zns, data=data)
+    return 'Loại component không hợp lệ'
 
 
 class ZnsDetail(APIView):

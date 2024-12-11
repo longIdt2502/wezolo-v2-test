@@ -1,4 +1,5 @@
 import random
+from typing import Optional
 
 from django.core.files.base import ContentFile
 
@@ -7,19 +8,30 @@ from .models import *
 
 
 def createZnsComponent(zns, data) -> ZnsComponentZns:
+    """
+    Input: zns: Zns, data: json
+    This def output is: `{ZnsComponentZns}`
+    First this def check in DB ZnsComponentZns has already existed or not ?
+    -> if not -> this def create a new ZnsComponentZns
+    """
     component = ZnsComponent.objects.get(
         type=data.get('type'),
         layout=data.get('layout'),
     )
-    zns_component_zns = ZnsComponentZns.objects.create(
+    zns_component_zns = ZnsComponentZns.objects.filter(
         zns=zns,
-        component=component,
-        order=data.get('index')
-    )
+        component=component
+    ).first()
+    if not zns_component_zns:
+        zns_component_zns = ZnsComponentZns.objects.create(
+            zns=zns,
+            component=component,
+            order=data.get('index')
+        )
     return zns_component_zns
 
 
-def createZnsFieldTitle(zns, data) -> str:
+def createZnsFieldTitle(zns, data) -> Optional[str]:
     pk = data.get('id')
     if pk:
         zns_field = ZnsFieldTitle.objects.filter(id=pk).first()
@@ -27,19 +39,19 @@ def createZnsFieldTitle(zns, data) -> str:
             return 'component không tồn tại'
         if data.get('action') == 'delete':
             zns_field.delete()
-            return 'delete success'
+            return None
         zns_field.value = data.get('value')
         zns_field.save()
-        return 'update success'
+        return None
     zns_component_zns = createZnsComponent(zns, data)
     ZnsFieldTitle.objects.create(
         value=data.get('value'),
         component=zns_component_zns,
     )
-    return 'create success'
+    return None
 
 
-def createZnsFieldParagraph(zns, data) -> str:
+def createZnsFieldParagraph(zns, data) -> Optional[str]:
     pk = data.get('id')
     if pk:
         zns_field = ZnsFieldParagraph.objects.filter(id=pk).first()
@@ -47,54 +59,64 @@ def createZnsFieldParagraph(zns, data) -> str:
             return 'component không tồn tại'
         if data.get('action') == 'delete':
             zns_field.delete()
-            return 'delete success'
+            return None
         zns_field.value = data.get('value')
         zns_field.save()
-        return 'success'
+        return None
     zns_component_zns = createZnsComponent(zns, data)
     ZnsFieldParagraph.objects.create(
         value=data.get('value'),
         component=zns_component_zns,
     )
-    return 'success'
+    return None
 
 
-def createZnsFieldOTP(zns, data) -> str:
+def createZnsFieldOTP(zns, data) -> Optional[str]:
     pk = data.get('id')
     if pk:
         zns_field = ZnsFieldOTP.objects.filter(id=pk).first()
         if not zns_field:
-            return 'component không tồn tại'
+            return 'component OTP không tồn tại'
         if data.get('action') == 'delete':
             zns_field.delete()
-            return 'delete success'
+            return None
         zns_field.value = data.get('value')
         zns_field.save()
-        return 'success'
+        return None
     zns_component_zns = createZnsComponent(zns, data)
     ZnsFieldOTP.objects.create(
         value=data.get('value'),
         component=zns_component_zns,
     )
-    return 'success'
+    return None
 
 
-# TODO: Khó
-def createZnsFieldTable(zns, data) -> str:
+def createZnsFieldTable(zns, data) -> Optional[str]:
     pk = data.get('id')
-    zns_component_zns = ZnsComponentZns.objects.get(id=pk)
+    zns_component_zns = ZnsComponentZns.objects.filter(id=pk).first()
     if not pk:
         zns_component_zns = createZnsComponent(zns, data)
+    if data.get('action') == 'delete':
+        zns_component_zns.delete()
+        zns_fields = ZnsFieldTable.objects.filter(component=zns_component_zns)
+        for item in zns_fields:
+            item.delete()
+        return None
     rows = data.get('rows', [])
     for item in rows:
-        pk = data.get('id')
+        pk = item.get('id')
         if pk:
-            zns_field = ZnsFieldTable.objects.get(id=pk)
-            zns_field.value = item.get('value'),
-            zns_field.index = item.get('index'),
-            zns_field.title = item.get('title'),
-            zns_field.row_type = item.get('row_type'),
-            zns_field.save()
+            zns_field = ZnsFieldTable.objects.filter(id=pk).first()
+            if not zns_field:
+                return 'Component Bảng, không tìm thấy hàng yêu cầu'
+            if data.get('action') == 'delete':
+                zns_field.delete()
+            else:
+                zns_field.value = item.get('value'),
+                zns_field.index = item.get('index'),
+                zns_field.title = item.get('title'),
+                zns_field.row_type = item.get('row_type'),
+                zns_field.save()
         else:
             ZnsFieldTable.objects.create(
                 value=item.get('value'),
@@ -103,10 +125,17 @@ def createZnsFieldTable(zns, data) -> str:
                 title=item.get('title'),
                 row_type=item.get('row_type'),
             )
-    return 'success'
+    return None
 
 
-def createZnsFieldLogo(zns, data, logo_light, logo_dark) -> str:
+def createZnsFieldLogo(zns, data, logo_light, logo_dark) -> Optional[str]:
+    if data.get('id'):
+        zns_field = ZnsFieldLogo.objects.filter(id=data.get('id')).first()
+        if zns_field:
+            zns_field.delete()
+        else:
+            return 'component Logo không tồn tại'
+
     r = random.randint(100000, 999999)
     file_name = f"logo_light_{r}.png"
     image_file_light = ContentFile(logo_light.read(), name=file_name)
@@ -115,12 +144,6 @@ def createZnsFieldLogo(zns, data, logo_light, logo_dark) -> str:
     file_name = f"logo_dark_{r}.png"
     image_file_dark = ContentFile(logo_dark.read(), name=file_name)
     uploaded_file_name_dark = AwsS3.upload_file(image_file_dark, f'zns_image/{zns.id}/')
-    if data.get('id'):
-        zns_field = ZnsFieldLogo.objects.filter(id=data.get('id')).first()
-        zns_field.light = uploaded_file_name_light
-        zns_field.dark = uploaded_file_name_dark
-        zns_field.save()
-        return 'success'
 
     zns_component_zns = createZnsComponent(zns, data)
     ZnsFieldLogo.objects.create(
@@ -128,48 +151,90 @@ def createZnsFieldLogo(zns, data, logo_light, logo_dark) -> str:
         light=uploaded_file_name_light,
         dark=uploaded_file_name_dark
     )
-    return 'success'
+    return None
 
 
-def createZnsFieldImage(zns, data, files) -> str:
+def createZnsFieldImage(zns, data, files) -> Optional[str]:
     zns_component_zns = createZnsComponent(zns, data)
+
+    components = data.get('component_data')
+    if components:
+        for item in components:
+            if item.get('action') == 'delete' and data.get('id'):
+                zns_field = ZnsFieldImage.objects.get(id=item.get('id'))
+                zns_field.delete()
+                return 'delete success'
+
     for file in files:
-
         r = random.randint(100000, 999999)
-        file_name = f"image_{zns_component_zns.id}_{r}.png"
+        file_name = f"image_{r}.png"
         image_file_light = ContentFile(file.read(), name=file_name)
-        uploaded_file_name = AwsS3.upload_file(image_file_light, f'zns_image/{zns_component_zns.id}/')
-
-        if data.get('id'):
-            zns_field = ZnsFieldImage.objects.filter(id=data.get('id')).first()
-            zns_field.item = uploaded_file_name
-            zns_field.save()
-            return 'success'
+        uploaded_file_name = AwsS3.upload_file(image_file_light, f'zns_image/{zns.id}/')
 
         ZnsFieldImage.objects.create(
             component=zns_component_zns,
             item=uploaded_file_name,
         )
+
+    zns_fields = ZnsFieldImage.objects.filter(component=zns_component_zns)
+    if zns_fields.count() == 0:
+        zns_component_zns.delete()
+
     return 'success'
 
 
-def createZnsFieldButton(zns, data) -> str:
+def createZnsFieldButton(zns, data) -> Optional[str]:
     zns_component_zns = createZnsComponent(zns, data)
     items = data.get('items')
+    if data.get('action') == 'delete':
+        zns_fields = ZnsFieldButton.objects.filter(component=zns_component_zns)
+        for item in zns_fields:
+            item.delete()
+        return None
     for item in items:
-        ZnsFieldButton.objects.create(
-            component=zns_component_zns,
-            button_order=item.get('index'),
-            type=item.get('type'),
-            content=item.get('content'),
-            title=item.get('title')
-        )
-    return 'success'
+        if item.get('id'):
+            zns_field = ZnsFieldButton.objects.filter(id=item.get('id')).first()
+            if not zns_field:
+                return 'Component Button không tồn tại'
+            if item.get('action') == 'delete':
+                zns_field.delete()
+                continue
+            zns_field.component = zns_component_zns
+            zns_field.button_order = item.get('index')
+            zns_field.type = item.get('type')
+            zns_field.content = item.get('content')
+            zns_field.title = item.get('title')
+            zns_field.save()
+        else:
+            ZnsFieldButton.objects.create(
+                component=zns_component_zns,
+                button_order=item.get('index'),
+                type=item.get('type'),
+                content=item.get('content'),
+                title=item.get('title')
+            )
+    return None
 
 
-def createZnsFieldPayment(zns, data) -> str:
+def createZnsFieldPayment(zns, data) -> Optional[str]:
     zns_component_zns = createZnsComponent(zns, data)
     bank = Banks.objects.get(bin_code=data.get('bank_code'))
+    if data.get('id'):
+        zns_field = ZnsFieldPayment.objects.filter(id=data.get('id')).first()
+        if not zns_field:
+            return 'component Thanh toán không tồn tại'
+        if data.get('action') == 'delete':
+            zns_field.delete()
+            zns_component_zns.delete()
+            return None
+        zns_field.bank_code = bank
+        zns_field.account_name = data.get('account_name')
+        zns_field.bank_account = data.get('account_number')
+        zns_field.amount = data.get('amount')
+        zns_field.note = data.get('note')
+        zns_field.save()
+        return None
+
     ZnsFieldPayment.objects.create(
         bank_code=bank,
         component=zns_component_zns,
@@ -178,11 +243,27 @@ def createZnsFieldPayment(zns, data) -> str:
         amount=data.get('amount'),
         note=data.get('note'),
     )
-    return 'success'
+    return None
 
 
-def createZnsFieldVoucher(zns, data) -> str:
+def createZnsFieldVoucher(zns, data) -> Optional[str]:
     zns_component_zns = createZnsComponent(zns, data)
+    if data.get('id'):
+        zns_field = ZnsFieldVoucher.objects.filter(id=data.get('id')).first()
+        if not zns_field:
+            return 'component Khuyến mãi không tồn tại'
+        if data.get('action') == 'delete':
+            zns_field.delete()
+            zns_component_zns.delete()
+            return None
+        zns_field.name = data.get('name')
+        zns_field.condition = data.get('condition')
+        zns_field.start_date = data.get('start_date')
+        zns_field.end_date = data.get('end_date')
+        zns_field.voucher_code = data.get('voucher_code')
+        zns_field.display_code = data.get('display_code')
+        zns_field.save()
+        return None
     ZnsFieldVoucher.objects.create(
         component=zns_component_zns,
         name=data.get('name'),
@@ -192,4 +273,4 @@ def createZnsFieldVoucher(zns, data) -> str:
         voucher_code=data.get('voucher_code'),
         display_code=data.get('display_code'),
     )
-    return 'success'
+    return None
