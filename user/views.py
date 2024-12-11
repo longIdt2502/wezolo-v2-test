@@ -182,12 +182,12 @@ class ForgotPasswordAPIView(APIView):
             return convert_response('Số điện thoại không tồn tại', 400)
         digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
         otp = ''.join(random.choice(digits) for i in range(6))
-        otp = '123456'
         verify = Verify.objects.create(
             phone_number=phone,
             otp=otp,
             type='FORGOT_PASSWORD'
         )
+        send_zns_otp(otp, phone)
         return convert_response('success', 200, data={"verify_id": verify.id})
 
 
