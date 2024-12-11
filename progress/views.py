@@ -32,8 +32,9 @@ class ProgressApi(APIView):
             progress = Progress.objects.filter()
 
             oa_query = data.get('oa')
-            if oa_query not in oas and oa_query:
-                raise Exception('Không có quyền truy cập Oa đã chọn')
+            if oa_query:
+                if int(oa_query) not in oas:
+                    raise Exception('Không có quyền truy cập Oa đã chọn')
             if oa_query:
                 progress = progress.filter(oa_id=oa_query)
             else:
@@ -66,7 +67,7 @@ class ProgressApi(APIView):
             # )
 
             tags_subquery = SubqueryJsonAgg(
-                ProgressTag.objects.filter(progress_id=OuterRef('id')).order_by('order').values()
+                ProgressTag.objects.filter(progress_id=OuterRef('id')).values()
             )
 
             oa_subquery = SubqueryJson(
