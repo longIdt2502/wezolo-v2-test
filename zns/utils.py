@@ -195,10 +195,10 @@ def createZnsFieldButton(zns, data) -> Optional[str]:
                 zns_field.delete()
                 continue
             zns_field.component = zns_component_zns
-            zns_field.button_order = item.get('index')
-            zns_field.type = item.get('type')
-            zns_field.content = item.get('content')
-            zns_field.title = item.get('title')
+            zns_field.button_order = item.get('index', zns_field.button_order)
+            zns_field.type = item.get('type', zns_field.type)
+            zns_field.content = item.get('content', zns_field.content)
+            zns_field.title = item.get('title', zns_field.title)
             zns_field.save()
         else:
             ZnsFieldButton.objects.create(
