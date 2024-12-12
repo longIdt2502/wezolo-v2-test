@@ -47,7 +47,16 @@ class Customer(models.Model):
     def to_json(self):
         return {
             "prefix_name": self.prefix_name,
-
+            "workspace": self.workspace.to_json(),
+            "phone": self.phone,
+            "email": self.email,
+            "address": self.address,
+            "gender": self.gender,
+            "birthday": self.birthday,
+            "source": self.source,
+            "note": self.note,
+            "file_import": self.file_import,
+            "created_at": self.created_at,
         }
 
 

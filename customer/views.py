@@ -143,8 +143,31 @@ class CustomerDetail(APIView):
 
     def get(self, request, pk):
         try:
+            tags_subquery = SubqueryJsonAgg(
+                Tag.objects.filter(oa_id=OuterRef('oa_id')).values(
+                    'id', 'title', 'color_text', 'color_fill', 'color_border'
+                )
+            )
             customer = Customer.objects.get(id=pk)
-            return convert_response('success', 200, data=customer.to_json())
+            customer = customer.to_json()
+
+            oa_follow = CustomerUserZalo.objects.filter(customer_id=pk)
+            customer['oa_follow'] = oa_follow.values(
+                'oa__oa_name', 'oa__oa_avatar'
+            ).annotate(
+                tags=tags_subquery
+            )
+
+            customer['oa_unfollow'] = ZaloOA.objects.filter(company_id=customer['workspace']['id']).exclude(
+                id__in=oa_follow.values_list('oa_id', flat=True)
+            ).values('oa_name', 'oa_avatar').annotate(
+                tags=SubqueryJsonAgg(
+                    Tag.objects.filter(oa_id=OuterRef('id')).values(
+                        'id', 'title', 'color_text', 'color_fill', 'color_border'
+                    )
+                )
+            )
+            return convert_response('success', 200, data=customer)
 
         except Exception as e:
             return convert_response(str(e), 400)

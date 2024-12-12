@@ -246,9 +246,9 @@ class ZnsLog(models.Model):
         CREATE = 'CREATE', 'Tạo mới'
         UPDATE = 'UPDATE', 'Cập nhật'
         DELETE = 'DELETE', 'Xoá'
-        REJECT = 'REJECT', 'Từ chối'
-        LOCK = 'LOCK', 'Khoá'
-        APPROVE = 'APPROVE', 'Đã duyệt'
+        REJECTED = 'REJECTED', 'Từ chối'
+        LOCKED = 'LOCKED', 'Khoá'
+        APPROVED = 'APPROVED', 'Đã duyệt'
 
     zns = models.ForeignKey(Zns, on_delete=models.CASCADE, null=False)
     type = models.CharField(max_length=100, choices=Type.choices, null=False)
