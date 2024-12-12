@@ -109,9 +109,9 @@ def createZnsFieldTable(zns, data) -> Optional[str]:
             if data.get('action') == 'delete':
                 zns_field.delete()
             else:
-                zns_field.value = item.get('value', zns_field.value),
-                zns_field.title = item.get('title', zns_field.title),
-                zns_field.row_type = item.get('row_type', zns_field.row_type),
+                zns_field.value = item.get('value', zns_field.value)
+                zns_field.title = item.get('title', zns_field.title)
+                zns_field.row_type = item.get('row_type', zns_field.row_type)
                 zns_field.save()
         else:
             ZnsFieldTable.objects.create(
