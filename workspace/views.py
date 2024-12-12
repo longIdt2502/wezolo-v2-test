@@ -106,6 +106,7 @@ class Workspaces(APIView):
                     address_data = json.loads(request.POST.get('address'))
                     address_ins = Address().create_from_json(address_data)
                     ws.address = address_ins
+                    ws.save()
 
                 if ws_count == 0 and not user.package:
                     package = Package.objects.get(code='FREE_TRIAL')

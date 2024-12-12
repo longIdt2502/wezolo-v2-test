@@ -37,6 +37,7 @@ services:
       - AWS_S3_CUSTOM_DOMAIN=dj8k73wzhvv1w.cloudfront.net
       - ZALO_APP_ID=3400715993471037517
       - ZALO_APP_SECRET=yM7wVNiI0hIV8VlYSik2
+      - OA_SECRET_KEY=lqB7IeyOF9xvReVx1tbt
       - ZALO_OA_AUTH_DOMAIN=https://oauth.zaloapp.com/v4/oa/permission
       - PAY_OS_CLIENT_ID='5a2c1b39-1217-442e-b933-20720bd0531c'
       - PAY_OS_API_KEY='8a0eeaf0-34ff-45b2-bed5-93008bf27441'
