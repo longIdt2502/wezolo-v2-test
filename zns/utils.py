@@ -110,7 +110,6 @@ def createZnsFieldTable(zns, data) -> Optional[str]:
                 zns_field.delete()
             else:
                 zns_field.value = item.get('value', zns_field.value),
-                zns_field.index = item.get('index', zns_field.index),
                 zns_field.title = item.get('title', zns_field.title),
                 zns_field.row_type = item.get('row_type', zns_field.row_type),
                 zns_field.save()
