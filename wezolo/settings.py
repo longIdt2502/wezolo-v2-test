@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'progress',
     'zns',
     'bank',
+    'chatbot',
 ]
 
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
