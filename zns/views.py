@@ -38,6 +38,9 @@ class ZnsApi(APIView):
         oas = ZaloOA.objects.filter(company_id__in=ws).values_list('id', flat=True)
 
         zns = Zns.objects.filter(oa_id__in=oas)
+        if user.is_superuser:
+            zns = Zns.objects.filter()
+
         search = data.get('search')
         if search:
             zns = zns.filter(Q(name__icontains=search) | Q(template__icontains=search))

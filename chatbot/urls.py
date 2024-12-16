@@ -2,5 +2,6 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path('campaign', ChatbotApi.as_view())
+    path('manage', ChatbotApi.as_view()),
+    path('detail/<int:pk>', ChatbotDetail.as_view()),
 ]
