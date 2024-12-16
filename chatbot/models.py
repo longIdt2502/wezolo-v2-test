@@ -4,10 +4,10 @@ from user.models import User
 from zalo.models import ZaloOA
 
 
-class ChatbotCampaign(models.Model):
+class Chatbot(models.Model):
     class Meta:
-        verbose_name = 'ChatbotCampaign'
-        db_table = 'chatbot_campaign'
+        verbose_name = 'Chatbot'
+        db_table = 'chatbot'
 
     name = models.CharField(max_length=255, null=True, blank=True)
     is_active = models.BooleanField(default=True, null=False)
@@ -32,7 +32,7 @@ class ChatbotAnswer(models.Model):
         HELP = 'HELP', 'Câu hướng dẫn'
 
     answer = models.TextField(null=False)
-    campaign = models.ForeignKey(ChatbotCampaign, on_delete=models.SET_NULL, null=True)
+    chatbot = models.ForeignKey(Chatbot, on_delete=models.SET_NULL, null=True)
     image = models.CharField(max_length=255, null=True, blank=True)
     type = models.CharField(max_length=60, choices=Type.choices, null=True)
     create_at = models.DateTimeField(auto_now_add=True)
