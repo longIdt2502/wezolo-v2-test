@@ -31,11 +31,11 @@ class Workspaces(APIView):
         page_size = int(data.get('page_size', 20))
         offset = (int(data.get('page', 1)) - 1) * page_size
         search = data.get('search', '')
-        type = data.get('type', 'ONWER')
+        type = data.get('type', Role.Code.OWNER)
 
         roles_list = Role.objects.exclude(code=Role.Code.OWNER).values_list('id', flat=True)
 
-        if type == 'ONWER':
+        if type == Role.Code.OWNER:
             ws = Workspace.objects.filter(created_by_id=user.id)
         else:
             in_workspaces = Employee.objects.filter(account_id=user.id, role_id__in=roles_list).values_list('workspace_id', flat=True)
@@ -48,7 +48,7 @@ class Workspaces(APIView):
 
         category = data.get('category')
         if category:
-            ws = ws.filter(category_id=category)
+            ws = ws.filter(category=category)
 
         # "created_at" | "-created_at"
         order_by_time = data.get('order_by_time')
