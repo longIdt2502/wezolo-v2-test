@@ -34,12 +34,12 @@ class ChatbotApi(APIView):
 
         total = campaign.count()
 
-        question_subquery = SubqueryJson(
-            ChatbotQuestion.objects.filter(answer_id=OuterRef('id')).values()[:1]
+        question_subquery = SubqueryJsonAgg(
+            ChatbotQuestion.objects.filter(answer_id=OuterRef('id')).values()
         )
 
         answer_subquery = SubqueryJsonAgg(
-            ChatbotAnswer.objects.filter(campaign_id=OuterRef('id')).values().annotate(
+            ChatbotAnswer.objects.filter(chatbot_id=OuterRef('id')).values().annotate(
                 question=question_subquery
             )
         )
@@ -79,12 +79,21 @@ class ChatbotApi(APIView):
                         created_by=user,
                     )
 
-                    question = ChatbotQuestion.objects.create(
-                        content=item.get('question'),
-                        type=item.get('type_question'),
-                        answer=answer,
-                        created_by=user,
-                    )
+                    if item.get('type_question') == ChatbotQuestion.Type.KEYWORD:
+                        for key in item.get('question', []):
+                            ChatbotQuestion.objects.create(
+                                content=key,
+                                type=ChatbotQuestion.Type.KEYWORD,
+                                answer=answer,
+                                created_by=user,
+                            )
+                    else:
+                        ChatbotQuestion.objects.create(
+                            content=item.get('question'),
+                            type=ChatbotQuestion.Type.QUESTION,
+                            answer=answer,
+                            created_by=user,
+                        )
 
                 return convert_response('success', 200, data=chatbot.id)
         except Exception as e:
@@ -95,12 +104,12 @@ class ChatbotDetail(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        question_subquery = SubqueryJson(
-            ChatbotQuestion.objects.filter(answer_id=OuterRef('id')).values()[:1]
+        question_subquery = SubqueryJsonAgg(
+            ChatbotQuestion.objects.filter(answer_id=OuterRef('id')).values()
         )
 
         answer_subquery = SubqueryJsonAgg(
-            ChatbotAnswer.objects.filter(campaign_id=OuterRef('id')).values().annotate(
+            ChatbotAnswer.objects.filter(chatbot_id=OuterRef('id')).values().annotate(
                 question=question_subquery
             )
         )
