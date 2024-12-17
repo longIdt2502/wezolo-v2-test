@@ -32,10 +32,10 @@ class Workspaces(APIView):
         offset = (int(data.get('page', 1)) - 1) * page_size
         search = data.get('search', '')
 
-        ws = Workspace.objects.filter(created_by=user)
+        in_workspaces = Employee.objects.filter(account_id=user.id).values_list('workspace_id', flat=True)
+        ws = Workspace.objects.filter(id__in=in_workspaces)
 
         ws = ws.filter(name__icontains=search)
-
         status = data.get('status')
         if status:
             ws = ws.filter(status=status)
@@ -61,8 +61,18 @@ class Workspaces(APIView):
             Value(0),
             output_field=FloatField()
         )
+
+        role_data = SubqueryJson(
+            Employee.objects.filter(account_id=user.id, workspace_id=OuterRef('id')).values('id')[:1]
+            .annotate(
+                role_data=SubqueryJson(
+                    Role.objects.filter(id=OuterRef('role')).values()[:1]
+                )
+            )
+        )
         ws = ws.values().annotate(
             total_money_spent=total_money_spent_query,
+            role=role_data
         )
 
         order_by_money_spent = data.get('order_by_money_spent')
