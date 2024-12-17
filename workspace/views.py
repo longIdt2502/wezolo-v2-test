@@ -31,10 +31,16 @@ class Workspaces(APIView):
         page_size = int(data.get('page_size', 20))
         offset = (int(data.get('page', 1)) - 1) * page_size
         search = data.get('search', '')
+        type = data.get('type', 'ONWER')
 
-        in_workspaces = Employee.objects.filter(account_id=user.id).values_list('workspace_id', flat=True)
-        ws = Workspace.objects.filter(id__in=in_workspaces)
+        roles_list = Role.objects.exclude(code=Role.Code.OWNER).values_list('id', flat=True)
 
+        if type == 'ONWER':
+            ws = Workspace.objects.filter(created_by_id=user.id)
+        else:
+            in_workspaces = Employee.objects.filter(account_id=user.id, role_id__in=roles_list).values_list('workspace_id', flat=True)
+            ws = Workspace.objects.filter(id__in=in_workspaces)
+            
         ws = ws.filter(name__icontains=search)
         status = data.get('status')
         if status:
