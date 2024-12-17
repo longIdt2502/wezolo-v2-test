@@ -12,6 +12,7 @@ from common.core.subquery import *
 from zalo.models import UserZalo, ZaloOA
 from zalo_messages.models import Message
 from tags.models import TagUserZalo
+from employee.models import Employee
 
 
 class MessageApi(APIView):
@@ -28,6 +29,11 @@ class MessageApi(APIView):
         if not zalo_oa_id:
             return convert_response('Yêu cầu truyền OA', 400)
         oa = ZaloOA.objects.filter(uid_zalo_oa=zalo_oa_id).first()
+
+        workspaces = Employee.objects.filter(account=user).values_list('workspace_id', flat=True)
+        if oa.company.id not in workspaces:
+            return convert_response('Bạn không có quyền truy cập', 403)
+
         if not oa:
             return convert_response('Oa không tồn tại', 400)
         user = UserZalo.objects.filter(oa=oa)
