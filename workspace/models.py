@@ -38,7 +38,7 @@ class Workspace(models.Model):
     tax_number = models.CharField(max_length=255, null=True, blank=True)
     email = models.EmailField(_('email address'), null=True, blank=True)
     image = models.TextField(null=True, blank=True)
-    category = models.ForeignKey(WorkspaceCategory, null=True, on_delete=models.SET_NULL)
+    category = models.CharField(max_length=255, null=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(null=True, blank=True)

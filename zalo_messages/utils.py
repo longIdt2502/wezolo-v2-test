@@ -5,15 +5,15 @@ import requests
 
 url = "https://openapi.zalo.me/v3.0/oa/message/cs"
 
-def send_message_text(access_token):
+def send_message_text(access_token, user_id, message):
     url = "https://oauth.zaloapp.com/v4/oa/access_token"
 
     payload = json.dumps({
         "recipient": {
-            "user_id": "2512523625412515"
+            "user_id": user_id
         },
         "message": {
-            "text": "hello, world!"
+            "text": message
         }
     })
     headers = {
@@ -22,5 +22,5 @@ def send_message_text(access_token):
     }
 
     response = requests.request("POST", url, headers=headers, data=payload)
-
+    print(response.json())
     return response.json()
