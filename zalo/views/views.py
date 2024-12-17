@@ -11,7 +11,7 @@ import django_rq
 
 from common.redis.config import task_queue
 from django.db import transaction
-from django.db.models import OuterRef
+from django.db.models import OuterRef, Q
 from rest_framework.views import APIView
 
 from common.zalo.event_name import ZaloEventName
@@ -47,6 +47,24 @@ class ZaloOaAPI(APIView):
         ws = data.get('workspace')
         if ws:
             zalo_oa = zalo_oa.filter(company_id=ws)
+
+        search = data.get('search')
+        if search:
+            zalo_oa = zalo_oa.filter(Q(oa_name__icontains=search))
+
+        status = data.get('status')
+        if status:
+            result = status.split("-")
+            if len(result):
+                zalo_oa = zalo_oa.filter(status__in=result)
+            else:
+                zalo_oa = zalo_oa.filter(status=status)
+
+        employee = data.get('employee')
+        if employee:
+            zalo_oa_ids = zalo_oa.values_list('id', flat=True)
+            oa_ids = EmployeeOa.objects.filter(employee_id=employee, oa_id__in=zalo_oa_ids).values_list('oa_id', flat=True)
+            zalo_oa = zalo_oa.filter(id__in=oa_ids)
 
         role_subquery = SubqueryJson(
             Role.objects.filter(id=OuterRef('role_id')).values(
