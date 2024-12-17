@@ -39,7 +39,7 @@ class ZnsApi(APIView):
 
         zns = Zns.objects.filter(oa_id__in=oas)
         if user.is_superuser:
-            zns = Zns.objects.filter()
+            zns = Zns.objects.filter().exclude(status=Zns.STATUS_CHOICES[0][0])
 
         search = data.get('search')
         if search:
@@ -90,6 +90,7 @@ class ZnsCreateApi(APIView):
             with transaction.atomic():
                 zns = Zns.objects.create(
                     name=data.get('name'),
+                    status=data.get('status'),
                     type=data.get('type'),
                     tag=data.get('tag'),
                     oa_id=data.get('oa'),
