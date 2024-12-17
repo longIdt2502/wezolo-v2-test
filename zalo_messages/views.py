@@ -13,6 +13,7 @@ from zalo.models import UserZalo, ZaloOA
 from zalo_messages.models import Message
 from tags.models import TagUserZalo
 from employee.models import Employee
+from zalo_messages.utils import send_message_text
 
 
 class MessageApi(APIView):
@@ -85,6 +86,8 @@ class MessageApi(APIView):
                 send_by=user,
                 oa=oa
             )
+
+            send_message_text(oa.access_token, user_zalo.user_zalo_id, data.get('message'))
 
             return convert_response('success', 200)
         except Exception as e:

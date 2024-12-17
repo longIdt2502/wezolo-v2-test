@@ -137,17 +137,17 @@ class ResendOTPAPIView(APIView):
 
     def post(self, request):
         data = request.data.copy()
-        phone = request.data.get("phone", None)
-        type_verify = request.data.get("type_verify", None)
+        phone = data.get("phone", None)
+        type_verify = data.get("type_verify", None)
         verify = Verify.objects.filter(phone_number=phone, type=type_verify).first()
         if not verify:
             return convert_response('can not find verify user', 404)
         digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
         otp = ''.join(random.choice(digits) for i in range(6))
         otp = '123456'
-        verify.otp = otp
         verify.expired_at = datetime.now() + timedelta(seconds=90)
         verify.save()
+        send_zns_otp(otp, phone)
         return convert_response('success', 200)
 
 

@@ -11,12 +11,7 @@ db-data
 compose.yaml
 backup
 
-# Bỏ qua tất cả file trong thư mục migrations
-*/migrations/*
-# Nhưng không bỏ qua chính thư mục migrations
-!*/migrations/
-# Giữ file __init__.py để Django nhận diện migrations như một package
-!*/migrations/__init__.py
+**/migrations/
 
 pharmago/settings.py
 media/
