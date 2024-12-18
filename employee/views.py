@@ -7,7 +7,7 @@ from utils.convert_response import convert_response
 
 from employee.models import Employee, EmployeeOa, EmployeeUserZalo
 from user.models import User
-from workspace.models import Role
+from workspace.models import Role, Workspace
 from zalo.models import ZaloOA, UserZalo
 
 
@@ -84,6 +84,9 @@ class Employees(APIView):
         workspace = data.get('workspace')
         if not workspace:
             return convert_response('Yêu cầu thông tin workspace', 400)
+        workspace_ins = Workspace.objects.get(id=workspace)
+        if workspace_ins.created_by.phone == phone:
+            return convert_response('Tài khoản đã là chủ Workspace', 400)
         role = data.get('role')
         if not role:
             return convert_response('Yêu cầu thông tin vai trò', 400)

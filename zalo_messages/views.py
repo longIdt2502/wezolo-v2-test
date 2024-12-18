@@ -4,13 +4,14 @@ import random
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.shortcuts import render
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from django.db.models import OuterRef, Q, Case, When, Value
 from django.core.files.base import ContentFile
 from common.s3 import AwsS3
 from common.zalo.request import update_token_oa
-
+import requests
+from rest_framework import response, status
 from utils.convert_response import convert_response
 from workspace.models import Role
 from ws.event import send_message_to_ws
@@ -122,6 +123,18 @@ class MessageApi(APIView):
                     }
                 }
 
+            if data.get('type_message') == Message.Type.STICKER:
+                attachment = {
+                    "type": "template",
+                    "payload": {
+                        "template_type": "media",
+                        "elements": [{
+                            "media_type": "sticker",
+                            "attachment_id": data.get('attachment_id')
+                        }]
+                    }
+                }
+
             res = send_message_text(oa, user_zalo_id, {
                 'text': data.get('message'),
                 'quote_message_id': data.get('quote_message_id'),
@@ -176,3 +189,27 @@ class MessageFileListApi(APIView):
         )[offset: offset + page_size].values()
 
         return convert_response('success', 200, data=messages)
+
+
+class MessageStickerApi(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, _):
+        url = "https://stickers.zaloapp.com/sticker"
+        payload = {}
+        headers = {}
+        res = requests.request("GET", url, headers=headers, data=payload)
+
+        return response.Response(status=status.HTTP_200_OK, data=res.json())
+
+
+class MessageStickerDetailApi(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, _, pk):
+        url = f"https://stickers.zaloapp.com/cate-stickers?cid={pk}"
+        payload = {}
+        headers = {}
+        res = requests.request("GET", url, headers=headers, data=payload)
+
+        return response.Response(status=status.HTTP_200_OK, data=res.json())
