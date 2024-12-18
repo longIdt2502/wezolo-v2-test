@@ -36,7 +36,7 @@ class Employees(APIView):
         # filter by Role
         role_query = data.get('role')
         if role_query:
-            employees_in_ws = employees_in_ws.filter(role_id=role_query)
+            employees_in_ws = employees_in_ws.filter(role__code=role_query)
         # filter by Status
         status_query = data.get('status')
         if status_query:

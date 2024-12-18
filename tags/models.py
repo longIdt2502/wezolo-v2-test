@@ -72,6 +72,15 @@ class TagUserZalo(models.Model):
     updated_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='user_updated_tag_user_zalo')
 
 
+    def to_json(self):
+        return {
+            'id': self.tag.id,
+            'title': self.tag.title,
+            'color_text': self.tag.color_text,
+            'color_fill': self.tag.color_fill,
+            'color_border': self.tag.color_border,
+        }
+
 class TagUserZaloHistory(models.Model):
     class Meta:
         verbose_name = 'TagUserZaloHistory'
