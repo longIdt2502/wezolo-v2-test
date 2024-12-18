@@ -323,8 +323,8 @@ class ZaloOaAcceptAuth(APIView):
                         zalo_oa.oa_type = data_oa_info.get('oa_type')
                         zalo_oa.cate_name = data_oa_info.get('cate_name')
                         zalo_oa.num_follower = data_oa_info.get('num_follower')
-                        zalo_oa.oa_avatar = data_oa_info.get('oa_avatar')
-                        zalo_oa.oa_cover = data_oa_info.get('oa_cover')
+                        zalo_oa.oa_avatar = data_oa_info.get('avatar')
+                        zalo_oa.oa_cover = data_oa_info.get('cover')
                         zalo_oa.package_name = data_oa_info.get('package_name')
                         zalo_oa.access_token = access_token
                         zalo_oa.refresh_token = refresh_token

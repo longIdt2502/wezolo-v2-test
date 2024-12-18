@@ -6,7 +6,7 @@ from channels.layers import get_channel_layer
 from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-from django.db.models import OuterRef, Q
+from django.db.models import OuterRef, Q, Case, When, Value
 from django.core.files.base import ContentFile
 from common.s3 import AwsS3
 from common.zalo.request import update_token_oa
@@ -65,7 +65,13 @@ class MessageApi(APIView):
             user_id_in_tags = tags_query.values_list('user_zalo_id', flat=True)
             user = user.filter(id__in=user_id_in_tags)
         
-        users = user.order_by('-last_message_time')[offset: offset + page_size]
+        user = user.annotate(
+            is_null_last_message_time=Case(
+                When(last_message_time__isnull=True, then=Value(1)),
+                When(last_message_time__isnull=False, then=Value(0)),
+            )
+        )
+        users = user.order_by('is_null_last_message_time', '-last_message_time')[offset: offset + page_size]
         res = []
         for item in users:
             res.append(item.to_json())
@@ -150,10 +156,11 @@ class MessageListApi(APIView):
         
         page_size = int(data.get('page_size', 20))
         offset = (int(data.get('page', 1)) - 1) * page_size
-        
-        messages = Message.objects.filter(Q(from_id=pk) | Q(to_id=pk)).order_by('-id')[offset: offset + page_size].values()
+        messages = Message.objects.filter(Q(from_id=pk) | Q(to_id=pk))
+        total = messages.count()
+        messages = messages.order_by('-id')[offset: offset + page_size].values()
 
-        return convert_response('success', 200, data=messages)
+        return convert_response('success', 200, data=messages, total=total)
 
 class MessageFileListApi(APIView):
     permission_classes = [IsAuthenticated]
