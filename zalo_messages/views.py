@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import random
 from asgiref.sync import async_to_sync
@@ -64,7 +65,7 @@ class MessageApi(APIView):
             user_id_in_tags = tags_query.values_list('user_zalo_id', flat=True)
             user = user.filter(id__in=user_id_in_tags)
         
-        users = user.order_by('-id')[offset: offset + page_size]
+        users = user.order_by('-last_message_time')[offset: offset + page_size]
         res = []
         for item in users:
             res.append(item.to_json())
@@ -73,11 +74,11 @@ class MessageApi(APIView):
     def post(self, request):
         try:
             user = request.user
-            # data = request.data.copy()
 
             data = json.loads(request.POST.get('data'))
+            user_zalo_id = data.get('user_zalo_id')
             oa = ZaloOA.objects.get(id=data.get('oa'))
-            user_zalo = UserZalo.objects.get(user_zalo_id=data.get('user_zalo_id'))
+            user_zalo = UserZalo.objects.get(user_zalo_id=user_zalo_id)
             
             attachment = {}
             message_url = None
@@ -115,12 +116,12 @@ class MessageApi(APIView):
                     }
                 }
 
-            res = send_message_text(oa, user_zalo.user_zalo_id, {
+            res = send_message_text(oa, user_zalo_id, {
                 'text': data.get('message'),
                 'quote_message_id': data.get('quote_message_id'),
                 'attachment': attachment
             })
-
+            print(res)
             if res['error'] == 0:
                 Message.objects.create(
                     src=Message.Src.OA,
@@ -132,7 +133,8 @@ class MessageApi(APIView):
                     to_id=user_zalo.user_zalo_id,
                     success=True,
                     send_by=user,
-                    oa=oa
+                    oa=oa,
+                    send_at=int(datetime.now().timestamp() * 1000),
                 )
 
             return convert_response('success', 200)

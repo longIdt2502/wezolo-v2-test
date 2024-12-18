@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import models
 from wheel.metadata import _
 from common.core.subquery import SubqueryJsonAgg
@@ -67,12 +68,15 @@ class Message(models.Model):
         user_zalo = UserZalo.objects.filter(user_zalo_id=user_zalo_id).first()
         send_message_to_ws(f'message_user_in_oa_{self.oa.uid_zalo_oa}', 'message_handler', user_zalo.to_json())
 
+        user_zalo.last_message_time = datetime.fromtimestamp(self.send_at / 1000)
+        user_zalo.save()
+
     def from_json(self, data):
         message = Message.objects.create(
             message_id=data.get('message_id'),
             quote_msg_id=data.get('quote_msg_id'),
             src=data.get('src'),
-            send_at=data.get('send_at'),
+            send_at=data.get('send_at', int(datetime.now().timestamp() * 1000)),
             type_message=data.get('type_message'),
             type_send=data.get('type_send'),
             message_text=data.get('message_text'),
