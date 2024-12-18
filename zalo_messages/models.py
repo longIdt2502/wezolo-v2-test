@@ -92,6 +92,7 @@ class Message(models.Model):
 
     def to_json(self):
         return {
+            'id': self.id,
             'message_id': self.message_id,
             'quote_msg_id': self.quote_msg_id,
             'uuid': self.uuid,
