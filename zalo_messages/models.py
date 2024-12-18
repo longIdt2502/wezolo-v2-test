@@ -4,6 +4,7 @@ from wheel.metadata import _
 from common.core.subquery import SubqueryJsonAgg
 from employee.models import EmployeeUserZalo
 from tags.models import TagUserZalo
+import pytz
 
 from user.models import User
 from ws.event import send_message_to_ws
@@ -68,7 +69,7 @@ class Message(models.Model):
         user_zalo = UserZalo.objects.filter(user_zalo_id=user_zalo_id).first()
         send_message_to_ws(f'message_user_in_oa_{self.oa.uid_zalo_oa}', 'message_handler', user_zalo.to_json())
 
-        user_zalo.last_message_time = datetime.fromtimestamp(float(self.send_at) / 1000)
+        user_zalo.last_message_time = datetime.fromtimestamp(float(self.send_at) / 1000).astimezone(pytz.timezone('Asia/Ho_Chi_Minh'))
         user_zalo.save()
 
     def from_json(self, data):
