@@ -163,7 +163,7 @@ class ProfileView(APIView):
         data = request.POST.get('data')
         if data:
             data = json.loads(request.POST.get('data'))
-            if request.get('full_name') == '':
+            if data.get('full_name') == '':
                 return convert_response('yêu cầu điền tên', 400)
             user.update_from_json(data)
         image = request.FILES.get('image')
