@@ -213,6 +213,20 @@ class MessageFileUploadApi(APIView):
         data = json.loads(request.POST.get('data'))
         oa = ZaloOA.objects.get(uid_zalo_oa=data.get('oa_uid'))
         file = request.FILES.get('file', None)
+        if not file:
+            return convert_response('yêu cầu truyền file', 400)
+
+        # Kiểm tra định dạng file
+        allowed_file_types = ['application/pdf', 
+                            'application/msword', 
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+        if file.content_type not in allowed_file_types:
+            return convert_response('Chỉ hỗ trợ file PDF/DOC/DOCX', 400)
+        # Kiểm tra dung lượng file (giới hạn 5MB)
+        max_file_size = 5 * 1024 * 1024  # 5MB in bytes
+        if file.size > max_file_size:
+            return convert_response('dung lượng file không vượt quá 5MB', 400)
+        
         url = "https://openapi.zalo.me/v2.0/oa/upload/file"
         payload = {}
         files = {
