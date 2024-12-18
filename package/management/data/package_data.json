@@ -8,7 +8,7 @@
     "points_reward": 0
   },
   {
-    "name": "Gói 1 - Bạc",
+    "name": "Bạc",
     "code": "PACKAGE_1",
     "description": "Gói dùng thử miễn phí tạo duy nhất 1 Workspace",
     "price": 6000000,
@@ -16,7 +16,7 @@
     "points_reward": 80000000
   },
   {
-    "name": "Gói 2 - Vàng",
+    "name": "Vàng",
     "code": "PACKAGE_2",
     "description": "Được tặng 100.000.000 điểm thưởng",
     "price": 12000000,
@@ -24,7 +24,7 @@
     "points_reward": 100000000
   },
   {
-    "name": "Gói 3 - Bạch kim",
+    "name": "Bạch kim",
     "code": "PACKAGE_3",
     "description": "Được tặng 1.000.000.000 điểm thưởng",
     "price": 24000000,

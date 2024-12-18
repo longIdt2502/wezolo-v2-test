@@ -11,6 +11,7 @@ from django.db.models import Q, OuterRef, IntegerField, Count, F
 from rest_framework.authtoken.models import Token
 from common.pref_keys import PrefKeys
 from common.core.subquery import *
+from employee.models import Employee, EmployeeOa
 
 from utils.convert_response import convert_response
 from user.serializers import UserSerializer
@@ -163,6 +164,8 @@ class ProfileView(APIView):
         data = request.POST.get('data')
         if data:
             data = json.loads(request.POST.get('data'))
+            if request.get('full_name') == '':
+                return convert_response('yêu cầu điền tên', 400)
             user.update_from_json(data)
         image = request.FILES.get('image')
         if image:
@@ -185,7 +188,8 @@ class ForgotPasswordAPIView(APIView):
         verify = Verify.objects.create(
             phone_number=phone,
             otp=otp,
-            type='FORGOT_PASSWORD'
+            type='FORGOT_PASSWORD',
+            expired_at=datetime.now()+timedelta(seconds=90)
         )
         send_zns_otp(otp, phone)
         return convert_response('success', 200, data={"verify_id": verify.id})
@@ -329,9 +333,17 @@ class UsersManage(APIView):
             output_field=IntegerField()
         )
 
-        users = users_query.filter(
-            Q(phone__icontains=search) | Q(full_name__icontains=search)
-        )[offset: offset + page_size].values().annotate(
+        ws = Workspace.objects.filter(name__icontains=search)
+        employee = Employee.objects.filter(workspace_id__in=ws.values_list('id', flat=True))
+        oa = ZaloOA.objects.filter(oa_name__icontains=search)
+        employee_oa = EmployeeOa.objects.filter(oa_id__in=oa.values_list('id', flat=True))
+        user_ids = users_query.filter(Q(phone__icontains=search) | Q(full_name__icontains=search)).values_list('id', flat=True)
+
+        user_ids_employee = list(employee.values_list('account_id', flat=True))
+        user_ids_oa = list(employee_oa.values_list('employee__account_id', flat=True))
+        user_ids = list(set(user_ids_employee + user_ids_oa + list(user_ids)))
+        users_query = users_query.filter(id__in=user_ids)
+        users = users_query[offset: offset + page_size].values().annotate(
             wallet_data=SubqueryJson(
                 Wallet.objects.filter(id=OuterRef('wallet')).values(
                     'id', 'wallet_uid', 'balance'
@@ -375,6 +387,8 @@ class UserManageAction(APIView):
             user = User.objects.get(id=pk)
 
             password = data.get('password')
+            if password and (len(password) < 6 or len(password) > 12):
+                return convert_response('Mật khẩu sai định dạng', 400)
             if password:
                 user.set_password(password)
 

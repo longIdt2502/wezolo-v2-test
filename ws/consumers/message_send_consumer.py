@@ -49,6 +49,8 @@ class MessageSendConsumer(WebsocketConsumer):
 # This comsumer listen list user_zalo message, who employee take care in Oa
 class MessageOaConsumer(WebsocketConsumer):
     def connect(self):
+        query_params = parse_qs(self.scope['query_string'].decode())
+        self.user_id = query_params.get('user_id', [None])[0]
         self.oa_id = self.scope['url_route']['kwargs']['oa_id']
         self.zalo_oa = get_object_or_404(ZaloOA, uid_zalo_oa=self.oa_id)
 
@@ -57,29 +59,21 @@ class MessageOaConsumer(WebsocketConsumer):
         )
 
         # Lấy headers từ request
-        headers = dict(self.scope['headers'])
-        auth_header = headers.get(b'authorization', None)
+        # headers = dict(self.scope['headers'])
+        # auth_header = headers.get(b'authorization', None)
         self.accept()
 
-        if auth_header:
-            # Tách token từ header
-            token_key = auth_header.decode().split("Token ")[-1]
-            user = self.get_user_from_token(token_key)
-            if user:
-                self.user = user
-                try:
-                    self.employee = Employee.objects.get(account=user, workspace=self.zalo_oa.company)
-                    if self.employee.role.code == Role.Code.SALE:
-                        EmployeeOa.objects.get(employee=self.employee, oa=self.zalo_oa)
-                    return
-                except:
-                    self.send_error("Bạn không có quyền truy cập Zalo Oa")
-                    self.close()
-            else:
-                self.send_error("Invalid or expired token.")
+        if self.user_id:
+            try:
+                self.employee = Employee.objects.get(account_id=self.user_id, workspace=self.zalo_oa.company)
+                if self.employee.role.code == Role.Code.SALE:
+                    EmployeeOa.objects.get(employee=self.employee, oa=self.zalo_oa)
+                return
+            except:
+                self.send_error("Bạn không có quyền truy cập Zalo Oa")
+                self.close()
         else:
-            self.send_error("Missing authorization token.")
-        # Từ chối nếu không auth được
+            self.send_error("yêu cầu user_id")
         self.close()
 
     def disconnect(self, code):

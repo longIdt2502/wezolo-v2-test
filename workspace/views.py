@@ -230,7 +230,7 @@ class RoleAPI(APIView):
     permission_classes = [AllowAny]
 
     def get(self, _):
-        roles = Role.objects.filter().values()
+        roles = Role.objects.filter().exclude(code=Role.Code.OWNER).values()
         return convert_response('success', 200, data=roles)
 
 
@@ -294,3 +294,24 @@ class WorkspacesAdminAction(APIView):
         ws.dev_note = data.get('dev_note', ws.dev_note)
         ws.save()
         return convert_response('success', 200, data=ws.to_json())
+
+
+class Workplace(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        data = request.GET.copy()
+        page_size = int(data.get('page_size', 20))
+        offset = (int(data.get('page', 1)) - 1) * page_size
+        search = data.get('search', '')
+
+        employee = Employee.objects.filter(account=user).exclude(role__code=Role.Code.OWNER)
+        ws_ids = employee.values_list('workspace_id', flat=True)
+        ws = Workspace.objects.filter(id__in=ws_ids)
+        total = ws.count()
+        ws = ws.filter(name__icontains=search)
+        ws = ws[offset: offset + page_size].values()
+        return convert_response('success', 200, data=ws, total=total)
+
+
