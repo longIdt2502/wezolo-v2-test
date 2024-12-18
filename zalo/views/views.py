@@ -420,27 +420,47 @@ class ZaloMessageCreate(APIView):
             user = UserZalo.objects.filter(user_zalo_id=items[0].get('user_zalo_oa')).first()
             if not user:
                 return convert_response('Người dùng Zalo không tồn tại', 400)
-            message_ins = [
-                Message(
-                    message_id=item.get('message_id'),
-                    src=item.get('src'),
-                    send_by=user,
-                    time=item.get('time'),
-                    # send_at=datetime.strptime(item.get('sent_time'), "%H:%M:%S %d/%m/%Y") if item.get(
-                    #     'sent_time') else None,
-                    send_at=item.get('sent_time'),
-                    type_message=Message.Type.TEXT,
-                    type_send=Message.TypeSend.USER,
-                    message_thumb=item.get('message_thumb'),
-                    from_id=item.get('from_id'),
-                    to_id=item.get('to_id'),
-                    success=True,
-                    oa=user.oa,
-                    message_text=item.get('message'),
-                )
-                for item in items
-            ]
-            Message.objects.bulk_create(message_ins)
+            
+            for item in items:
+                payload = {
+                    "message_id": item.get('message_id'),
+                    "quote_msg_id": item.get('quote_msg_id'),
+                    "src": item.get('src'),
+                    "send_at": item.get('sent_time'),
+                    "type_message": Message.Type.TEXT,
+                    "type_send": Message.TypeSend.USER,
+                    "message_text": item.get('message'),
+                    "message_url": item.get('message_url'),
+                    "message_links": item.get('message_links'),
+                    "message_location": item.get('message_location'),
+                    "from_id": item.get('from_id'),
+                    "to_id": item.get('to_id'),
+                    "success": True,
+                    "oa": user.oa.id,
+                }
+                message = Message().from_json(payload)
+                print(message.id)
+            # message_ins = [
+            #     Message(
+            #         message_id=item.get('message_id'),
+            #         src=item.get('src'),
+            #         send_by=user,
+            #         time=item.get('time'),
+            #         # send_at=datetime.strptime(item.get('sent_time'), "%H:%M:%S %d/%m/%Y") if item.get(
+            #         #     'sent_time') else None,
+            #         send_at=item.get('sent_time'),
+            #         type_message=Message.Type.TEXT,
+            #         type_send=Message.TypeSend.USER,
+            #         message_thumb=item.get('message_thumb'),
+            #         from_id=item.get('from_id'),
+            #         to_id=item.get('to_id'),
+            #         success=True,
+            #         oa=user.oa,
+            #         message_text=item.get('message'),
+            #     )
+            #     for item in items
+            # ]
+            # Message.objects.bulk_create(message_ins)
             return convert_response('success', 200)
         except Exception as e:
             return convert_response(str(e), 400)
