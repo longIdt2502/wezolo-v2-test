@@ -416,10 +416,10 @@ class ZaloMessageCreate(APIView):
         try:
             items = request.data.copy()
             if len(items) == 0:
-                return convert_response('Dữ liệu rỗng', 400)
+                raise Exception('Dữ liệu rỗng')
             user = UserZalo.objects.filter(user_zalo_id=items[0].get('user_zalo_oa')).first()
             if not user:
-                return convert_response('Người dùng Zalo không tồn tại', 400)
+                raise Exception('Người dùng Zalo không tồn tại')
             
             for item in items:
                 payload = {
@@ -463,4 +463,5 @@ class ZaloMessageCreate(APIView):
             # Message.objects.bulk_create(message_ins)
             return convert_response('success', 200)
         except Exception as e:
+            print(str(e))
             return convert_response(str(e), 400)
