@@ -88,10 +88,10 @@ class MessageApi(APIView):
             user_zalo = UserZalo.objects.get(user_zalo_id=user_zalo_id)
             
             attachment = {}
-            message_url = None
+            # message_url = None
             images = request.FILES.getlist('images', None)
             if images:
-                message_url = []
+                # message_url = []
                 attachment['type'] = 'template'
                 attachment['payload'] = {
                     "template_type": "media",
@@ -106,24 +106,32 @@ class MessageApi(APIView):
                         "media_type": "image",
                         "url": url
                     })
-                    message_url.append({
-                        "payload": {
-                            "thumbnail": url,
-                            "url": url
-                        },
-                        "type": "image"
-                    })
+                    # message_url.append({
+                    #     "payload": {
+                    #         "thumbnail": url,
+                    #         "url": url
+                    #     },
+                    #     "type": "image"
+                    # })
             
-            file = request.FILES.get('file', None)
-            if file:
+            if data.get('type_message') == Message.Type.FILE:
+                # message_url = []
                 attachment = {
                     "type": "file",
                     "payload": {
-                        "token": "12i8LV3BcmmDS4iLfyoU3qKxHXNtpu077ZjA7xRHmmi8EXrEjuR50LHjJXJWWvTQ17OJ7R2Oc5q4SHSJjPoPKmDq5X2tyS4MI78oKexCna1CUJnQyiMvUKmfG7UOX8PYVW5FJAckbWbi1tWbj8BnCNOyTGMBr8mrG5XZ4epkfbD4HczzjUs3FM0QL1ZM"
+                        "token": data.get('attachment_token')
                     }
                 }
+                # message_url.append({
+                #     "payload": {
+                #         "thumbnail": url,
+                #         "url": url
+                #     },
+                #     "type": "image"
+                # })
 
             if data.get('type_message') == Message.Type.STICKER:
+                # message_url = []
                 attachment = {
                     "type": "template",
                     "payload": {
@@ -134,6 +142,13 @@ class MessageApi(APIView):
                         }]
                     }
                 }
+                # message_url.append({
+                #     "payload": {
+                #         "url": data.get('attachment_url'),
+                #         "id": data.get('attachment_id')
+                #     },
+                #     "type": "sticker"
+                # })
 
             res = send_message_text(oa, user_zalo_id, {
                 'text': data.get('message'),
@@ -141,20 +156,20 @@ class MessageApi(APIView):
                 'attachment': attachment
             })
             print(res)
-            if res['error'] == 0:
-                Message.objects.create(
-                    src=Message.Src.OA,
-                    type_message=data.get('type_message'),
-                    type_send=data.get('type_send'),
-                    message_text=data.get('message'),
-                    message_url=json.dumps(message_url),
-                    from_id=oa.uid_zalo_oa,
-                    to_id=user_zalo.user_zalo_id,
-                    success=True,
-                    send_by=user,
-                    oa=oa,
-                    send_at=int(datetime.now().timestamp() * 1000),
-                )
+            # if res['error'] == 0:
+            #     Message.objects.create(
+            #         src=Message.Src.OA,
+            #         type_message=data.get('type_message'),
+            #         type_send=data.get('type_send'),
+            #         message_text=data.get('message'),
+            #         message_url=json.dumps(message_url),
+            #         from_id=oa.uid_zalo_oa,
+            #         to_id=user_zalo.user_zalo_id,
+            #         success=True,
+            #         send_by=user,
+            #         oa=oa,
+            #         send_at=int(datetime.now().timestamp() * 1000),
+            #     )
 
             return convert_response('success', 200)
         except Exception as e:
@@ -189,6 +204,30 @@ class MessageFileListApi(APIView):
         )[offset: offset + page_size].values()
 
         return convert_response('success', 200, data=messages)
+
+
+class MessageFileUploadApi(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = json.loads(request.POST.get('data'))
+        oa = ZaloOA.objects.get(uid_zalo_oa=data.get('oa_uid'))
+        file = request.FILES.get('file', None)
+        url = "https://openapi.zalo.me/v2.0/oa/upload/file"
+        payload = {}
+        files = {
+            'file': (file.name, file, file.content_type)
+        }
+        headers = {
+            'access_token': oa.access_token
+        }
+        response = requests.request("POST", url, headers=headers, data=payload, files=files)
+        response = response.json()
+        print(response)
+        return convert_response('success', 200, data={
+            'uuid': data.get('uuid'),
+            'token': response.get('data').get('token')
+        })
 
 
 class MessageStickerApi(APIView):
