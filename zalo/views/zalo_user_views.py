@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from django.db.models import OuterRef, Q
 
 from common.core.subquery import *
+from tags.models import TagUserZalo
 from utils.convert_response import convert_response
 from zalo.models import UserZalo
 from employee.models import EmployeeUserZalo, ZaloOA
@@ -146,6 +147,22 @@ class ZaloUserDetail(APIView):
             user_zalo.gender = data.get('gender', user_zalo.gender)
             user_zalo.birthday = datetime.datetime.strptime(data.get('birthday'), "%d/%M/%y") if data.get('birthday') else None
             user_zalo.updated_at = datetime.datetime.now()
+
+            tags = data.get('tags', [])
+            for tag in tags:
+                tag_user_zalo = TagUserZalo.objects.filter(user_zalo=user_zalo, tag_id=tag).first()
+                if not tag_user_zalo:
+                    TagUserZalo.objects.create(
+                        user_zalo=user_zalo,
+                        tag_id=tag,
+                        created_by=user
+                    )
+            
+            tags = data.get('tags_remove', [])
+            for tag in tags:
+                tag_user_zalo = TagUserZalo.objects.filter(user_zalo=user_zalo, tag_id=tag).first()
+                if tag_user_zalo:
+                    tag_user_zalo.delete()
 
             user_zalo.save()
             return convert_response('success', 200)

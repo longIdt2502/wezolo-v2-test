@@ -119,9 +119,12 @@ class CustomerList(APIView):
             )
         )
 
-        tag_id = data.get('tag')
+        tag_id = data.get('tags')
         if tag_id:
-            customer = customer.filter(tagcustomer__tag_id=tag_id)
+            tag_id = tag_id.split(',')
+            tag_cus = TagCustomer.objects.filter(tag_id__in=tag_id)
+            cus = tag_cus.values_list('customer_id', flat=True)
+            customer = customer.filter(id__in=cus)
 
         total = customer.count()
         customer = customer[offset: offset + page_size].values().annotate(
@@ -198,6 +201,22 @@ class CustomerDetail(APIView):
                 cuz = CustomerUserZalo.objects.filter(customer=customer, oa_id=oa).first()
                 if cuz:
                     cuz.delete()
+            
+            tags = data.get('tags', [])
+            for tag in tags:
+                tag_cus = TagCustomer.objects.filter(customer=customer, tag_id=tag).first()
+                if not tag_cus:
+                    TagCustomer.objects.create(
+                        customer=customer,
+                        tag_id=tag,
+                        created_by=user
+                    )
+            
+            tags = data.get('tags_remove', [])
+            for tag in tags:
+                tag_cus = TagCustomer.objects.filter(customer=customer, tag_id=tag).first()
+                if tag_cus:
+                    tag_cus.delete()
 
             customer.save()
 

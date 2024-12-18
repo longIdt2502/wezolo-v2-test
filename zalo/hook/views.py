@@ -44,6 +44,22 @@ class ZaloHook(APIView):
                 handle_user_submit_info(request.data.copy())
             if event_type == ZaloEventName.change_template_status:
                 handle_change_template_status(request.data.copy())
+            if event_type == ZaloEventName.user_seen_message:
+                handle_seen_message(request.data.copy())
+            if event_type in [
+                ZaloEventName.user_send_audio,
+                ZaloEventName.user_send_business_card,
+                ZaloEventName.user_send_file,
+                ZaloEventName.user_send_gif,
+                ZaloEventName.user_send_location,
+                ZaloEventName.user_send_image,
+                ZaloEventName.user_send_link,
+                ZaloEventName.user_send_sticker,
+                ZaloEventName.user_send_video,
+                ZaloEventName.user_send_text,
+            ] :
+                handle_message_hook(request.data.copy())
+
 
             return convert_response('success', 200)
         except Exception as e:

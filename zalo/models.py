@@ -2,6 +2,7 @@ import random
 
 from django.core.files.base import ContentFile
 from django.db import models
+from common.core.subquery import SubqueryJsonAgg
 
 from common.s3 import AwsS3
 from user.models import User
@@ -178,6 +179,31 @@ class UserZalo(models.Model):
     #         pk=self.pk)
     #     if other_users.count() > 0:
     #         other_users.delete()
+
+    def to_json(self):
+        from tags.models import TagUserZalo
+        from zalo_messages.models import Message
+        tags = TagUserZalo.objects.filter(user_zalo_id=self.id)
+        tags_json = []
+        for item in tags:
+            tags_json.append(item.to_json())
+        last_message_subquery = Message.objects.filter(models.Q(from_id=self.user_zalo_id) | models.Q(to_id=self.user_zalo_id)).order_by('-id').first()
+        return {
+            'id': self.id,
+            'name': self.name,
+            'prefix_name': self.prefix_name,
+            'phone': self.phone,
+            'user_zalo_id': self.user_zalo_id,
+            'avatar_small': self.avatar_small,
+            'avatar_big': self.avatar_big,
+            'last_message_time': last_message_subquery.to_json(),
+            'is_follower': self.is_follower,
+            'chatbot': self.chatbot,
+            'oa': self.oa.to_json(),
+            'tags': tags_json,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None,
+        }
 
 
 class UserZaloTag(models.Model):

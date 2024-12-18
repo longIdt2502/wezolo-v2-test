@@ -1,9 +1,13 @@
 from datetime import datetime
+import json
+from typing import Optional
 
 from common.zalo.event_name import ZaloEventName
+from ws.event import send_message_to_ws
 from zalo.models import ZaloOA, UserZalo
 from user.models import Address, City, District, Ward
 from zns.models import Zns, ZnsLog
+from zalo_messages.models import Message
 
 
 def handle_follow_event(data) -> [str, int]:
@@ -79,3 +83,84 @@ def handle_change_template_status(data) -> [str, int]:
         return 'success', 200
     except Exception as e:
         return str(e), 400
+
+
+#TODO: Message handle hook
+def handle_message_hook(data) -> Optional[str]:
+    try:
+        print(data)
+        sender = data.get('sender').get('id')
+        recipient = data.get('recipient').get('id')
+        message = data.get('message')
+
+        message_json = {
+            'message_id': message.get('msg_id'),
+            'user_zalo_id': sender,
+            'src': Message.Src.USER,
+            'type_send': Message.TypeSend.USER,
+            'send_at': data.get('timestamp'),
+            'from_id': sender,
+            'to_id': recipient,
+            'quote_msg_id': data.get('message').get('quote_msg_id')
+        }
+
+        type_message =  data.get('event_name')
+        message_json['message_text'] = message.get('text')
+        if type_message == 'user_send_text':
+            type_message = Message.Type.TEXT
+        if type_message == 'user_send_image':
+            type_message = Message.Type.PHOTO
+            message_json['message_url'] = json.dumps(message.get('attachments'))
+        if type_message == 'user_send_link':
+            type_message = Message.Type.LINK
+            message_json['message_links'] = json.dumps(message.get('attachments'))
+        if type_message == 'user_send_audio':
+            type_message = Message.Type.VOICE
+            message_json['message_url'] = json.dumps(message.get('attachments'))
+        if type_message == 'user_send_video':
+            type_message = Message.Type.VIDEO
+            message_json['message_url'] = json.dumps(message.get('attachments'))
+        if type_message == 'user_send_sticker':
+            type_message = Message.Type.STICKER
+            message_json['message_url'] = json.dumps(message.get('attachments'))
+        if type_message == 'user_send_location':
+            type_message = Message.Type.LOCATION
+            message_json['message_location'] = json.dumps(message.get('attachments'))
+        if type_message == 'user_send_business_card':
+            type_message = Message.Type.BUSINESS_CARD
+            message_json['message_url'] = json.dumps(message.get('attachments'))
+        if type_message == 'user_send_file':
+            type_message = Message.Type.FILE
+            message_json['message_url'] = json.dumps(message.get('attachments'))
+
+        oa = ZaloOA.objects.get(uid_zalo_oa=recipient)
+
+        message_json['type_message'] = type_message
+        message_json['oa'] = oa.id
+        Message().from_json(message_json)
+
+        return None
+    except Exception as e:
+        print(e)
+        return str(e)
+
+def handle_seen_message(data) -> Optional[str]:
+    try:
+        print(data)
+        sender = data.get('sender').get('id')
+        recipient = data.get('recipient').get('id')
+        message = data.get('message')
+
+        messages = Message.objects.filter(message_id__in=message.get('msg_ids'))
+        for mess in messages:
+            mess.read_at = datetime.fromtimestamp(data.get('timestamp'))
+            mess.save()
+        
+        send_message_to_ws(f'message_{recipient}', 'message_handler', {
+            'last_seen': datetime.now(),
+        })
+
+        return None
+    except Exception as e:
+        print(e)
+        return str(e)

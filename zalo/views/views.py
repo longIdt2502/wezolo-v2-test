@@ -23,13 +23,14 @@ from common.core.subquery import *
 from utils.check_financial_capacity import CheckFinancialCapacity
 from common.redis.connect_oa_job import connect_oa_job
 from zalo.utils import get_token_from_code, get_oa_info
-from zalo.models import ZaloOA, CodeVerifier, UserZalo, Message
+from zalo.models import ZaloOA, CodeVerifier, UserZalo
 from user.models import Address, User
 from wallet.models import WalletTransaction, Wallet
 from reward.models import RewardBenefit
 from package.models import Price
 from workspace.models import Workspace, Role
 from employee.models import EmployeeOa, Employee
+from zalo_messages.models import Message
 
 
 class ZaloOaAPI(APIView):
@@ -425,8 +426,9 @@ class ZaloMessageCreate(APIView):
                     src=item.get('src'),
                     send_by=user,
                     time=item.get('time'),
-                    send_at=datetime.strptime(item.get('sent_time'), "%H:%M:%S %d/%m/%Y") if item.get(
-                        'sent_time') else None,
+                    # send_at=datetime.strptime(item.get('sent_time'), "%H:%M:%S %d/%m/%Y") if item.get(
+                    #     'sent_time') else None,
+                    send_at=item.get('sent_time'),
                     type_message=Message.Type.TEXT,
                     type_send=Message.TypeSend.USER,
                     message_thumb=item.get('message_thumb'),
