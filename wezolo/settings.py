@@ -108,15 +108,15 @@ TEMPLATES = [
 ASGI_APPLICATION = "wezolo.asgi.application"
 
 CHANNEL_LAYERS = {
-    # "default": {
-    #     "BACKEND": "channels.layers.InMemoryChannelLayer"
-    # }
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('redis_server', 6379)],  # Redis server location (localhost, default Redis port)
-        },
-    },
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+    # 'default': {
+    #     'BACKEND': 'channels_redis.core.RedisChannelLayer',
+    #     'CONFIG': {
+    #         "hosts": [('redis_server', 6379)],  # Redis server location (localhost, default Redis port)
+    #     },
+    # },
 }
 
 # Redis
