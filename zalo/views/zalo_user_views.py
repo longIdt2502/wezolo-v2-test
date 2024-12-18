@@ -21,6 +21,9 @@ class ZaloUserCreate(APIView):
     def post(self, request):
         data = request.data.copy()
         phone = data.get('phone')
+        user_zalo = UserZalo.objects.filter(user_zalo_id=data.get('user_zalo_id')).first()
+        if user_zalo:
+            return convert_response('user_zalo_id đã tồn tại', 400)
         user_zalo = UserZalo.objects.create(
             name=data.get('name'),
             phone=phone if phone != 0 else None,

@@ -1,4 +1,5 @@
 import json
+from urllib.parse import parse_qs
 
 from channels.generic.websocket import WebsocketConsumer
 from django.shortcuts import get_object_or_404
@@ -12,8 +13,10 @@ from zalo.models import UserZalo, ZaloOA
 
 class MessageSendConsumer(WebsocketConsumer):
     def connect(self):
+        query_params = parse_qs(self.scope['query_string'].decode())
+        self.oa_id = query_params.get('oa_id', [None])[0]
         self.user_zalo_id = self.scope['url_route']['kwargs']['user_zalo_id']
-        self.user_zalo = get_object_or_404(UserZalo, user_zalo_id=self.user_zalo_id)
+        self.user_zalo = get_object_or_404(UserZalo, user_zalo_id=self.user_zalo_id, oa_id=self.oa_id)
 
         async_to_sync(self.channel_layer.group_add)(
             f'message_{self.user_zalo_id}', self.channel_name
