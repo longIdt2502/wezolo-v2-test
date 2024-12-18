@@ -21,7 +21,6 @@ def send_message_text(oa: ZaloOA, user_id, message):
     }
 
     response = requests.request("POST", url, headers=headers, data=payload)
-    print(response.json())
     response = response.json()
     if response.get('error') == -216:
         oa = update_token_oa(oa.uid_zalo_oa)
