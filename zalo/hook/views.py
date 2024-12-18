@@ -59,6 +59,19 @@ class ZaloHook(APIView):
                 ZaloEventName.user_send_text,
             ] :
                 handle_message_hook(request.data.copy())
+            if event_type in [
+                ZaloEventName.oa_send_audio,
+                ZaloEventName.oa_send_business_card,
+                ZaloEventName.oa_send_file,
+                ZaloEventName.oa_send_gif,
+                ZaloEventName.oa_send_location,
+                ZaloEventName.oa_send_image,
+                ZaloEventName.oa_send_link,
+                ZaloEventName.oa_send_sticker,
+                ZaloEventName.oa_send_video,
+                ZaloEventName.oa_send_text,
+            ] :
+                handle_message_oa_send_hook(request.data.copy())
 
 
             return convert_response('success', 200)
