@@ -20,8 +20,7 @@ def list_message_oa_job(access_token, user_zalo_oa: str):
         offset = 0
         item_count = 10
         while item_count == 10:
-            res = oa_list_message_in_conversation(access_token, user_zalo_oa, 0)
-            print(res)
+            res = oa_list_message_in_conversation(access_token, user_zalo_oa, offset)
             if res.get('error') != 0:
                 break
             messages_valid = []
