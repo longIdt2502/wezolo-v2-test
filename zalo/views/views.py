@@ -422,11 +422,12 @@ class ZaloMessageCreate(APIView):
                 raise Exception('Người dùng Zalo không tồn tại')
             
             for item in items:
+                datetime_obj = datetime.datetime.strptime(item.get('sent_time'), "%H:%M:%S %d/%m/%Y")
                 payload = {
                     "message_id": item.get('message_id'),
                     "quote_msg_id": item.get('quote_msg_id'),
                     "src": item.get('src'),
-                    "send_at": item.get('sent_time'),
+                    "send_at": int(datetime_obj.timestamp()),
                     "type_message": Message.Type.TEXT,
                     "type_send": Message.TypeSend.USER,
                     "message_text": item.get('message'),
