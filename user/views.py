@@ -145,7 +145,6 @@ class ResendOTPAPIView(APIView):
             return convert_response('can not find verify user', 404)
         digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
         otp = ''.join(random.choice(digits) for i in range(6))
-        otp = '123456'
         verify.expired_at = datetime.now() + timedelta(seconds=90)
         verify.save()
         send_zns_otp(otp, phone)
