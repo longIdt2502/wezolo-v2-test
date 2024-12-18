@@ -128,6 +128,7 @@ class User(AbstractUser):
             id=self.level_id
         ).values().first()
         return {
+            "id": self.id,
             "uid": str(self.uid),
             "phone": self.phone,
             "full_name": self.full_name,
