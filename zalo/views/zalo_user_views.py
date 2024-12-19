@@ -149,7 +149,7 @@ class ZaloUserList(APIView):
             )
 
             total = customers.count()
-            customers = customers.values()[offset: offset + page_size].annotate(
+            customers = customers.order_by('-id').values()[offset: offset + page_size].annotate(
                 employee=employee_subquery,
                 tags=tags_subquery
             )
