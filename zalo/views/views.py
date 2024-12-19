@@ -99,12 +99,10 @@ class ZaloOaAPI(APIView):
         try:
             with transaction.atomic():
                 user = request.user
-
+                data = json.loads(request.POST.get('data'))
                 oa_check = ZaloOA.objects.filter(oa_name=data.get('oa_name')).first()
                 if oa_check:
                     raise Exception('Tên Zalo Oa đã tồn tại')
-
-                data = json.loads(request.POST.get('data'))
                 code = random.randint(100000, 999999)
                 oa_ins = ZaloOA.objects.filter(created_by=user).first()
                 zalo_oa = ZaloOA.objects.create(
