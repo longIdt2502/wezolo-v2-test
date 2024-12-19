@@ -9,8 +9,9 @@ from django.db.models import OuterRef, Q
 from common.core.subquery import *
 from tags.models import TagUserZalo
 from utils.convert_response import convert_response
+from workspace.models import Role
 from zalo.models import UserZalo
-from employee.models import EmployeeUserZalo, ZaloOA
+from employee.models import Employee, EmployeeUserZalo, ZaloOA
 from user.models import User
 from customer.models import Customer, CustomerUserZalo
 
@@ -91,13 +92,24 @@ class ZaloUserList(APIView):
 
     def get(self, request):
         try:
+            user = request.user
             data = request.GET.copy()
             page_size = int(data.get('page_size', 20))
             offset = (int(data.get('page', 1)) - 1) * page_size
             oa = data.get('oa')
+            oa_ins = ZaloOA.objects.get(id=oa)
             if not oa:
                 raise Exception('thiếu thông tin Oa')
             customers = UserZalo.objects.filter(oa_id=oa)
+
+            employee_user = Employee.objects.filter(account=user, workspace=oa_ins.company).first()
+            if not employee_user:
+                raise Exception('Bạn không có quyền truy cập Oa')
+            
+            if employee_user.role == Role.Code.SALE:
+                employee_userzalo = EmployeeUserZalo.objects.filter(employee=employee)
+                customers_id = employee_userzalo.values_list('customer_id', flat=True)
+                customers = customers.filter(id__in=customers_id)
 
             is_follow = data.get('is_follow')
             if is_follow:
@@ -126,9 +138,16 @@ class ZaloUserList(APIView):
                 )
             )
 
+            tags_subquery = SubqueryJsonAgg(
+                TagUserZalo.objects.filter(user_zalo_id=OuterRef('id')).values(
+                    'tag__title', 'tag__color_text', 'tag__color_fill', 'tag__color_border'
+                )
+            )
+
             total = customers.count()
             customers = customers.values()[offset: offset + page_size].annotate(
-                employee=employee_subquery
+                employee=employee_subquery,
+                tags=tags_subquery
             )
             return convert_response('success', 200, data=customers, total=total)
         except Exception as e:

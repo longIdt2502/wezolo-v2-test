@@ -2,6 +2,7 @@
 
 class ZaloEventName:
     follow = 'follow'
+    user_submit_info = 'user_submit_info'
     un_follow = 'un_follow'
     user_submit_info = 'user_submit_info'
     # TODO: zns

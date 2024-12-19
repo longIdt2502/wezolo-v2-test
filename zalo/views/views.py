@@ -100,6 +100,10 @@ class ZaloOaAPI(APIView):
             with transaction.atomic():
                 user = request.user
 
+                oa_check = ZaloOA.objects.filter(oa_name=data.get('oa_name')).first()
+                if oa_check:
+                    raise Exception('Tên Zalo Oa đã tồn tại')
+
                 data = json.loads(request.POST.get('data'))
                 code = random.randint(100000, 999999)
                 oa_ins = ZaloOA.objects.filter(created_by=user).first()
@@ -123,7 +127,7 @@ class ZaloOaAPI(APIView):
                 của User -> Lấy được Level (Reward_tiers) -> Dựa vào Reward_tier và Type -> tìm được Reward_benefit -> tìm được
                 Price tương ứng -> kiểm tra tiền trong ví và thực hiện tiếp thao tác
                 """
-                if oa_ins:
+                if len(oa_ins) > 0:
                     can_transact, wallet, benefit = CheckFinancialCapacity(user, Price.Type.CREATE_OA)
                     print(benefit)
                     if not can_transact:
@@ -170,10 +174,10 @@ class ZaloOaAPI(APIView):
                     zalo_oa.cccd_truoc = url_front
                     zalo_oa.cccd_sau = url_back
                 if cong_van:
-                    url = zalo_oa.upload_file(cong_van, f'cccd_sau{get_file_extension(cong_van.name)}')
+                    url = zalo_oa.upload_file(cong_van, f'cong_van{get_file_extension(cong_van.name)}')
                     zalo_oa.cong_van = url
                 if chung_minh:
-                    url = zalo_oa.upload_file(chung_minh, f'cccd_sau{get_file_extension(chung_minh.name)}')
+                    url = zalo_oa.upload_file(chung_minh, f'chung_minh{get_file_extension(chung_minh.name)}')
                     zalo_oa.chung_minh = url
                 if ho_chieu:
                     url = zalo_oa.upload_file(ho_chieu, f'ho_chieu{get_file_extension(ho_chieu.name)}')
