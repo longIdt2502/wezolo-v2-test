@@ -22,7 +22,7 @@ from common.pref_keys import PrefKeys
 from common.core.subquery import *
 from utils.check_financial_capacity import CheckFinancialCapacity
 from common.redis.connect_oa_job import connect_oa_job
-from zalo.utils import get_token_from_code, get_oa_info
+from zalo.utils import get_token_from_code, get_oa_info, quota_message_oa
 from zalo.models import ZaloOA, CodeVerifier, UserZalo
 from user.models import Address, User
 from wallet.models import WalletTransaction, Wallet
@@ -305,6 +305,8 @@ class ZaloOaAcceptAuth(APIView):
 
                 # update zalo_oa in wezolo db
                 # zalo_oa = ZaloOA()
+                quota_oa = quota_message_oa(access_token)
+                sub_quota = next((item for item in quota_oa.get('data') if item["quota_type"] == "sub_quota"), None)
                 if oa_id:
                     zalo_oa = ZaloOA.objects.filter(id=oa_id).first()
                     if not zalo_oa:
@@ -315,6 +317,10 @@ class ZaloOaAcceptAuth(APIView):
                     zalo_oa.uid_zalo_oa = oa_id_zalo
                     zalo_oa.access_token = access_token
                     zalo_oa.refresh_token = refresh_token
+                    if sub_quota:
+                        zalo_oa.message_remain = sub_quota.get('remain')
+                        zalo_oa.message_quota = sub_quota.get('total')
+                        zalo_oa.message_expired = datetime.strptime(sub_quota.get('valid_through'), "%d/%m/%Y").timestamp()
                     zalo_oa.save()
                 else:
                     zalo_oa = ZaloOA.objects.filter(uid_zalo_oa=data_oa_info.get('oa_id')).first()
@@ -341,6 +347,10 @@ class ZaloOaAcceptAuth(APIView):
                             data_oa_info.get('package_auto_renew_date'),
                             "%d/%m/%Y"
                         )
+                        if sub_quota:
+                            zalo_oa.message_remain = sub_quota.get('remain')
+                            zalo_oa.message_quota = sub_quota.get('total')
+                            zalo_oa.message_expired = datetime.strptime(sub_quota.get('valid_through'), "%d/%m/%Y").timestamp()
                         zalo_oa.save()
                     else:
                         zalo_oa = ZaloOA.objects.create(

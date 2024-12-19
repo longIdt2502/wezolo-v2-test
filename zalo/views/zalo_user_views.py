@@ -32,7 +32,11 @@ class ZaloUserCreate(APIView):
             avatar_small=data.get('avatar_small'),
             avatar_big=data.get('avatar_big'),
             oa_id=data.get('oa_id'),
-            is_follower=data.get('is_follower')
+            is_follower=data.get('is_follower'),
+            last_message_reply=data.get('last_message_reply'),
+            message_quota_type=data.get('message_quota_type'),
+            message_remain=data.get('message_remain'),
+            message_quota=data.get('message_quota'),
         )
 
         oa = ZaloOA.objects.get(id=data.get('oa_id'))

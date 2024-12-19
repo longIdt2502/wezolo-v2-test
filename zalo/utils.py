@@ -59,6 +59,19 @@ def get_oa_info(access_token, refresh_token):
     return response.json()
 
 
+def quota_message_oa(access_token):
+    url = 'https://openapi.zalo.me/v3.0/oa/quota/message'
+    payload = json.dumps({
+        "quota_owner": "OA"
+    })
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'access_token': access_token
+    }
+    response = requests.request("POST", url, headers=headers, data=payload)
+    return response.json()
+
+
 def oa_list_customer(access_token, offset):
     # example json response => example/zalo_example_response.json => get_list_user
     headers = {

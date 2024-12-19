@@ -168,6 +168,8 @@ class UserZalo(models.Model):
     message_quota_type = models.CharField(max_length=255, null=True, blank=True)
     message_remain = models.IntegerField(null=True, blank=True)
     message_quota = models.IntegerField(null=True, blank=True)
+    last_message_reply = models.FloatField(null=True)
+    tag_quota = models.IntegerField(null=True)
     chatbot = models.BooleanField(default=False, null=False)
     created_at = created_at_field
     updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
@@ -199,6 +201,9 @@ class UserZalo(models.Model):
             'last_message': last_message_subquery.to_json() if last_message_subquery else None,
             'last_message_time': self.last_message_time.strftime('%Y-%m-%d %H:%M:%S') if self.last_message_time else None,
             'is_follower': self.is_follower,
+            'message_quota_type': self.message_quota_type,
+            'message_remain': self.message_remain,
+            'message_quota': self.message_quota,
             'chatbot': self.chatbot,
             'oa': self.oa.to_json() if self.oa else None,
             'tags': tags_json,
