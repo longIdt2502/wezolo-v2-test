@@ -183,12 +183,16 @@ class UserZalo(models.Model):
     #         other_users.delete()
 
     def to_json(self):
+        from customer.models import CustomerUserZalo
         from tags.models import TagUserZalo
         from zalo_messages.models import Message
         tags = TagUserZalo.objects.filter(user_zalo_id=self.id)
         tags_json = []
         for item in tags:
             tags_json.append(item.to_json())
+        customer_user_zalo = CustomerUserZalo.objects.filter(user_zalo_id=self.id).values(
+            'customer_id', 'customer__prefix_name', 'customer__phone'
+        ).first()
         last_message_subquery = Message.objects.filter(models.Q(from_id=self.user_zalo_id) | models.Q(to_id=self.user_zalo_id)).order_by('-id').first()
         return {
             'id': self.id,
@@ -207,6 +211,7 @@ class UserZalo(models.Model):
             'chatbot': self.chatbot,
             'oa': self.oa.to_json() if self.oa else None,
             'tags': tags_json,
+            'customer': customer_user_zalo,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None,
         }

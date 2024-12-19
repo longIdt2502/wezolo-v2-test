@@ -65,7 +65,7 @@ class MessageApi(APIView):
             tags_query = TagUserZalo.objects.filter(tag_id__in=tags)
             user_id_in_tags = tags_query.values_list('user_zalo_id', flat=True)
             user = user.filter(id__in=user_id_in_tags)
-        
+
         user = user.annotate(
             is_null_last_message_time=Case(
                 When(last_message_time__isnull=True, then=Value(1)),
