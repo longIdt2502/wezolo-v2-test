@@ -88,10 +88,8 @@ class MessageApi(APIView):
             user_zalo = UserZalo.objects.get(user_zalo_id=user_zalo_id)
             
             attachment = {}
-            # message_url = None
             images = request.FILES.getlist('images', None)
             if images:
-                # message_url = []
                 attachment['type'] = 'template'
                 attachment['payload'] = {
                     "template_type": "media",
@@ -106,13 +104,6 @@ class MessageApi(APIView):
                         "media_type": "image",
                         "url": url
                     })
-                    # message_url.append({
-                    #     "payload": {
-                    #         "thumbnail": url,
-                    #         "url": url
-                    #     },
-                    #     "type": "image"
-                    # })
             
             if data.get('type_message') == Message.Type.FILE:
                 # message_url = []
@@ -122,13 +113,6 @@ class MessageApi(APIView):
                         "token": data.get('attachment_token')
                     }
                 }
-                # message_url.append({
-                #     "payload": {
-                #         "thumbnail": url,
-                #         "url": url
-                #     },
-                #     "type": "image"
-                # })
 
             if data.get('type_message') == Message.Type.STICKER:
                 # message_url = []
@@ -142,13 +126,6 @@ class MessageApi(APIView):
                         }]
                     }
                 }
-                # message_url.append({
-                #     "payload": {
-                #         "url": data.get('attachment_url'),
-                #         "id": data.get('attachment_id')
-                #     },
-                #     "type": "sticker"
-                # })
 
             res = send_message_text(oa, user_zalo_id, {
                 'text': data.get('message'),
@@ -156,20 +133,23 @@ class MessageApi(APIView):
                 'attachment': attachment
             })
             print(res)
-            # if res['error'] == 0:
-            #     Message.objects.create(
-            #         src=Message.Src.OA,
-            #         type_message=data.get('type_message'),
-            #         type_send=data.get('type_send'),
-            #         message_text=data.get('message'),
-            #         message_url=json.dumps(message_url),
-            #         from_id=oa.uid_zalo_oa,
-            #         to_id=user_zalo.user_zalo_id,
-            #         success=True,
-            #         send_by=user,
-            #         oa=oa,
-            #         send_at=int(datetime.now().timestamp() * 1000),
-            #     )
+            # Kiểm tra loại tin nhắn và cập nhật message_quota
+            quota = res.get('data').get('quota')
+            if quota:
+                quota_type = quota.get('quota_type')
+                if quota_type == 'reply':
+                    user_zalo.message_quota_type = quota_type
+                    user_zalo.message_remain = quota.get('remain')
+                    user_zalo.message_quota = quota.get('total')
+                if quota_type == 'sub_quota':
+                    oa.message_remain = quota.get('remain')
+                    oa.message_quota = quota.get('total')
+                    oa.message_expired = datetime.strptime(quota.get('expired_date'), "%d/%m/%Y").timestamp()
+            else:
+                user_zalo.message_remain = 0
+                oa.message_remain = 0
+            user_zalo.save()
+            oa.save()
 
             return convert_response('success', 200)
         except Exception as e:

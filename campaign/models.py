@@ -1,5 +1,6 @@
 from django.db import models
 import django_rq
+from common.redis.send_message_campain_job import send_message_campain_job
 
 from customer.models import Customer
 from user.models import User
@@ -57,7 +58,7 @@ class Campaign(models.Model):
             zns_id=data.get('zns_id'),
             message=data.get('message'),
             message_file=data.get('message_file'),
-            price_zns=data.get('price_zns'),
+            price_zns=data.get('price_zns', 0),
             total=data.get('total'),
             created_by_id=data.get('created_by'),
         )
@@ -85,7 +86,10 @@ class CampaignMessage(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-        # django_rq.enqueue(connect_oa_job, access_token, zalo_oa.id)
+        django_rq.enqueue(send_message_campain_job, self.campaign.oa.access_token, self.user_zalo.user_zalo_id, {
+            'text': self.campaign.message,
+            'attachment': self.campaign.message_file
+        })
         
 
 class CampaignZns(models.Model):
