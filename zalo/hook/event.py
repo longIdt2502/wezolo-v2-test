@@ -6,11 +6,27 @@ from common.zalo.event_name import ZaloEventName
 from ws.event import send_message_to_ws
 from zalo.models import ZaloOA, UserZalo
 from user.models import Address, City, District, Ward
+from zalo.utils import revert_phone
 from zns.models import Zns, ZnsLog
 from zalo_messages.models import Message
 
 
-def handle_follow_event(data) -> [str, int]:
+def handle_user_submit_info(data) -> Optional[str]:
+    try:
+        user_id = data.get('sender').get('id')
+        uid_zalo_oa = data.get('recipient').get('id')
+        user_zalo = UserZalo.objects.get(user_zalo_id=user_id, oa__uid_zalo_oa=uid_zalo_oa)
+        info = data.get('info')
+        user_zalo.phone = revert_phone(str(info.get('phone'))) if info.get('phone') else None
+        user_zalo.prefix_name = info.get('name', user_zalo.prefix_name)
+        user_zalo.address = f"{info.get('address')}, {info.get('ward')}, {info.get('district')}, {info.get('city')}"
+        user_zalo.save()
+        return None
+    except Exception as e:
+        return str(e)
+
+
+def handle_follow_event(data) -> Optional[str]:
     event_type = data.get('event_name')
     user_id = data.get('follower').get('id')
     uid_zalo_oa = data.get('oa_id')
@@ -19,9 +35,9 @@ def handle_follow_event(data) -> [str, int]:
         user_zalo = UserZalo.objects.get(user_zalo_id=user_id, oa__uid_zalo_oa=uid_zalo_oa)
         user_zalo.is_follower = is_follow
         user_zalo.save()
-        return 'success', 200
+        return None
     except Exception as e:
-        return str(e), 400
+        return str(e)
 
 
 def handle_user_submit_info(data) -> [str, int]:

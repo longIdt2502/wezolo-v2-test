@@ -138,3 +138,12 @@ def convert_phone(phone: str) -> str:
         return "84" + phone[1:]
 
     return phone
+
+def revert_phone(phone: str) -> str:
+    if phone.startswith("84"):
+        return "0" + phone[2:]
+
+    elif phone.startswith("0"):
+        return phone
+
+    return phone
