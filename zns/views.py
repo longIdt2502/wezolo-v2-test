@@ -68,8 +68,13 @@ class ZnsApi(APIView):
             )[:1]
         )
 
+        params_query = SubqueryJsonAgg(
+            ZnsParams.objects.filter(zns_id=OuterRef('id')).values()
+        )
+
         zns = zns.order_by('-id')[offset: offset + page_size].values().annotate(
-            oa_data=oa_subquery
+            oa_data=oa_subquery,
+            params=params_query,
         )
 
         return convert_response('success', 200, data=zns, total=total)

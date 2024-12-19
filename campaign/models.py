@@ -1,6 +1,6 @@
 from django.db import models
 import django_rq
-from common.redis.send_message_campain_job import send_message_campain_job
+from common.redis.send_message_campain_job import send_message_campain_job, send_zns_campain_job
 
 from customer.models import Customer
 from user.models import User
@@ -59,7 +59,7 @@ class Campaign(models.Model):
             message=data.get('message'),
             message_file=data.get('message_file'),
             price_zns=data.get('price_zns', 0),
-            total=data.get('total'),
+            total=data.get('total', 0),
             created_by_id=data.get('created_by'),
         )
         return campaign
@@ -101,6 +101,7 @@ class CampaignZns(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     zns = models.ForeignKey(Zns, on_delete=models.SET_NULL, null=True)
+    zns_params = models.JSONField(null=True)
     status = models.CharField(max_length=255, choices=StatusMessage.choices, default=StatusMessage.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     response_json = models.JSONField(null=True)
@@ -108,3 +109,11 @@ class CampaignZns(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+
+        django_rq.enqueue(
+            send_zns_campain_job, 
+            self.campaign.oa.access_token,
+            self.customer.phone,
+            self.zns.template,
+            self.zns_params,
+        )
