@@ -58,6 +58,7 @@ class CampaignApi(APIView):
                 CampaignZns.objects.create(
                     campaign=campaign,
                     customer_id=id,
+                    zns_params=data.get('zns_params'),
                     status=StatusMessage.PENDING,
                     zns_id=data.get('zns')
                 )
