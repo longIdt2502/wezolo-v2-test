@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'bank',
     'chatbot',
     'zalo_messages',
+    'campaign',
 ]
 
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import json
 import os
 
@@ -53,7 +54,23 @@ def detail_customer_oa_job(access_token, user_id, oa: int):
                 "avatar_big": customer['avatars']['240'],
                 "oa_id": oa,
                 "is_follower": customer['user_is_follower'],
+                "last_message_reply": datetime.strptime(customer['user_last_interaction_date'], "%d/%m/%Y").timestamp() if customer['user_last_interaction_date'] else None
             }
+            # Xử lý để tìm ra được quota_type message của user_zalo
+            if customer['user_last_interaction_date']:
+                last_interaction = datetime.strptime(customer['user_last_interaction_date'], "%d/%m/%Y")
+                now = datetime.now()
+                # Tính khoảng cách thời gian
+                time_difference = now - last_interaction
+                # Kiểm tra điều kiện
+                if time_difference <= timedelta(hours=48):
+                    payload['message_quota_type'] = 'reply'
+                elif timedelta(hours=48) < time_difference <= timedelta(days=7):
+                    payload['message_quota_type'] = 'sub_quota'
+                else:
+                    payload['message_quota_type'] = 'false'
+                payload['message_remain'] = 8
+                payload['message_quota'] = 8
             res_cus = requests.post(url, data=payload)
             res_cus_json = res_cus.json()
             if res_cus_json.get('data'):

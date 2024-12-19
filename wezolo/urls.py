@@ -30,5 +30,6 @@ urlpatterns = [
     path('v1/zns/', include('zns.urls')),
     path('v1/bank/', include('bank.urls')),
     path('v1/chatbot/', include('chatbot.urls')),
+    path('v1/campaign/', include('campaign.urls')),
     path('v1/message_zalo/', include('zalo_messages.urls')),
 ]
