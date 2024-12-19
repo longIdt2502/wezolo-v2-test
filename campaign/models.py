@@ -1,6 +1,7 @@
 from django.db import models
-from customer.models import Customer
+import django_rq
 
+from customer.models import Customer
 from user.models import User
 from zalo.models import Message, UserZalo, ZaloOA
 from zns.models import Zns
@@ -81,6 +82,11 @@ class CampaignMessage(models.Model):
     status = models.CharField(max_length=255, choices=StatusMessage.choices, default=StatusMessage.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        # django_rq.enqueue(connect_oa_job, access_token, zalo_oa.id)
+        
 
 class CampaignZns(models.Model):
     class Meta:
@@ -95,3 +101,6 @@ class CampaignZns(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     response_json = models.JSONField(null=True)
     is_refund = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
