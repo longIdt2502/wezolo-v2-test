@@ -9,7 +9,7 @@ from user.models import Address, City, District, Ward
 from zalo.utils import revert_phone
 from zns.models import Zns, ZnsLog
 from zalo_messages.models import Message
-
+from zns.zalo.utils import *
 
 def handle_user_submit_info(data) -> Optional[str]:
     try:
@@ -89,6 +89,10 @@ def handle_change_template_status(data) -> [str, int]:
             zns.status = 'REJECTED'
         if new_status == 'REJECT' and prev_status == 'DELETE':
             zns.status = 'REJECTED'
+        zns_zalo = detail_zns(zns.oa.access_token, zns.template)
+        if zns_zalo.get('error') == 0:
+            preview_url = zns_zalo.get('data').get('previewUrl')
+            zns.preview = preview_url
         zns.save()
         ZnsLog.objects.create(
             zns=zns,

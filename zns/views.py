@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from django.db import transaction
-from django.db.models import OuterRef, Q, F, Case, When, Value, CharField
+from django.db.models import OuterRef, Q, F, Case, When, Value, CharField, IntegerField
 from django.db.models.functions import Coalesce
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -13,6 +13,7 @@ from common.core.subquery import *
 from employee.models import Employee
 from package.models import Price
 from reward.models import RewardBenefit
+from utils.check_financial_capacity import CheckFinancialCapacity
 from utils.convert_response import convert_response
 from zalo.models import ZaloOA
 from zns.models import *
@@ -72,10 +73,15 @@ class ZnsApi(APIView):
             ZnsParams.objects.filter(zns_id=OuterRef('id')).values()
         )
 
+        _, _, price = CheckFinancialCapacity(user, Price.Type.ZNS)
+
         zns = zns.order_by('-id')[offset: offset + page_size].values().annotate(
             oa_data=oa_subquery,
             params=params_query,
         )
+
+        for item in zns:
+            item['price'] = price.value.value
 
         return convert_response('success', 200, data=zns, total=total)
 
@@ -100,6 +106,7 @@ class ZnsCreateApi(APIView):
                     tag=data.get('tag'),
                     oa_id=data.get('oa'),
                     note=data.get('note'),
+                    price=data.get('price'),
                     created_by=user,
                 )
 

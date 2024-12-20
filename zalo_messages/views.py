@@ -21,7 +21,7 @@ from zalo.models import UserZalo, ZaloOA
 from zalo_messages.models import Message
 from tags.models import TagUserZalo
 from employee.models import Employee, EmployeeUserZalo
-from zalo_messages.utils import send_message_text
+from zalo_messages.utils import send_message_text, send_request_info
 
 
 class MessageApi(APIView):
@@ -154,6 +154,17 @@ class MessageApi(APIView):
             return convert_response('success', 200)
         except Exception as e:
             return convert_response(str(e), 400)
+
+
+class MessageRequestInfoApi(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data.copy()
+        oa = ZaloOA.objects.get(uid_zalo_oa=data.get('oa_id'))
+        res = send_request_info(oa, data.get('user_id'))
+        print(res)
+        return convert_response('success', 200)
 
 
 class MessageListApi(APIView):

@@ -27,3 +27,37 @@ def send_message_text(oa: ZaloOA, user_id, message):
         response = send_message_text(oa, user_id, message)
 
     return response
+
+
+def send_request_info(oa: ZaloOA, user_id):
+    payload = json.dumps({
+        "recipient": {
+            "user_id": user_id
+        },
+        "message": {
+            "attachment": {
+            "type": "template",
+            "payload": {
+                "template_type": "request_user_info",
+                "elements": [
+                {
+                    "title": "OA Chatbot (Testing)",
+                    "subtitle": "Đang yêu cầu thông tin từ bạn",
+                    "image_url": "https://developers.zalo.me/web/static/zalo.png"
+                }
+                ]
+            }
+            }
+        }
+    })
+    headers = {
+        'Content-Type': 'application/json',
+        'access_token': oa.access_token
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload)
+    response = response.json()
+    if response.get('error') == -216:
+        oa = update_token_oa(oa.uid_zalo_oa)
+        response = send_request_info(oa, user_id)
+    return response

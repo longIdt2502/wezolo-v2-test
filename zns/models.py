@@ -41,6 +41,8 @@ class Zns(models.Model):
     type = models.IntegerField(choices=TYPE_CHOICES, help_text="Loại mẫu tin.")
     tag = models.IntegerField(choices=TAG_CHOICES, help_text="Tag mẫu tin.")
     note = models.TextField(null=True)
+    price = models.FloatField(default=0)
+    preview = models.CharField(max_length=556, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
     created_by = models.ForeignKey(User, null=False, on_delete=models.CASCADE, related_name='user_created_zns')
