@@ -47,7 +47,7 @@ def detail_customer_oa_job(access_token, user_id, oa: int):
             url = f'{domain}/v1/zalo/zalo_user/create'
             payload = {
                 "name": customer['display_name'],
-                "phone": customer['shared_info']['phone'],
+                "phone": customer['shared_info']['phone'] if customer['shared_info']['phone'] != 0 else None,
                 "address": customer['shared_info']['address'],
                 "user_zalo_id": user_id,
                 "avatar_small": customer['avatars']['120'],
