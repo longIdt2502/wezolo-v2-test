@@ -304,7 +304,10 @@ class ZaloOaAcceptAuth(APIView):
                 # update zalo_oa in wezolo db
                 # zalo_oa = ZaloOA()
                 quota_oa = quota_message_oa(access_token)
-                sub_quota = next((item for item in quota_oa.get('data') if item["quota_type"] == "sub_quota"), None)
+                sub_quota = None
+                for item in quota_oa.get('data', []):
+                    if item["quota_type"] == "sub_quota":
+                        sub_quota = item
                 if oa_id:
                     zalo_oa = ZaloOA.objects.filter(id=oa_id).first()
                     if not zalo_oa:
