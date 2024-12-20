@@ -107,14 +107,6 @@ class CampaignMessage(models.Model):
     user_zalo = models.ForeignKey(UserZalo, on_delete=models.CASCADE)
     status = models.CharField(max_length=255, choices=StatusMessage.choices, default=StatusMessage.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-        django_rq.enqueue(send_message_campain_job, self.campaign.oa.access_token, self.user_zalo.user_zalo_id, {
-            'text': self.campaign.message,
-            'attachment': self.campaign.message_file
-        })
         
 
 class CampaignZns(models.Model):
@@ -132,14 +124,3 @@ class CampaignZns(models.Model):
     response_json = models.JSONField(null=True)
     is_refund = models.BooleanField(default=False)
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-        django_rq.enqueue(
-            send_zns_campain_job, 
-            self.campaign.oa.access_token,
-            self.customer.phone,
-            self.zns.template,
-            self.zns_params,
-            self.id,
-        )
