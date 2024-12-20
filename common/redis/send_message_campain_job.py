@@ -1,5 +1,9 @@
+import os
 import requests
 import json
+# from campaign.models import StatusMessage
+
+from common.pref_keys import PrefKeys
 
 
 def send_message_campain_job(access_token, user_id, message):
@@ -26,7 +30,7 @@ def send_message_campain_job(access_token, user_id, message):
         return str(e)
 
 
-def send_zns_campain_job(access_token, phone, template, params):
+def send_zns_campain_job(access_token, phone, template, params, campaign_zns_id):
     try:
         url = "https://business.openapi.zalo.me/message/template"
         payload = json.dumps({
@@ -44,6 +48,14 @@ def send_zns_campain_job(access_token, phone, template, params):
         response = response.json()
         if response.get('error') == -216:
             raise Exception('token OA đã hết hạn')
+        # call API for update status Message Campaign
+        domain = os.environ.get(PrefKeys.DOMAIN_URL)
+        url = f'{domain}/v1/campaign/zns/{campaign_zns_id}'
+        payload = json.dumps({
+            'status': 'SENT' if response.get('error') == 0 else 'REJECT'
+        })
+        headers = {'Content-Type': 'application/json'}
+        requests.post(url, data=payload, headers=headers)
         return response
     except Exception as e:
         print(str(e))

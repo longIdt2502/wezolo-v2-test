@@ -12,7 +12,7 @@ from asgiref.sync import async_to_sync
 from common.core.subquery import *
 from employee.models import Employee
 
-from utils.check_financial_capacity import CheckFinancialCapacity
+from utils.check_financial_capacity import checkFinancialCapacity
 from utils.convert_response import convert_response
 from workspace.models import Workspace, Role
 from wallet.models import Wallet, WalletTransaction
@@ -98,7 +98,7 @@ class Workspaces(APIView):
                 wallet = Wallet.objects.filter(owner=user).first()
                 ws_count = Workspace.objects.filter(created_by=user).count()
                 if ws_count > 0:
-                    can_transact, wallet, benefit = CheckFinancialCapacity(user, Price.Type.CREATE_WS)
+                    can_transact, wallet, benefit = checkFinancialCapacity(user, Price.Type.CREATE_WS)
                     if not can_transact:
                         raise Exception('Số dư ví không đủ để thực hiện thao tác')
                     # wallet.balance = wallet.balance - benefit.value.value

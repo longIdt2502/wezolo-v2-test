@@ -10,7 +10,7 @@ from reward.models import RewardBenefit, Price, RewardTier, Reward
 from package.models import Package, Price
 
 
-def CheckFinancialCapacity(user: User, type_check: Price.Type) -> Tuple[bool, Wallet, RewardBenefit]:
+def checkFinancialCapacity(user: User, type_check: Price.Type) -> Tuple[bool, Wallet, RewardBenefit]:
     try:
         # rewards = Reward.objects.filter(customer_id=user, expiration_date__lte=timezone.now() - timedelta(days=180))
         # total_point = rewards.aggregate(
