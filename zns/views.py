@@ -106,7 +106,7 @@ class ZnsCreateApi(APIView):
                     tag=data.get('tag'),
                     oa_id=data.get('oa'),
                     note=data.get('note'),
-                    price=data.get('price'),
+                    price=data.get('price', 0),
                     created_by=user,
                 )
 
