@@ -189,12 +189,15 @@ class MessageFileListApi(APIView):
         
         page_size = int(data.get('page_size', 20))
         offset = (int(data.get('page', 1)) - 1) * page_size
-        
-        messages = Message.objects.filter(Q(from_id=pk) | Q(to_id=pk)).order_by('-id').filter(
-            type_message=Message.Type.PHOTO
-        )[offset: offset + page_size].values()
 
-        return convert_response('success', 200, data=messages)
+        type_message = data.get('type_message')
+        
+        messages = Message.objects.filter(Q(from_id=pk) | Q(to_id=pk)).filter(
+            type_message=type_message
+        )
+        total = messages.count()
+        messages = messages.order_by('-id')[offset: offset + page_size].values()
+        return convert_response('success', 200, data=messages, total=total)
 
 
 class MessageFileUploadApi(APIView):

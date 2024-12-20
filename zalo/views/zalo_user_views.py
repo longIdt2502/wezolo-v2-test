@@ -42,18 +42,19 @@ class ZaloUserCreate(APIView):
 
         oa = ZaloOA.objects.get(id=data.get('oa_id'))
 
-        if len(phone) > 10:
-            customer = Customer.objects.create(
-                prefix_name=data.get('name'),
-                phone=phone,
-                address=data.get('address'),
-                workspace=oa.company,
-            )
-            CustomerUserZalo.objects.create(
-                user_zalo=user_zalo,
-                oa=oa,
-                customer=customer
-            )
+        if phone :
+            if len(phone) > 10:
+                customer = Customer.objects.create(
+                    prefix_name=data.get('name'),
+                    phone=phone,
+                    address=data.get('address'),
+                    workspace=oa.company,
+                )
+                CustomerUserZalo.objects.create(
+                    user_zalo=user_zalo,
+                    oa=oa,
+                    customer=customer
+                )
 
         oa_id = data.get('oa_id')
         total_user = UserZalo.objects.filter(oa_id=oa_id).count()
