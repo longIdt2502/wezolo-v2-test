@@ -70,6 +70,8 @@ class Message(models.Model):
         send_message_to_ws(f'message_user_in_oa_{self.oa.uid_zalo_oa}', 'message_handler', user_zalo.to_json())
 
         user_zalo.last_message_time = datetime.fromtimestamp(float(self.send_at) / 1000).astimezone(pytz.timezone('Asia/Ho_Chi_Minh'))
+        if self.Src.USER:
+            user_zalo.message_unread += 1
         user_zalo.save()
 
     def from_json(self, data):

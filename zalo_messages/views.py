@@ -65,12 +65,12 @@ class MessageApi(APIView):
             tags_query = TagUserZalo.objects.filter(tag_id__in=tags)
             user_id_in_tags = tags_query.values_list('user_zalo_id', flat=True)
             user = user.filter(id__in=user_id_in_tags)
-
+        
         user = user.annotate(
             is_null_last_message_time=Case(
                 When(last_message_time__isnull=True, then=Value(1)),
                 When(last_message_time__isnull=False, then=Value(0)),
-            )
+            ),
         )
         users = user.order_by('is_null_last_message_time', '-last_message_time')[offset: offset + page_size]
         res = []
@@ -177,8 +177,10 @@ class MessageListApi(APIView):
         offset = (int(data.get('page', 1)) - 1) * page_size
         messages = Message.objects.filter(Q(from_id=pk) | Q(to_id=pk))
         total = messages.count()
+        user_zalo = UserZalo.objects.get(user_zalo_id=pk)
+        user_zalo.message_unread = 0
+        user_zalo.save()
         messages = messages.order_by('-id')[offset: offset + page_size].values()
-
         return convert_response('success', 200, data=messages, total=total)
 
 class MessageFileListApi(APIView):
