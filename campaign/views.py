@@ -85,7 +85,11 @@ class CampaignApi(APIView):
             owner = employee.workspace.created_by
             wallet = Wallet.objects.get(owner=owner)
 
-            if wallet.balance < data.get('total', 0):
+            price_zns = data.get('price_zns', 0)
+            if not isinstance(price_zns, (int, float)):
+                raise Exception('Giá trị `price_zns` không hợp lệ.')
+
+            if wallet.balance < price_zns:
                 raise Exception('Số dư ví không đử để chạy chiến dịch')
 
             image = request.FILES.get('image')
