@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 import random
-from django.db.models import OuterRef, Q
+from django.db.models import OuterRef, Q, F
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.files.base import ContentFile
@@ -14,7 +14,7 @@ from common.s3 import AwsS3
 from wallet.models import Wallet, WalletTransaction
 from workspace.models import Role
 from zalo.models import ZaloOA
-from customer.models import CustomerUserZalo
+from customer.models import CustomerUserZalo, Customer
 from .models import Campaign, CampaignMessage, CampaignZns, StatusMessage
 
 # Create your views here.
@@ -61,7 +61,9 @@ class CampaignApi(APIView):
             if type_campaign:
                 campaign = campaign.filter(type=type_campaign)
             
-            campaign = campaign[offset: offset + page_size].values()
+            campaign = campaign[offset: offset + page_size].values().annotate(
+                user_created=F('created_by__full_name')
+            )
             
             return convert_response('success', 200, data=campaign, total_campaign_zns=total_campaign_zns, total_campaign_message=total_campaign_message)
         except Exception as e:
@@ -136,7 +138,7 @@ class CampaignApi(APIView):
                     WalletTransaction.objects.create(
                         wallet=wallet,
                         user=owner,
-                        type=WalletTransaction.Type.EXPENDITURE,
+                        type=WalletTransaction.Type.OUT_ZNS,
                         method=WalletTransaction.Method.CASH,
                         oa=oa,
                         used_at=datetime.now(),
@@ -200,12 +202,21 @@ class CampaignListMessageApi(APIView):
                         'user_zalo__name', 'user_zalo__avatar_small', 'user_zalo__avatar_big', 'user_zalo__phone'
                     )
                 )
+                customer_subquery = SubqueryJson(
+                    Customer.objects.filter(id=OuterRef('customer_id')).values(
+                        'id', 'prefix_name', 'phone', 'email'
+                    )[:1]
+                )
                 messages = CampaignZns.objects.filter(campaign=campaign).filter(
                     Q(customer__prefix_name__icontains=search) | Q(customer__phone__icontains=search)
                 )
                 total = messages.count()
-                messages = messages[offset: offset + page_size].values().annotate(
-                    user_zalo=customer_user_zalo_subquery
+                messages = messages[offset: offset + page_size].values(
+
+                ).annotate(
+                    customer=customer_subquery,
+                    user_zalo=customer_user_zalo_subquery,
+                    zns_preview=F('zns__preview')
                 )
             if campaign.type == Campaign.Type.MESSAGE:
                 messages = CampaignMessage.objects.filter(campaign=campaign).filter(
@@ -239,7 +250,7 @@ class CampaignZnsDetailApi(APIView):
             WalletTransaction.objects.create(
                 wallet=wallet,
                 user=oa.company.created_by,
-                type=WalletTransaction.Type.RETURN,
+                type=WalletTransaction.Type.IN_ZNS,
                 method=WalletTransaction.Method.CASH,
                 oa=oa,
                 used_at=datetime.now(),

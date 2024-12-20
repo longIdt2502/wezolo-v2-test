@@ -134,7 +134,7 @@ class ZaloOaAPI(APIView):
                     WalletTransaction.objects.create(
                         wallet=wallet,
                         user=user,
-                        type=WalletTransaction.Type.EXPENDITURE,
+                        type=WalletTransaction.Type.OUT_CREATE_OA,
                         method=WalletTransaction.Method.TRANSFER,
                         amount=benefit.value.value,
                         total_amount=benefit.value.value,

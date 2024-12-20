@@ -135,7 +135,7 @@ class Workspaces(APIView):
                 else:
                     WalletTransaction.objects.create(
                         user=user,
-                        type='EXPENDITURE',
+                        type=WalletTransaction.Type.OUT_CREATE_WS,
                         method='TRANSFER',
                         amount=1500000,
                         total_amount=1500000,
