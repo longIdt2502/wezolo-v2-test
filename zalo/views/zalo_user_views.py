@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from django.db.models import OuterRef, Q
 
 from common.core.subquery import *
+from progress.models import ProgressTagUserZalo
 from tags.models import TagUserZalo
 from utils.convert_response import convert_response
 from workspace.models import Role
@@ -148,10 +149,17 @@ class ZaloUserList(APIView):
                 )
             )
 
+            progress_tag_subquery = SubqueryJson(
+                ProgressTagUserZalo.objects.filter(user_zalo_id=OuterRef('id')).values(
+                    'tag__progress__title', 'tag__type', 'tag__title', 'tag__color_text', 'tag__color_fill', 'tag__color_border'
+                )[:1]
+            )
+
             total = customers.count()
             customers = customers.order_by('-id').values()[offset: offset + page_size].annotate(
                 employee=employee_subquery,
-                tags=tags_subquery
+                tags=tags_subquery,
+                progress=progress_tag_subquery,
             )
             return convert_response('success', 200, data=customers, total=total)
         except Exception as e:
@@ -188,6 +196,21 @@ class ZaloUserDetail(APIView):
             for tag in tags:
                 tag_user_zalo = TagUserZalo.objects.filter(user_zalo=user_zalo, tag_id=tag).first()
                 if tag_user_zalo:
+                    tag_user_zalo.delete()
+
+            tag_progress = data.get('tag_progress')
+            if tag_progress:
+                tag_user_zalo = ProgressTagUserZalo.objects.filter(tag_id=tag_progress, user_zalo=user_zalo).first()
+                if not tag_user_zalo:
+                    ProgressTagUserZalo.objects.create(
+                        tag_id=tag_progress,
+                        user_zalo=user_zalo,
+                        created_by=user,
+                    )
+            tag_progress = data.get('tag_progress_remove')
+            if tag_progress:
+                tag_user_zalo = ProgressTagUserZalo.objects.filter(tag_id=tag_progress, user_zalo=user_zalo).first()
+                if not tag_user_zalo:
                     tag_user_zalo.delete()
 
             user_zalo.save()
