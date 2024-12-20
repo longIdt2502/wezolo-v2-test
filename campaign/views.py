@@ -82,7 +82,7 @@ class CampaignApi(APIView):
                 employee_oa = EmployeeOa.objects.filter(employee__account=user, oa=oa).first()
                 if not employee_oa and employee_oa.employee.role == Role.Code.SALE:
                     raise Exception('Bạn không có quyền thực hiện')
-            owner = employee_oa.employee.workspace.created_by
+            owner = employee.workspace.created_by
             wallet = Wallet.objects.get(owner=owner)
 
             if wallet.balance < data.get('total', 0):
