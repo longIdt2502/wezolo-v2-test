@@ -91,7 +91,10 @@ class WalletTransaction(models.Model):
             self.wallet.refresh_from_db()
             current_balance = self.wallet.balance
 
-            if self.type == self.Type.RETURN or self.type == self.Type.EXPENDITURE or self.type == self.Type.PACKAGE:
+            if self.type in [
+                self.Type.OUT_PACKAGE, self.Type.OUT_ZNS, self.Type.OUT_MESS, self.Type.OUT_START,
+                self.Type.OUT_CREATE_OA, self.Type.OUT_CONECT_OA, self.Type.OUT_CREATE_WS, self.Type.OUT_OA_PREMIUM,
+            ]:
                 if current_balance < self.amount:
                     raise ValueError("Insufficient wallet balance")
                 self.wallet.balance = F('balance') - self.amount
