@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 import random
-from django.db.models import OuterRef
+from django.db.models import OuterRef, Q
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.files.base import ContentFile
@@ -181,19 +181,24 @@ class CampaignListMessageApi(APIView):
             campagin = Campaign.objects.get(id=pk)
             messages = []
             total = 0
+            search = data.get('search', '')
             if campagin.type == Campaign.Type.ZNS:
                 customer_user_zalo_subquery = SubqueryJson(
                     CustomerUserZalo.objects.filter(customer_id=OuterRef('customer_id')).values(
                         'user_zalo__name', 'user_zalo__avatar_small', 'user_zalo__avatar_big', 'user_zalo__phone'
                     )
                 )
-                messages = CampaignZns.objects.filter(campagin=campagin)
+                messages = CampaignZns.objects.filter(campagin=campagin).filter(
+                    Q(customer__prefix_name__icontains=search) | Q(customer__phone__icontains=search)
+                )
                 total = messages.count()
                 messages = messages[offset: offset + page_size].values().annotate(
                     user_zalo=customer_user_zalo_subquery
                 )
             if campagin.type == Campaign.Type.MESSAGE:
-                messages = CampaignMessage.objects.filter(campagin=campagin)
+                messages = CampaignMessage.objects.filter(campagin=campagin).filter(
+                    Q(user_zalo__name__icontains=search) | Q(user_zalo__phone__icontains=search)
+                )
                 total = messages.count()
                 messages = messages[offset: offset + page_size].values(
                     'user_zalo__name', 'user_zalo__avatar_small', 'user_zalo__avatar_big',
