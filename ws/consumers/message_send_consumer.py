@@ -31,6 +31,9 @@ class MessageSendConsumer(WebsocketConsumer):
 
     def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
+        if text_data_json['send_at']:
+            if text_data_json['send_at'] is str:
+                text_data_json['send_at'] = float(text_data_json['send_at'])
         message = text_data_json['message']
 
         event = {
