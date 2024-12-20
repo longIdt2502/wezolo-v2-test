@@ -46,6 +46,11 @@ class Employees(APIView):
             employee_oa = EmployeeOa.objects.filter(oa_id=zalo_oa_query).values_list('employee_id', flat=True)
             employees_in_ws = employees_in_ws.filter(id__in=employee_oa)
 
+        zalo_user = data.get('zalo_user')
+        if zalo_user:
+            employee_userzalo = EmployeeUserZalo.objects.filter(customer_id=zalo_user).values_list('employee_id', flat=True)
+            employees_in_ws = employees_in_ws.filter(id__in=employee_userzalo)
+
         oa_subquery = SubqueryJson(
             ZaloOA.objects.filter(id=OuterRef('oa_id')).values('id', 'oa_name', 'oa_avatar')[:1]
         )
