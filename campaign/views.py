@@ -246,20 +246,21 @@ class CampaignZnsDetailApi(APIView):
         wallet = Wallet.objects.get(owner=oa.company.created_by)
         # get price to sent 1 zns message
         _, _, price = checkFinancialCapacity(oa.company.created_by, Price.Type.ZNS)
-        if status == StatusMessage.REJECT:
-            WalletTransaction.objects.create(
-                wallet=wallet,
-                user=oa.company.created_by,
-                type=WalletTransaction.Type.IN_ZNS,
-                method=WalletTransaction.Method.CASH,
-                oa=oa,
-                used_at=datetime.now(),
-                amount=price.value.value,
-                total_amount=price.value.value,
-            )
-            campaign.total_refund = (campaign.total_refund if campaign.total_refund else 0) + price.value.value
-        else:
-            campaign.total_success = (campaign.total_success if campaign.total_success else 0) + 1
+        if campaign_zns.status == 'PENDING':
+            if status == StatusMessage.REJECT:
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    user=oa.company.created_by,
+                    type=WalletTransaction.Type.IN_ZNS,
+                    method=WalletTransaction.Method.CASH,
+                    oa=oa,
+                    used_at=datetime.now(),
+                    amount=price.value.value,
+                    total_amount=price.value.value,
+                )
+                campaign.total_refund = (campaign.total_refund if campaign.total_refund else 0) + price.value.value
+            else:
+                campaign.total_success = (campaign.total_success if campaign.total_success else 0) + 1
         campaign.save()
         campaign_zns.save()
         return convert_response('success', 200)
