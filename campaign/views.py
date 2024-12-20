@@ -52,6 +52,10 @@ class CampaignApi(APIView):
             search = data.get('search')
             if search:
                 campagin = campagin.filter(name__icontains=search)
+
+            status = data.get('status')
+            if status:
+                campagin = campagin.filter(status=status)
             
             type_campaign = data.get('type_campaign')
             if type_campaign:
@@ -72,7 +76,7 @@ class CampaignApi(APIView):
             # Check wallet balance
             oa = ZaloOA.objects.get(id=data.get('oa'))
             employee_oa = EmployeeOa.objects.filter(employee__account=user, oa=oa).first()
-            if not employee_oa:
+            if not employee_oa and employee_oa.employee.role == Role.Code.SALE:
                 raise Exception('Bạn không có quyền thực hiện')
             owner = employee_oa.employee.workspace.created_by
             wallet = Wallet.objects.get(owner=owner)
