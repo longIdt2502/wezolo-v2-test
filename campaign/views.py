@@ -257,9 +257,9 @@ class CampaignZnsDetailApi(APIView):
                 amount=price.value.value,
                 total_amount=price.value.value,
             )
-            campaign.total_refund = campaign.total_refund + price.value.value
+            campaign.total_refund = (campaign.total_refund if campaign.total_refund else 0) + price.value.value
         else:
-            campaign.total_success = campaign.total_success + 1
+            campaign.total_success = (campaign.total_success if campaign.total_success else 0) + 1
         campaign.save()
         campaign_zns.save()
         return convert_response('success', 200)

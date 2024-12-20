@@ -191,7 +191,7 @@ class UserZalo(models.Model):
         tags = TagUserZalo.objects.filter(user_zalo_id=self.id)
         tags_json = []
         tag_progress = ProgressTagUserZalo.objects.filter(user_zalo=self.id).values(
-            'tag_id',
+            'tag__progress_id' , 'tag_id',
             'tag__title', 'tag__color_text', 'tag__color_fill', 'tag__color_border',
             'tag__type', 'tag__progress__title'
         ).first()

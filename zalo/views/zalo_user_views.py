@@ -201,6 +201,9 @@ class ZaloUserDetail(APIView):
 
             tag_progress = data.get('tag_progress')
             if tag_progress:
+                tag_user_zalo_ins = ProgressTagUserZalo.objects.filter(user_zalo=user_zalo)
+                for item in tag_user_zalo_ins:
+                    item.delete()
                 tag_user_zalo = ProgressTagUserZalo.objects.filter(tag_id=tag_progress, user_zalo=user_zalo).first()
                 if not tag_user_zalo:
                     ProgressTagUserZalo.objects.create(
@@ -211,7 +214,7 @@ class ZaloUserDetail(APIView):
             tag_progress = data.get('tag_progress_remove')
             if tag_progress:
                 tag_user_zalo = ProgressTagUserZalo.objects.filter(tag_id=tag_progress, user_zalo=user_zalo).first()
-                if not tag_user_zalo:
+                if tag_user_zalo:
                     tag_user_zalo.delete()
 
             user_zalo.save()

@@ -46,13 +46,13 @@ def send_zns_campain_job(access_token, phone, template, params, campaign_zns_id)
 
         response = requests.request("POST", url, headers=headers, data=payload)
         response = response.json()
-        if response.get('error') == -216:
-            raise Exception('token OA đã hết hạn')
-        # call API for update status Message Campaign
         domain = os.environ.get(PrefKeys.DOMAIN_URL)
         url = f'{domain}/v1/campaign/zns/{campaign_zns_id}'
+        print(response)
+        print(response.get('error'))
+        status = 'SENT' if response.get('error') == 0 else 'REJECT'
         payload = json.dumps({
-            'status': 'SENT' if response.get('error') == 0 else 'REJECT'
+            'status': status
         })
         headers = {'Content-Type': 'application/json'}
         res = requests.put(url, data=payload, headers=headers)
