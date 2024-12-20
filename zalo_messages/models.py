@@ -72,6 +72,8 @@ class Message(models.Model):
         user_zalo.last_message_time = datetime.fromtimestamp(float(self.send_at) / 1000).astimezone(pytz.timezone('Asia/Ho_Chi_Minh'))
         if self.Src.USER:
             user_zalo.message_unread += 1
+        else:
+            user_zalo.message_unread = 0
         user_zalo.save()
 
     def from_json(self, data):
