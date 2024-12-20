@@ -50,7 +50,9 @@ def send_zns_campain_job(access_token, phone, template, params, campaign_zns_id)
         url = f'{domain}/v1/campaign/zns/{campaign_zns_id}'
         print(response)
         print(response.get('error'))
-        status = 'SENT' if response.get('error') == 0 else 'REJECT'
+        status = 'REJECT'
+        if response.get('error') == 0 or response.get('error') == '0':
+            status = 'SENT'
         payload = json.dumps({
             'status': status
         })

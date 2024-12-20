@@ -1,10 +1,12 @@
 from datetime import datetime
 import json
 import random
+import django_rq
 from django.db.models import OuterRef, Q, F
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.files.base import ContentFile
+from common.redis.send_message_campain_job import send_message_campain_job, send_zns_campain_job
 from employee.models import EmployeeOa, Employee
 from package.models import Price
 from utils.check_financial_capacity import checkFinancialCapacity
@@ -124,11 +126,15 @@ class CampaignApi(APIView):
             if campaign.type == Campaign.Type.MESSAGE:
                 user_zalos = data.get('user_zalos', [])
                 for id in user_zalos: 
-                    CampaignMessage.objects.create(
+                    cm_ins = CampaignMessage.objects.create(
                         campaign=campaign,
                         user_zalo_id=id,
                         status=StatusMessage.PENDING
                     )
+                    django_rq.enqueue(send_message_campain_job, cm_ins.campaign.oa.access_token, cm_ins.user_zalo.user_zalo_id, {
+                        'text': cm_ins.campaign.message,
+                        'attachment': cm_ins.campaign.message_file
+                    })
             
             # get price to sent 1 zns message
             _, _, price = checkFinancialCapacity(owner, Price.Type.ZNS)
@@ -145,12 +151,20 @@ class CampaignApi(APIView):
                         amount=price.value.value,
                         total_amount=price.value.value,
                     )
-                    CampaignZns.objects.create(
+                    cz_ins = CampaignZns.objects.create(
                         campaign=campaign,
                         customer_id=id,
                         zns_params=data.get('zns_params'),
                         status=StatusMessage.PENDING,
                         zns_id=data.get('zns')
+                    )
+                    django_rq.enqueue(
+                        send_zns_campain_job, 
+                        cz_ins.campaign.oa.access_token,
+                        cz_ins.customer.phone,
+                        cz_ins.zns.template,
+                        cz_ins.zns_params,
+                        cz_ins.id,
                     )
 
             return convert_response('success', 200, data=campaign.id)
@@ -241,7 +255,6 @@ class CampaignZnsDetailApi(APIView):
         status = data.get('status')
         campaign_zns = CampaignZns.objects.get(id=pk)
         campaign = campaign_zns.campaign
-        campaign_zns.status = status
         oa = campaign_zns.campaign.oa
         wallet = Wallet.objects.get(owner=oa.company.created_by)
         # get price to sent 1 zns message
@@ -262,5 +275,7 @@ class CampaignZnsDetailApi(APIView):
             else:
                 campaign.total_success = (campaign.total_success if campaign.total_success else 0) + 1
         campaign.save()
+
+        campaign_zns.status = status
         campaign_zns.save()
         return convert_response('success', 200)
