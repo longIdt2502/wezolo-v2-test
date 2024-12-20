@@ -20,7 +20,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from common.file_ext import get_file_extension
 from common.pref_keys import PrefKeys
 from common.core.subquery import *
-from utils.check_financial_capacity import CheckFinancialCapacity
+from utils.check_financial_capacity import checkFinancialCapacity
 from common.redis.connect_oa_job import connect_oa_job
 from zalo.utils import get_token_from_code, get_oa_info, quota_message_oa
 from zalo.models import ZaloOA, CodeVerifier, UserZalo
@@ -126,7 +126,7 @@ class ZaloOaAPI(APIView):
                 Price tương ứng -> kiểm tra tiền trong ví và thực hiện tiếp thao tác
                 """
                 if len(oa_ins) > 0:
-                    can_transact, wallet, benefit = CheckFinancialCapacity(user, Price.Type.CREATE_OA)
+                    can_transact, wallet, benefit = checkFinancialCapacity(user, Price.Type.CREATE_OA)
                     print(benefit)
                     if not can_transact:
                         raise Exception('Số dư ví không đủ để thực hiện thao tác')

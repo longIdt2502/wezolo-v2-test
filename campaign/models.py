@@ -4,6 +4,7 @@ from common.redis.send_message_campain_job import send_message_campain_job, send
 
 from customer.models import Customer
 from user.models import User
+from wallet.models import WalletTransaction
 from zalo.models import Message, UserZalo, ZaloOA
 from zns.models import Zns
 
@@ -63,6 +64,29 @@ class Campaign(models.Model):
             created_by_id=data.get('created_by'),
         )
         return campaign
+    
+    def to_json(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "oa_id": self.oa.id,
+            "status": self.status,
+            "type": self.type,
+            "start_sent_at": self.start_sent_at.isoformat() if self.start_sent_at else None,
+            "zns_id": self.zns.id if self.zns else None,
+            "message": self.message,
+            "message_file": self.message_file,
+            "price_zns": self.price_zns,
+            "total": self.total,
+            "total_sent": self.total_sent,
+            "total_success": self.total_success,
+            "total_amount": self.total_amount,
+            "total_refund": self.total_refund,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "created_by_name": self.created_by.full_name if self.created_by else None,
+            "updated_by_name": self.updated_by.full_name if self.updated_by else None,
+        }
         
 
 class StatusMessage(models.TextChoices):
@@ -116,4 +140,5 @@ class CampaignZns(models.Model):
             self.customer.phone,
             self.zns.template,
             self.zns_params,
+            self.id,
         )

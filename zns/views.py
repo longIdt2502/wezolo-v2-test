@@ -13,7 +13,7 @@ from common.core.subquery import *
 from employee.models import Employee
 from package.models import Price
 from reward.models import RewardBenefit
-from utils.check_financial_capacity import CheckFinancialCapacity
+from utils.check_financial_capacity import checkFinancialCapacity
 from utils.convert_response import convert_response
 from zalo.models import ZaloOA
 from zns.models import *
@@ -73,7 +73,7 @@ class ZnsApi(APIView):
             ZnsParams.objects.filter(zns_id=OuterRef('id')).values()
         )
 
-        _, _, price = CheckFinancialCapacity(user, Price.Type.ZNS)
+        _, _, price = checkFinancialCapacity(user, Price.Type.ZNS)
 
         zns = zns.order_by('-id')[offset: offset + page_size].values().annotate(
             oa_data=oa_subquery,
