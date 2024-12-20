@@ -52,10 +52,17 @@ class WalletTransaction(models.Model):
         db_table = 'wallet_transaction'
 
     class Type(models.TextChoices):
-        DEPOSIT = 'DEPOSIT', 'nạp tiền'
-        EXPENDITURE = 'EXPENDITURE', 'chi tiêu'
-        RETURN = 'RETURN', 'trả lại'
-        PACKAGE = 'PACKAGE', 'mua gói'
+        DEPOSIT = 'DEPOSIT', 'Nạp tiền'
+        OUT_PACKAGE = 'OUT_PACKAGE', 'Mua gói'
+        OUT_ZNS = 'OUT_ZNS', 'Gửi tin zns'
+        OUT_MESS = 'OUT_MESS', 'Gửi tin vượt khung'
+        OUT_START = 'OUT_START', 'Khởi tạo'
+        OUT_CREATE_OA = 'OUT_CREATE_OA', 'Tạo zalo OA'
+        OUT_CONECT_OA = 'OUT_CONECT_OA', 'Kết nối zalo OA'
+        OUT_CREATE_WS = 'OUT_CREATE_WS', 'Tạo wordspace'
+        OUT_OA_PREMIUM = 'OUT_OA_PREMIUM', 'Nâng cấp OA premium'
+        IN_ZNS = 'IN_ZNS', 'Hoàn tiền zns'
+        IN_MESSAGE = 'IN_MESSAGE', 'Hoàn tiền tin nhắn'
 
     class Method(models.TextChoices):
         CASH = 'CASH', 'tiền mặt'

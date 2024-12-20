@@ -55,7 +55,8 @@ def send_zns_campain_job(access_token, phone, template, params, campaign_zns_id)
             'status': 'SENT' if response.get('error') == 0 else 'REJECT'
         })
         headers = {'Content-Type': 'application/json'}
-        requests.post(url, data=payload, headers=headers)
+        res = requests.put(url, data=payload, headers=headers)
+        print(res)
         return response
     except Exception as e:
         print(str(e))
