@@ -36,7 +36,7 @@ class CampaignApi(APIView):
             if not employee:
                 raise Exception('Không có quyền truy cập Campaign trong Workspace')
 
-            campagin = Campaign.objects.filter(oa__company_id=ws)
+            campaign = Campaign.objects.filter(oa__company_id=ws)
 
             oa = data.get('oa')
             if oa:
@@ -44,26 +44,26 @@ class CampaignApi(APIView):
                     employee_oa = EmployeeOa.objects.filter(employee=employee).values_list('oa_id', flat=True)
                     if oa not in employee_oa:
                         raise Exception('Không có quyền truy cập Campaign trong OA')
-                campagin = campagin.filter(oa_id=oa)
+                campaign = campaign.filter(oa_id=oa)
             
-            total_campaign_message = campagin.filter(type=Campaign.Type.MESSAGE).count()
-            total_campaign_zns = campagin.filter(type=Campaign.Type.ZNS).count()
+            total_campaign_message = campaign.filter(type=Campaign.Type.MESSAGE).count()
+            total_campaign_zns = campaign.filter(type=Campaign.Type.ZNS).count()
             
             search = data.get('search')
             if search:
-                campagin = campagin.filter(name__icontains=search)
+                campaign = campaign.filter(name__icontains=search)
 
             status = data.get('status')
             if status:
-                campagin = campagin.filter(status=status)
+                campaign = campaign.filter(status=status)
             
             type_campaign = data.get('type_campaign')
             if type_campaign:
-                campagin = campagin.filter(type=type_campaign)
+                campaign = campaign.filter(type=type_campaign)
             
-            campagin = campagin[offset: offset + page_size].values()
+            campaign = campaign[offset: offset + page_size].values()
             
-            return convert_response('success', 200, data=campagin, total_campaign_zns=total_campaign_zns, total_campaign_message=total_campaign_message)
+            return convert_response('success', 200, data=campaign, total_campaign_zns=total_campaign_zns, total_campaign_message=total_campaign_message)
         except Exception as e:
             return convert_response(str(e), 400)
 
@@ -163,19 +163,19 @@ class CampaignDetailApi(APIView):
         try:
             user = request.user
 
-            campagin = Campaign.objects.get(id=pk)
+            campaign = Campaign.objects.get(id=pk)
 
-            employee = Employee.objects.filter(account=user, workspace=campagin.oa.company).first()
+            employee = Employee.objects.filter(account=user, workspace=campaign.oa.company).first()
             if not employee:
                 raise Exception('Không có quyền truy cập Campaign trong Workspace')
 
 
             if employee.role == Role.Code.SALE:
                 employee_oa = EmployeeOa.objects.filter(employee=employee).values_list('oa_id', flat=True)
-                if campagin.oa not in employee_oa:
+                if campaign.oa not in employee_oa:
                     raise Exception('Không có quyền truy cập Campaign trong OA')
             
-            return convert_response('success', 200, data=campagin.to_json())
+            return convert_response('success', 200, data=campaign.to_json())
         except Exception as e:
             return convert_response(str(e), 400)
 
@@ -190,25 +190,25 @@ class CampaignListMessageApi(APIView):
             page_size = int(data.get('page_size', 20))
             offset = (int(data.get('page', 1)) - 1) * page_size
 
-            campagin = Campaign.objects.get(id=pk)
+            campaign = Campaign.objects.get(id=pk)
             messages = []
             total = 0
             search = data.get('search', '')
-            if campagin.type == Campaign.Type.ZNS:
+            if campaign.type == Campaign.Type.ZNS:
                 customer_user_zalo_subquery = SubqueryJson(
                     CustomerUserZalo.objects.filter(customer_id=OuterRef('customer_id')).values(
                         'user_zalo__name', 'user_zalo__avatar_small', 'user_zalo__avatar_big', 'user_zalo__phone'
                     )
                 )
-                messages = CampaignZns.objects.filter(campagin=campagin).filter(
+                messages = CampaignZns.objects.filter(campaign=campaign).filter(
                     Q(customer__prefix_name__icontains=search) | Q(customer__phone__icontains=search)
                 )
                 total = messages.count()
                 messages = messages[offset: offset + page_size].values().annotate(
                     user_zalo=customer_user_zalo_subquery
                 )
-            if campagin.type == Campaign.Type.MESSAGE:
-                messages = CampaignMessage.objects.filter(campagin=campagin).filter(
+            if campaign.type == Campaign.Type.MESSAGE:
+                messages = CampaignMessage.objects.filter(campaign=campaign).filter(
                     Q(user_zalo__name__icontains=search) | Q(user_zalo__phone__icontains=search)
                 )
                 total = messages.count()
