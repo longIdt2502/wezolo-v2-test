@@ -163,6 +163,7 @@ class UserZalo(models.Model):
         max_length=10, blank=True, null=True, verbose_name='gender')
     oa = models.ForeignKey(ZaloOA, on_delete=models.CASCADE, null=True)
     is_follower = models.BooleanField(default=False, null=False)
+    message_unread = models.IntegerField(default=0)
     # address = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL)
     address = models.TextField(null=True, blank=True)
     message_quota_type = models.CharField(max_length=255, null=True, blank=True)
@@ -185,9 +186,14 @@ class UserZalo(models.Model):
     def to_json(self):
         from customer.models import CustomerUserZalo
         from tags.models import TagUserZalo
+        from progress.models import ProgressTagUserZalo
         from zalo_messages.models import Message
         tags = TagUserZalo.objects.filter(user_zalo_id=self.id)
         tags_json = []
+        tag_progress = ProgressTagUserZalo.objects.filter(user_zalo=self.id).values(
+            'tag__title', 'tag__color_text', 'tag__color_fill', 'tag__color_border',
+            'tag__type', 'tag__progress__title'
+        ).first()
         for item in tags:
             tags_json.append(item.to_json())
         customer_user_zalo = CustomerUserZalo.objects.filter(user_zalo_id=self.id).values(
@@ -205,12 +211,17 @@ class UserZalo(models.Model):
             'last_message': last_message_subquery.to_json() if last_message_subquery else None,
             'last_message_time': self.last_message_time.strftime('%Y-%m-%d %H:%M:%S') if self.last_message_time else None,
             'is_follower': self.is_follower,
+            'birthday': self.birthday,
+            'address': self.address,
+            'is_follower': self.is_follower,
             'message_quota_type': self.message_quota_type,
             'message_remain': self.message_remain,
             'message_quota': self.message_quota,
+            'message_unread': self.message_unread,
             'chatbot': self.chatbot,
             'oa': self.oa.to_json() if self.oa else None,
             'tags': tags_json,
+            'progress': tag_progress,
             'customer': customer_user_zalo,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None,

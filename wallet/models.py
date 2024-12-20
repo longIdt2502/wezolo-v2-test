@@ -80,8 +80,12 @@ class WalletTransaction(models.Model):
         is_new = self.pk is None
 
         if is_new:
+            # Lấy giá trị thực của balance từ cơ sở dữ liệu
+            self.wallet.refresh_from_db()
+            current_balance = self.wallet.balance
+
             if self.type == self.Type.RETURN or self.type == self.Type.EXPENDITURE or self.type == self.Type.PACKAGE:
-                if self.wallet.balance < self.amount:
+                if current_balance < self.amount:
                     raise ValueError("Insufficient wallet balance")
                 self.wallet.balance = F('balance') - self.amount
             self.wallet.save()
