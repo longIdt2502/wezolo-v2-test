@@ -23,6 +23,7 @@ from user.models import User
 from workspace.models import Workspace
 from tags.models import Tag, TagCustomer
 from zalo.models import ZaloOA
+from progress.models import ProgressTagCustomer
 
 
 class CustomerCreate(APIView):
@@ -126,6 +127,12 @@ class CustomerList(APIView):
             cus = tag_cus.values_list('customer_id', flat=True)
             customer = customer.filter(id__in=cus)
 
+        progress_tag_subquery = SubqueryJson(
+            ProgressTagCustomer.objects.filter(customer_id=OuterRef('id')).values(
+                'tag__progress__title', 'tag__type', 'tag__title', 'tag__color_text', 'tag__color_fill', 'tag__color_border'
+            )[:1]
+        )
+
         total = customer.count()
         customer = customer[offset: offset + page_size].values().annotate(
             oa_follow=oa_subquery,
@@ -136,6 +143,7 @@ class CustomerList(APIView):
                 )[:1]
             ),
             tag=tag_subquery,
+            progress=progress_tag_subquery,
         )
 
         return convert_response('success', 200, data=customer, total=total)
@@ -153,6 +161,12 @@ class CustomerDetail(APIView):
             )
             customer = Customer.objects.get(id=pk)
             customer = customer.to_json()
+
+            progress_tag = ProgressTagCustomer.objects.filter(customer_id=customer['id']).values(
+                'tag__progress__title', 'tag__type', 'tag__title', 'tag__color_text', 'tag__color_fill', 'tag__color_border'
+            ).first()
+
+            customer['progress'] = progress_tag
 
             oa_follow = CustomerUserZalo.objects.filter(customer_id=pk)
             customer['oa_follow'] = oa_follow.values(
@@ -216,6 +230,21 @@ class CustomerDetail(APIView):
             for tag in tags:
                 tag_cus = TagCustomer.objects.filter(customer=customer, tag_id=tag).first()
                 if tag_cus:
+                    tag_cus.delete()
+
+            tag_progress = data.get('tag_progress')
+            if tag_progress:
+                tag_cus = ProgressTagCustomer.objects.filter(tag_id=tag_progress, customer=customer).first()
+                if not tag_cus:
+                    ProgressTagCustomer.objects.create(
+                        tag_id=tag_progress,
+                        customer=customer,
+                        created_by=user,
+                    )
+            tag_progress = data.get('tag_progress_remove')
+            if tag_progress:
+                tag_cus = ProgressTagCustomer.objects.filter(tag_id=tag_progress, customer=customer).first()
+                if not tag_cus:
                     tag_cus.delete()
 
             customer.save()
