@@ -59,6 +59,7 @@ class Campaign(models.Model):
             zns_id=data.get('zns_id'),
             message=data.get('message'),
             message_file=data.get('message_file'),
+            total_amount=data.get('price_zns', 0),
             price_zns=data.get('price_zns', 0),
             total=data.get('total', 0),
             created_by_id=data.get('created_by'),
