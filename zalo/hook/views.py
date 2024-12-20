@@ -42,8 +42,6 @@ class ZaloHook(APIView):
                 handle_follow_event(request.data.copy())
             if event_type == ZaloEventName.user_submit_info:
                 handle_user_submit_info(request.data.copy())
-            if event_type == ZaloEventName.user_submit_info:
-                handle_user_submit_info(request.data.copy())
             if event_type == ZaloEventName.change_template_status:
                 handle_change_template_status(request.data.copy())
             if event_type == ZaloEventName.user_seen_message:

@@ -10,9 +10,12 @@ from zalo.utils import revert_phone
 from zns.models import Zns, ZnsLog
 from zalo_messages.models import Message
 from zns.zalo.utils import *
+from customer.models import CustomerUserZalo, Customer
+
 
 def handle_user_submit_info(data) -> Optional[str]:
     try:
+        print(data)
         user_id = data.get('sender').get('id')
         uid_zalo_oa = data.get('recipient').get('id')
         user_zalo = UserZalo.objects.get(user_zalo_id=user_id, oa__uid_zalo_oa=uid_zalo_oa)
@@ -21,8 +24,22 @@ def handle_user_submit_info(data) -> Optional[str]:
         user_zalo.prefix_name = info.get('name', user_zalo.prefix_name)
         user_zalo.address = f"{info.get('address')}, {info.get('ward')}, {info.get('district')}, {info.get('city')}"
         user_zalo.save()
+
+        customer = Customer.objects.create(
+            prefix_name=user_zalo.name,
+            phone=user_zalo.phone,
+            address=user_zalo.address,
+            workspace=user_zalo.oa.company,
+        )
+
+        CustomerUserZalo.objects.create(
+            user_zalo=user_zalo,
+            oa=user_zalo.oa,
+            customer=customer
+        )
         return None
     except Exception as e:
+        print(str(e))
         return str(e)
 
 
@@ -38,35 +55,6 @@ def handle_follow_event(data) -> Optional[str]:
         return None
     except Exception as e:
         return str(e)
-
-
-def handle_user_submit_info(data) -> [str, int]:
-    info = data.get('info')
-    user_id = data.get('sender').get('id')
-    uid_zalo_oa = data.get('recipient').get('id')
-    try:
-        user_zalo = UserZalo.objects.get(user_zalo_id=user_id, oa__uid_zalo_oa=uid_zalo_oa)
-        user_zalo.phone = info.get('phone')
-        user_zalo.name = info.get('name')
-
-        ward_name = info.get('ward')
-        district_name = info.get('district')
-        city_name = info.get('city')
-        if city_name and district_name:
-            city = City.objects.filter(name=city_name)
-            district = District.objects.filter(name_with_type__icontains=district_name)
-            ward = Ward.objects.filter(name_with_type__icontains=ward_name)
-            address = Address.objects.create(
-                city=city,
-                district=district,
-                ward=ward,
-                address=info.get('address')
-            )
-            user_zalo.address = address
-        user_zalo.save()
-        return 'success', 200
-    except Exception as e:
-        return str(e), 400
 
 
 # TODO: ZNS handle hook
