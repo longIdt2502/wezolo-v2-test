@@ -27,7 +27,7 @@ from zalo.models import ZaloOA, CodeVerifier, UserZalo
 from user.models import Address, User
 from wallet.models import WalletTransaction, Wallet
 from reward.models import RewardBenefit
-from package.models import Price
+from package.models import Package, Price
 from workspace.models import Workspace, Role
 from employee.models import EmployeeOa, Employee
 from zalo_messages.models import Message
@@ -125,7 +125,7 @@ class ZaloOaAPI(APIView):
                 của User -> Lấy được Level (Reward_tiers) -> Dựa vào Reward_tier và Type -> tìm được Reward_benefit -> tìm được
                 Price tương ứng -> kiểm tra tiền trong ví và thực hiện tiếp thao tác
                 """
-                if len(oa_ins) > 0:
+                if oa_ins or user.package.code == 'FREE_TRIAL':
                     can_transact, wallet, benefit = checkFinancialCapacity(user, Price.Type.CREATE_OA)
                     print(benefit)
                     if not can_transact:
