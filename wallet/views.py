@@ -60,7 +60,7 @@ class WalletPayment(APIView):
             user=wallet.owner,
         )
         description = 'Nạp vào tài khoản'
-        if type_payment == WalletTransaction.Type.OUT_PACKAGE:
+        if type_payment == WalletTransaction.Type.IN_PACKAGE:
             description = type_payment
         payment_data = PaymentData(
             orderCode=wallet_trans.id, amount=amount, description=description,
@@ -87,21 +87,15 @@ class WalletReceiveHookPayment(APIView):
             return convert_response('wallet not found', 400)
         wallet_trans.pay_os_reference = data.get('reference')
         wallet_trans.save()
-        reward = Reward.objects.create(
-            customer_id=wallet_trans.user,
-            event=wallet_trans,
-            points_earned=wallet_trans.total_amount,
-            expiration_date=datetime.now() + timedelta(seconds=90)
-        )
         wallet = Wallet.objects.get(owner=wallet_trans.user)
         # nếu hành động nạp tiền là để mua gói
-        if data.get('description') == WalletTransaction.Type.OUT_PACKAGE:
-            reward_tier = reward.customer_id.level
+        if data.get('description') == WalletTransaction.Type.IN_PACKAGE:
+            reward_tier = wallet.owner.level
             if reward_tier:
                 reward_benefit = RewardBenefit.objects.filter(tier_id=reward_tier, type=Price.Type.START).first()
                 if reward_benefit:
                     if reward_benefit.value.value != 0:
-                        WalletTransaction.objects.create(
+                        wallet_trans = WalletTransaction.objects.create(
                             amount=reward_benefit.value.value,
                             total_amount=reward_benefit.value.value,
                             method=WalletTransaction.Method.TRANSFER,
@@ -109,6 +103,19 @@ class WalletReceiveHookPayment(APIView):
                             wallet=wallet,
                             user=wallet.owner,
                         )
+                        Reward.objects.create(
+                            customer_id=wallet.owner,
+                            event=wallet_trans,
+                            points_earned=wallet.owner.package.points_reward,
+                            expiration_date=datetime.now() + timedelta(days=90)
+                        )
+        else:
+            Reward.objects.create(
+                customer_id=wallet_trans.user,
+                event=wallet_trans,
+                points_earned=wallet_trans.total_amount,
+                expiration_date=datetime.now() + timedelta(days=90)
+            )
         # channel_layer = get_channel_layer()
         # async_to_sync(channel_layer.group_send)(
         #     f'wallet_{wallet.id}',

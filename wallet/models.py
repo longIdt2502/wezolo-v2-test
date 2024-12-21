@@ -54,7 +54,7 @@ class WalletTransaction(models.Model):
 
     class Type(models.TextChoices):
         DEPOSIT = 'DEPOSIT', 'Nạp tiền'
-        OUT_PACKAGE = 'OUT_PACKAGE', 'Mua gói'
+        IN_PACKAGE = 'IN_PACKAGE', 'Mua gói'
         OUT_ZNS = 'OUT_ZNS', 'Gửi tin zns'
         OUT_MESS = 'OUT_MESS', 'Gửi tin vượt khung'
         OUT_START = 'OUT_START', 'Khởi tạo'
@@ -93,7 +93,7 @@ class WalletTransaction(models.Model):
             current_balance = self.wallet.balance
 
             if self.type in [
-                self.Type.OUT_PACKAGE, self.Type.OUT_ZNS, self.Type.OUT_MESS, self.Type.OUT_START,
+                self.Type.IN_PACKAGE, self.Type.OUT_ZNS, self.Type.OUT_MESS, self.Type.OUT_START,
                 self.Type.OUT_CREATE_OA, self.Type.OUT_CONECT_OA, self.Type.OUT_CREATE_WS, self.Type.OUT_OA_PREMIUM,
             ]:
                 if current_balance < self.amount:
@@ -104,7 +104,7 @@ class WalletTransaction(models.Model):
         # Save transaction
         super().save(*args, **kwargs)
         if is_new and self.type in [
-            self.Type.OUT_PACKAGE, self.Type.OUT_ZNS, self.Type.OUT_MESS, self.Type.OUT_START,
+            self.Type.IN_PACKAGE, self.Type.OUT_ZNS, self.Type.OUT_MESS, self.Type.OUT_START,
             self.Type.OUT_CREATE_OA, self.Type.OUT_CONECT_OA, self.Type.OUT_CREATE_WS, self.Type.OUT_OA_PREMIUM,
         ]:
             send_message_to_ws(f'wallet_{self.wallet.id}', 'message_handler', {
