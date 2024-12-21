@@ -22,6 +22,7 @@ class WalletConsumer(WebsocketConsumer):
 
         event = {
             'type': 'message_handler',
+            'message': {}
         }
         async_to_sync(self.channel_layer.group_send)(
             f'wallet_{self.wallet_id}', event
