@@ -47,9 +47,10 @@ class WalletConsumer(WebsocketConsumer):
         try:
             trans_id = event.get('message').get('trans_id')
             wallet = Wallet.objects.get(id=self.wallet_id)
-            transaction = WalletTransaction.objects.get(id=trans_id)
+            transaction = WalletTransaction.objects.filter(id=trans_id).first()
             wallet = wallet.to_json()
-            wallet['transaction'] = transaction.to_json()
+            if transaction:
+                wallet['transaction'] = transaction.to_json()
             self.send(text_data=json.dumps(wallet.to_json()))
 
         except Exception as e:
