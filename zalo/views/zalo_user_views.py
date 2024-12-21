@@ -25,7 +25,18 @@ class ZaloUserCreate(APIView):
         phone = data.get('phone')
         user_zalo = UserZalo.objects.filter(user_zalo_id=data.get('user_zalo_id')).first()
         if user_zalo:
-            return convert_response('user_zalo_id đã tồn tại', 400)
+            user_zalo.name = data.get('name')
+            user_zalo.phone = phone if phone != 0 else None
+            user_zalo.user_zalo_id = data.get('user_zalo_id')
+            user_zalo.avatar_small = data.get('avatar_small')
+            user_zalo.avatar_big = data.get('avatar_big')
+            user_zalo.is_follower = data.get('is_follower')
+            user_zalo.last_message_reply=data.get('last_message_reply')
+            user_zalo.message_quota_type=data.get('message_quota_type')
+            user_zalo.message_remain=data.get('message_remain')
+            user_zalo.message_quota=data.get('message_quota')
+            user_zalo.save()
+            return convert_response('user_zalo_id tồn tại đã được cập nhật', 200)
         user_zalo = UserZalo.objects.create(
             name=data.get('name'),
             phone=phone if phone != 0 else None,
