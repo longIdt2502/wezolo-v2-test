@@ -48,12 +48,12 @@ class WalletConsumer(WebsocketConsumer):
         try:
             trans_id = event.get('message').get('trans_id')
             wallet = Wallet.objects.get(id=self.wallet_id)
-            transaction = WalletTransaction.objects.filter(id=trans_id).first()
             wallet = wallet.to_json()
-            if transaction:
+            if trans_id:
+                transaction = WalletTransaction.objects.filter(id=trans_id).first()
                 wallet['transaction'] = transaction.to_json()
             self.send(text_data=json.dumps(wallet))
 
         except Exception as e:
-            self.send(text_data='Không tìm thấy giao dịch/ví')
+            self.send(text_data=f'Không tìm thấy giao dịch/ví {str(e)}')
 
