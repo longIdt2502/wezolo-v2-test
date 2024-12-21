@@ -89,8 +89,8 @@ def connect_oa_job(access_token, oa: int):
             items = res['data']['users']
             for item in items:
                 django_rq.enqueue(detail_customer_oa_job, access_token, item['user_id'], oa)
-            item_count = res['data']['total']
-            total_user += item_count
+            item_count = len(res['data']['users'])
+            total_user += len(res['data']['users'])
             offset += item_count
 
         # Send message total user need sync process by socket

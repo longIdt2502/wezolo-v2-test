@@ -2,9 +2,12 @@ import hashlib
 import hmac
 import json
 import os
+import django_rq
 
+from django.db.models import Q
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
+from common.redis.connect_oa_job import detail_customer_oa_job
 
 from common.zalo.event_name import ZaloEventName
 from utils.convert_response import convert_response
@@ -16,36 +19,37 @@ class ZaloHook(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            # print('---start')
-            # signature = request.headers.get('X-ZEvent-Signature')
-            # timestamp = request.data.get('timestamp')
-            # print(timestamp)
-            # data = json.dumps(request.data)
-            # print(data)
-            # app_id = os.environ.get('ZALO_APP_ID')
-            # oa_secret_key = os.environ.get('OA_SECRET_KEY')
-            # print(app_id)
-            # print(oa_secret_key)
-            # mac = hmac.new(
-            #     key=oa_secret_key.encode('utf-8'),
-            #     msg=f'{app_id}{request.data}{timestamp}{oa_secret_key}'.encode('utf-8'),
-            #     digestmod=hashlib.sha256
-            # ).hexdigest()
-            # print(mac)
-            # print(signature)
-            #
-            # if signature != mac:
-            #     return convert_response('Invalid Signature', 403)
+            data = request.data.copy()
+            sender_id = None
+            recipient_id = None
+            sender = data.get('sender')
+            if sender:
+                sender_id = sender.get('id')
+            recipient = data.get('recipient')
+            if recipient:
+                recipient_id = recipient.get('id')
+            if sender_id or recipient_id:
+                user_zalo = UserZalo.objects.filter(
+                    Q(user_zalo_id=sender_id) | 
+                    Q(user_zalo_id=recipient_id)
+                ).first()
+                oa = ZaloOA.objects.filter(
+                    Q(uid_zalo_oa=sender_id) | 
+                    Q(uid_zalo_oa=recipient_id)
+                ).first()
+                if not user_zalo and oa:
+                    django_rq.enqueue(detail_customer_oa_job, oa.access_token, sender_id, oa.id)
+                    django_rq.enqueue(detail_customer_oa_job, oa.access_token, recipient_id, oa.id)
 
             event_type = request.data.get('event_name')
             if event_type == ZaloEventName.follow or event_type == ZaloEventName.un_follow:
-                handle_follow_event(request.data.copy())
+                handle_follow_event(data)
             if event_type == ZaloEventName.user_submit_info:
-                handle_user_submit_info(request.data.copy())
+                handle_user_submit_info(data)
             if event_type == ZaloEventName.change_template_status:
-                handle_change_template_status(request.data.copy())
+                handle_change_template_status(data)
             if event_type == ZaloEventName.user_seen_message:
-                handle_seen_message(request.data.copy())
+                handle_seen_message(data)
             if event_type in [
                 ZaloEventName.user_send_audio,
                 ZaloEventName.user_send_business_card,
@@ -58,7 +62,7 @@ class ZaloHook(APIView):
                 ZaloEventName.user_send_video,
                 ZaloEventName.user_send_text,
             ] :
-                handle_message_hook(request.data.copy())
+                handle_message_hook(data)
             if event_type in [
                 ZaloEventName.oa_send_audio,
                 ZaloEventName.oa_send_business_card,
@@ -71,7 +75,7 @@ class ZaloHook(APIView):
                 ZaloEventName.oa_send_video,
                 ZaloEventName.oa_send_text,
             ] :
-                handle_message_oa_send_hook(request.data.copy())
+                handle_message_oa_send_hook(data)
 
 
             return convert_response('success', 200)
