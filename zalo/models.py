@@ -213,6 +213,7 @@ class UserZalo(models.Model):
             'last_message_time': self.last_message_time.strftime('%Y-%m-%d %H:%M:%S') if self.last_message_time else None,
             'is_follower': self.is_follower,
             'birthday': self.birthday,
+            'gender': self.gender,
             'address': self.address,
             'is_follower': self.is_follower,
             'message_quota_type': self.message_quota_type,
