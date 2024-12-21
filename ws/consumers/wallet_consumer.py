@@ -29,7 +29,7 @@ class WalletConsumer(WebsocketConsumer):
 
     def disconnect(self, code):
         async_to_sync(self.channel_layer.group_discard)(
-            self.wallet_id, self.channel_name
+            f'wallet_{self.wallet_id}', self.channel_name
         )
 
     def receive(self, text_data=None, bytes_data=None):
@@ -51,7 +51,7 @@ class WalletConsumer(WebsocketConsumer):
             wallet = wallet.to_json()
             if transaction:
                 wallet['transaction'] = transaction.to_json()
-            self.send(text_data=json.dumps(wallet.to_json()))
+            self.send(text_data=json.dumps(wallet))
 
         except Exception as e:
             self.send(text_data='Không tìm thấy giao dịch/ví')
