@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.db import models
 from wheel.metadata import _
+from chatbot.models import Chatbot, ChatbotAnswer, ChatbotQuestion
 from common.core.subquery import SubqueryJsonAgg
 from employee.models import EmployeeUserZalo
 from tags.models import TagUserZalo
@@ -9,6 +10,7 @@ import pytz
 from user.models import User
 from ws.event import send_message_to_ws
 from zalo.models import UserZalo, ZaloOA
+from zalo_messages.utils import send_message_text
 
 
 class Message(models.Model):
@@ -71,6 +73,30 @@ class Message(models.Model):
 
         user_zalo.last_message_time = datetime.fromtimestamp(float(self.send_at) / 1000).astimezone(pytz.timezone('Asia/Ho_Chi_Minh'))
         if self.Src.USER:
+            if user_zalo.chatbot:
+                chatbot = Chatbot.objects.filter(is_active=True, oa=user_zalo.oa).first()
+                if chatbot:
+                    last_message_oa_send = Message.objects.filter(src=self.Src.OA, success=True).last()
+                    answer = None
+                    if not last_message_oa_send.type_send == self.TypeSend.BOT:
+                        answer = ChatbotAnswer.objects.filter(type=ChatbotAnswer.Type.GREETING).first()
+                    else:
+                        list_question = ChatbotQuestion.objects.filter(
+                            answer__chatbot=chatbot
+                        )
+                        for item in list_question:
+                            if answer:
+                                continue
+                            if item.type == ChatbotQuestion.Type.KEYWORD:
+                                keywords = item.content.split(',')
+                                for key in keywords:
+                                    if key in self.message_text:
+                                        answer = item.answer
+                    send_message_text(user_zalo.oa, user_zalo_id, {
+                        'text': answer.answer,
+                    })
+
+
             user_zalo.message_unread += 1
         else:
             user_zalo.message_unread = 0

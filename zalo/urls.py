@@ -12,6 +12,7 @@ urlpatterns = [
     path('hook', ZaloHook.as_view()),
 
     path('zalo_user/create', ZaloUserCreate.as_view()),
+    path('zalo_user/toggle-chatbot/<int:pk>', ZaloUserToggleChatbot.as_view()),
     path('zalo_user/detail/<int:pk>', ZaloUserDetail.as_view()),
     path('zalo_user/send_sync_process', ZaloUserSendSyncProcess.as_view()),
     path('zalo_user/list', ZaloUserList.as_view()),

@@ -41,9 +41,9 @@ def send_request_info(oa: ZaloOA, user_id):
                 "template_type": "request_user_info",
                 "elements": [
                 {
-                    "title": "OA Chatbot (Testing)",
-                    "subtitle": "Đang yêu cầu thông tin từ bạn",
-                    "image_url": "https://developers.zalo.me/web/static/zalo.png"
+                    "title": "WeZolo thông báo",
+                    "subtitle": "Hãy chia sẻ thông tin của mình",
+                    "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR1pb-qVaXaLJyJJAWV6jsx1yHQ-0iZS_PzAg&s"
                 }
                 ]
             }
