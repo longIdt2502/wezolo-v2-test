@@ -194,6 +194,19 @@ class ZaloUserDetail(APIView):
             user_zalo.birthday = datetime.datetime.strptime(data.get('birthday'), "%d/%m/%Y") if data.get('birthday') else None
             user_zalo.updated_at = datetime.datetime.now()
 
+            if data.get('phone'):
+                customer_ins = Customer.objects.filter(phone=data.get('phone', user_zalo.phone)).first()
+                if not customer_ins:
+                    Customer.objects.create(
+                        prefix_name=data.get('name', user_zalo.name),
+                        phone=data.get('phone', user_zalo.phone),
+                        address=data.get('address', user_zalo.address),
+                        gender=data.get('gender', user_zalo.gender),
+                        birthday=datetime.datetime.strptime(data.get('birthday'), "%d/%m/%Y") if data.get('birthday') else None,
+                        workspace=user_zalo.oa.company,
+                        created_by=user,
+                    )
+
             tags = data.get('tags', [])
             for tag in tags:
                 tag_user_zalo = TagUserZalo.objects.filter(user_zalo=user_zalo, tag_id=tag).first()
