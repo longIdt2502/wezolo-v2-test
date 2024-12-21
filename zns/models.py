@@ -257,3 +257,9 @@ class ZnsLog(models.Model):
     content = models.TextField(null=True)
     actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     action_at = models.DateTimeField(auto_now_add=True)
+
+
+class ZnsSent(models.Model):
+    class Meta:
+        verbose_name = 'ZnsSent'
+        db_table = 'zns_sent'
