@@ -159,10 +159,12 @@ class WalletTransApi(APIView):
         types_in = [WalletTransaction.Type.DEPOSIT, WalletTransaction.Type.IN_MESSAGE, WalletTransaction.Type.IN_ZNS]
         total_in = wallet_tras.filter(type__in=types_in).values().annotate(
             total_money=Sum('total_amount')
-        ).values('total_money')[:1]
+        ).values('total_money').first()
+        total_in = total_in['total_money'] if total_in else 0
         total_out = wallet_tras.exclude(type__in=types_in).values().annotate(
             total_money=Sum('total_amount')
-        ).values('total_money')[:1]
+        ).values('total_money').first()
+        total_out = total_in['total_money'] if total_out else 0
         wallet_tras = wallet_tras.order_by('-id')[offset: offset + page_size].values()
         return convert_response('success', 200, data=wallet_tras, total=total, total_in=total_in, total_out=total_out)
 
