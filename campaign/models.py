@@ -6,7 +6,7 @@ from customer.models import Customer
 from user.models import User
 from wallet.models import WalletTransaction
 from zalo.models import Message, UserZalo, ZaloOA
-from zns.models import Zns
+from zns.models import Zns, ZnsSent
 
 
 class Campaign(models.Model):
@@ -119,6 +119,7 @@ class CampaignZns(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     zns = models.ForeignKey(Zns, on_delete=models.SET_NULL, null=True)
     zns_params = models.JSONField(null=True)
+    zns_sent = models.ForeignKey(ZnsSent, on_delete=models.SET_NULL, null=True)
     status = models.CharField(max_length=255, choices=StatusMessage.choices, default=StatusMessage.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     response_json = models.JSONField(null=True)
