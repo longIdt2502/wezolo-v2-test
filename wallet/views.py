@@ -95,5 +95,35 @@ class WalletReceiveHookPayment(APIView):
 
 
 class WalletTransApi(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        data = request.GET.copy()
+        page_size = int(data.get('page_size', 20))
+        offset = (int(data.get('page', 1)) - 1) * page_size
+
+        wallet_tras = WalletTransaction.objects.filter(
+            wallet__owner=user
+        )
+
+        type_trans = data.get('type')
+        if type_trans:
+            wallet_tras = wallet_tras.filter(type=type_trans)
+
+        date_start = data.get('date_start')
+        if date_start:
+            date_start = datetime.strptime(date_start, '%d-%m-%Y')
+            wallet_tras = wallet_tras.filter(created_at__gte=date_start)
+        
+        date_end = data.get('date_end')
+        if date_end:
+            date_end = datetime.strptime(date_end, '%d-%m-%Y')
+            wallet_tras = wallet_tras.filter(created_at__lte=date_end)
+        
+        total = wallet_tras.count()
+        wallet_tras = wallet_tras.order_by('-id')[offset: offset + page_size].values()
+        return convert_response('success', 200, data=wallet_tras, total=total)
+
     def post(self, request):
         pass
