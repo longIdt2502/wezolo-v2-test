@@ -6,6 +6,7 @@ from django.db.models import F
 from channels.layers import get_channel_layer
 
 from user.models import User, Address
+from ws.event import send_message_to_ws
 from zalo.models import ZaloOA
 
 
@@ -98,22 +99,35 @@ class WalletTransaction(models.Model):
                 if current_balance < self.amount:
                     raise ValueError("Insufficient wallet balance")
                 self.wallet.balance = F('balance') - self.amount
-            self.wallet.save()
+                self.wallet.save()
 
         # Save transaction
         super().save(*args, **kwargs)
-
+        if is_new and self.type in [
+            self.Type.OUT_PACKAGE, self.Type.OUT_ZNS, self.Type.OUT_MESS, self.Type.OUT_START,
+            self.Type.OUT_CREATE_OA, self.Type.OUT_CONECT_OA, self.Type.OUT_CREATE_WS, self.Type.OUT_OA_PREMIUM,
+        ]:
+            send_message_to_ws(f'wallet_{self.wallet.id}', 'message_handler', {
+                'trans_id': self.pk,  # Now `self.pk` is valid
+            })
         # Nếu là nạp tiền thì check xem -> giao dịch này đã nạp tiền thành công hay chưa dựa vào pay_os_reference
         if self.type == self.Type.DEPOSIT and self.pay_os_reference is not None:
             self.wallet.balance = F('balance') + self.amount
             self.wallet.save()
+            send_message_to_ws(f'wallet_{self.wallet.id}', 'message_handler', {
+                'trans_id': self.pk,
+            })
 
     def to_json(self):
         return {
+            'id': self.id,
             'transaction_id': self.transaction_id,
             'type': self.type,
             'method': self.method,
             'amount': self.amount,
+            'bonus_amount': self.bonus_amount,
+            'total_amount': self.total_amount,
+            'created_at': self.created_at,
         }
 
 

@@ -33,17 +33,25 @@ class WalletConsumer(WebsocketConsumer):
         )
 
     def receive(self, text_data=None, bytes_data=None):
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
         event = {
             'type': 'message_handler',
+            'message': message
         }
         async_to_sync(self.channel_layer.group_send)(
             f'wallet_{self.wallet_id}', event
         )
 
     def message_handler(self, event):
-        wallet = Wallet.objects.get(id=self.wallet_id)
-        if wallet:
+        try:
+            trans_id = event.get('message').get('trans_id')
+            wallet = Wallet.objects.get(id=self.wallet_id)
+            transaction = WalletTransaction.objects.get(id=trans_id)
+            wallet = wallet.to_json()
+            wallet['transaction'] = transaction.to_json()
             self.send(text_data=json.dumps(wallet.to_json()))
-        else:
-            self.send(text_data='Không tìm thấy giao dịch')
+
+        except Exception as e:
+            self.send(text_data='Không tìm thấy giao dịch/ví')
 
