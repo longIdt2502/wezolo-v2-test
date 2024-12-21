@@ -252,3 +252,19 @@ class ZaloUserDetail(APIView):
             return convert_response('success', 200)
         except Exception as e:
             return convert_response(str(e), 400)
+
+
+class ZaloUserToggleChatbot(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, pk):
+        user = request.user
+        data = request.data.copy()
+        try:
+            # employee = Employee.objects.filter()
+            user_zalo = UserZalo.objects.get(id=pk)
+            user_zalo.chatbot = data.get('status', user_zalo.chatbot)
+            user_zalo.save()
+            return convert_response('success', 200)
+        except Exception as e:
+            return convert_response(str(e), 400)
