@@ -59,6 +59,14 @@ class RewardTier(models.Model):
             code=data.get('code'),
             min_points=data.get('min_points'),
         )
+    
+    def to_json(self):
+        return {
+            "name": self.name,
+            "code": self.code,
+            "min_points": self.min_points,
+            "benefit_description": self.benefit_description
+        }
 
 
 class RewardBenefit(models.Model):

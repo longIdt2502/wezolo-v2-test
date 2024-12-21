@@ -17,12 +17,13 @@ from django.db.models import OuterRef, F, Q
 from common.core.subquery import *
 from common.s3 import AwsS3
 from utils.convert_response import convert_response
+from zalo.utils import convert_phone
 
 from .models import Customer, CustomerUserZalo, CustomerImport
 from user.models import User
 from workspace.models import Workspace
 from tags.models import Tag, TagCustomer
-from zalo.models import ZaloOA
+from zalo.models import UserZalo, ZaloOA
 from progress.models import ProgressTagCustomer
 
 
@@ -39,6 +40,7 @@ class CustomerCreate(APIView):
                     raise Exception('Yêu cầu thông tin workspace')
                 oas = data.get('oa', [])
                 phone = data.get('phone')
+                phone = convert_phone(phone)
                 customer = Customer.objects.filter(workspace_id=ws, phone=phone).first()
                 if customer:
                     for oa in oas:
@@ -65,10 +67,13 @@ class CustomerCreate(APIView):
                     created_by=user,
                 )
                 for oa in oas:
-                    CustomerUserZalo.objects.create(
-                        customer=customer,
-                        oa_id=oa,
-                    )
+                    user_zalo = UserZalo.objects.filter(phone=phone, oa_id=oa).first()
+                    if user_zalo:
+                        CustomerUserZalo.objects.create(
+                            customer=customer,
+                            oa_id=oa,
+                            user_zalo=user
+                        )
                 return convert_response('success', 200, data=customer.id)
 
             except Exception as e:
@@ -129,7 +134,16 @@ class CustomerList(APIView):
 
         progress_tag_subquery = SubqueryJson(
             ProgressTagCustomer.objects.filter(customer_id=OuterRef('id')).values(
-                'tag__progress__title', 'tag__type', 'tag__title', 'tag__color_text', 'tag__color_fill', 'tag__color_border'
+                'tag__progress_id' , 'tag_id',
+                'tag__title', 'tag__color_text', 'tag__color_fill', 'tag__color_border',
+                'tag__type', 'tag__progress__title'
+            )[:1]
+        )
+
+        user_zalo_query = SubqueryJson(
+            CustomerUserZalo.objects.filter(customer_id=OuterRef('id')).values(
+                'user_zalo__id', 'user_zalo__name', 'user_zalo__phone', 'user_zalo__avatar_small', 
+                'user_zalo__avatar_big', 'user_zalo__user_zalo_id'
             )[:1]
         )
 
@@ -144,6 +158,7 @@ class CustomerList(APIView):
             ),
             tag=tag_subquery,
             progress=progress_tag_subquery,
+            user_zalo=user_zalo_query,
         )
 
         return convert_response('success', 200, data=customer, total=total)

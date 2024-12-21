@@ -163,7 +163,9 @@ class ZaloUserList(APIView):
 
             progress_tag_subquery = SubqueryJson(
                 ProgressTagUserZalo.objects.filter(user_zalo_id=OuterRef('id')).values(
-                    'tag__progress__title', 'tag__type', 'tag__title', 'tag__color_text', 'tag__color_fill', 'tag__color_border'
+                    'tag__progress_id' , 'tag_id',
+                    'tag__title', 'tag__color_text', 'tag__color_fill', 'tag__color_border',
+                    'tag__type', 'tag__progress__title'
                 )[:1]
             )
 
@@ -197,7 +199,7 @@ class ZaloUserDetail(APIView):
             if data.get('phone'):
                 customer_ins = Customer.objects.filter(phone=data.get('phone', user_zalo.phone)).first()
                 if not customer_ins:
-                    Customer.objects.create(
+                    customer = Customer.objects.create(
                         prefix_name=data.get('name', user_zalo.name),
                         phone=data.get('phone', user_zalo.phone),
                         address=data.get('address', user_zalo.address),
@@ -205,6 +207,11 @@ class ZaloUserDetail(APIView):
                         birthday=datetime.datetime.strptime(data.get('birthday'), "%d/%m/%Y") if data.get('birthday') else None,
                         workspace=user_zalo.oa.company,
                         created_by=user,
+                    )
+                    CustomerUserZalo.objects.create(
+                        customer=customer,
+                        user_zalo=user_zalo,
+                        oa=user_zalo.oa
                     )
 
             tags = data.get('tags', [])
