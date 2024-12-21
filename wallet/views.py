@@ -4,14 +4,16 @@ from datetime import timedelta, datetime
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.db.models import Sum
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from package.models import Price
 from utils.convert_response import convert_response
 from common.pay_os.pay_os_init import payOS
 from payos import PaymentData, ItemData
 
 from .models import Wallet, WalletTransaction
-from reward.models import Reward
+from reward.models import Reward, RewardBenefit
 
 
 class WalletView(APIView):
@@ -44,6 +46,11 @@ class WalletPayment(APIView):
         wallet = Wallet.objects.filter(owner=user).first()
         if not wallet:
             return convert_response('Ví không khả dụng với người dùng', 400)
+        type_payment = data.get('type')
+        cancelUrl = data.get('cancelUrl')
+        returnUrl = data.get('returnUrl')
+        if not cancelUrl or not returnUrl:
+            return convert_response('Yêu cầu cancelUrl và returnUrl', 400)
         wallet_trans = WalletTransaction.objects.create(
             amount=amount,
             total_amount=amount,
@@ -53,10 +60,14 @@ class WalletPayment(APIView):
             user=wallet.owner,
         )
         description = 'Nạp vào tài khoản'
-        payment_data = PaymentData(orderCode=wallet_trans.id, amount=amount, description=description,
-                                   items=[],
-                                   cancelUrl="http://localhost:8000",
-                                   returnUrl="http://localhost:8000")
+        if type_payment == WalletTransaction.Type.OUT_PACKAGE:
+            description = type_payment
+        payment_data = PaymentData(
+            orderCode=wallet_trans.id, amount=amount, description=description,
+            items=[],
+            cancelUrl=cancelUrl,
+            returnUrl=returnUrl
+        )
 
         payment_link_data = payOS.createPaymentLink(paymentData=payment_data)
         return convert_response('success', 200, data=payment_link_data.to_json())
@@ -76,21 +87,36 @@ class WalletReceiveHookPayment(APIView):
             return convert_response('wallet not found', 400)
         wallet_trans.pay_os_reference = data.get('reference')
         wallet_trans.save()
-        Reward.objects.create(
+        reward = Reward.objects.create(
             customer_id=wallet_trans.user,
             event=wallet_trans,
             points_earned=wallet_trans.total_amount,
             expiration_date=datetime.now() + timedelta(seconds=90)
         )
         wallet = Wallet.objects.get(owner=wallet_trans.user)
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f'wallet_{wallet.id}',
-            {
-                'type': 'message_handler',
-                'wallet_trans_id': wallet_trans.id
-            },
-        )
+        # nếu hành động nạp tiền là để mua gói
+        if data.get('description') == WalletTransaction.Type.OUT_PACKAGE:
+            reward_tier = reward.customer_id.level
+            if reward_tier:
+                reward_benefit = RewardBenefit.objects.filter(tier_id=reward_tier, type=Price.Type.START).first()
+                if reward_benefit:
+                    if reward_benefit.value.value != 0:
+                        WalletTransaction.objects.create(
+                            amount=reward_benefit.value.value,
+                            total_amount=reward_benefit.value.value,
+                            method=WalletTransaction.Method.TRANSFER,
+                            type=WalletTransaction.Type.OUT_START,
+                            wallet=wallet,
+                            user=wallet.owner,
+                        )
+        # channel_layer = get_channel_layer()
+        # async_to_sync(channel_layer.group_send)(
+        #     f'wallet_{wallet.id}',
+        #     {
+        #         'type': 'message_handler',
+        #         'wallet_trans_id': wallet_trans.id
+        #     },
+        # )
         return convert_response('success', 200)
 
 
@@ -122,8 +148,16 @@ class WalletTransApi(APIView):
             wallet_tras = wallet_tras.filter(created_at__lte=date_end)
         
         total = wallet_tras.count()
+
+        types_in = [WalletTransaction.Type.DEPOSIT, WalletTransaction.Type.IN_MESSAGE, WalletTransaction.Type.IN_ZNS]
+        total_in = wallet_tras.filter(type__in=types_in).values().annotate(
+            total_money=Sum('total_amount')
+        ).values('total_money')[:1]
+        total_out = wallet_tras.exclude(type__in=types_in).values().annotate(
+            total_money=Sum('total_amount')
+        ).values('total_money')[:1]
         wallet_tras = wallet_tras.order_by('-id')[offset: offset + page_size].values()
-        return convert_response('success', 200, data=wallet_tras, total=total)
+        return convert_response('success', 200, data=wallet_tras, total=total, total_in=total_in, total_out=total_out)
 
     def post(self, request):
         pass
