@@ -164,7 +164,7 @@ class WalletTransApi(APIView):
         total_out = wallet_tras.exclude(type__in=types_in).values().annotate(
             total_money=Sum('total_amount')
         ).values('total_money').first()
-        total_out = total_in['total_money'] if total_out else 0
+        total_out = total_out['total_money'] if total_out else 0
         wallet_tras = wallet_tras.order_by('-id')[offset: offset + page_size].values()
         return convert_response('success', 200, data=wallet_tras, total=total, total_in=total_in, total_out=total_out)
 
