@@ -24,7 +24,7 @@ class RewardsApi(APIView):
         total_point = rewards.aggregate(
             total_point=Sum('points_earned')
         )['total_point'] or 0
-
+        total = rewards.count()
         detail = rewards[
             offset: offset + page_size
         ].values().annotate(
@@ -45,6 +45,7 @@ class RewardsApi(APIView):
         )['total_point'] or 0
         return convert_response(
             'success', 200, data=detail,
+            total=total,
             total_point=total_point, 
             point_to_next_level=point_to_next_level,
             point_near_expiry=point_near_expiry, 
