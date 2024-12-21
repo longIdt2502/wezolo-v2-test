@@ -17,6 +17,7 @@ from wallet.models import Wallet, WalletTransaction
 from workspace.models import Role
 from zalo.models import ZaloOA
 from customer.models import CustomerUserZalo, Customer
+from zns.models import ZnsSent
 from .models import Campaign, CampaignMessage, CampaignZns, StatusMessage
 
 # Create your views here.
@@ -141,7 +142,7 @@ class CampaignApi(APIView):
             if campaign.type == Campaign.Type.ZNS:
                 customers = data.get('customers', [])
                 for id in customers:
-                    WalletTransaction.objects.create(
+                    wallet_trans = WalletTransaction.objects.create(
                         wallet=wallet,
                         user=owner,
                         type=WalletTransaction.Type.OUT_ZNS,
@@ -151,12 +152,22 @@ class CampaignApi(APIView):
                         amount=price.value.value,
                         total_amount=price.value.value,
                     )
+                    zns_sent = ZnsSent.objects.create(
+                        zns_id=data.get('zns'),
+                        oa=oa,
+                        customer_id=id,
+                        type_send=ZnsSent.TYPE_SEND_CHOICES.campaign,
+                        params=data.get('zns_params'),
+                        payment=wallet_trans,
+                        created_by=user,
+                    )
                     cz_ins = CampaignZns.objects.create(
                         campaign=campaign,
                         customer_id=id,
                         zns_params=data.get('zns_params'),
                         status=StatusMessage.PENDING,
-                        zns_id=data.get('zns')
+                        zns_id=data.get('zns'),
+                        zns_sent=zns_sent,
                     )
                     django_rq.enqueue(
                         send_zns_campain_job, 
@@ -255,13 +266,15 @@ class CampaignZnsDetailApi(APIView):
         status = data.get('status')
         campaign_zns = CampaignZns.objects.get(id=pk)
         campaign = campaign_zns.campaign
+        zns_sent = campaign_zns.zns_sent
+        zns_sent.response = data.get('response')
         oa = campaign_zns.campaign.oa
         wallet = Wallet.objects.get(owner=oa.company.created_by)
         # get price to sent 1 zns message
         _, _, price = checkFinancialCapacity(oa.company.created_by, Price.Type.ZNS)
         if campaign_zns.status == 'PENDING':
             if status == StatusMessage.REJECT:
-                WalletTransaction.objects.create(
+                wall_trasn = WalletTransaction.objects.create(
                     wallet=wallet,
                     user=oa.company.created_by,
                     type=WalletTransaction.Type.IN_ZNS,
@@ -271,11 +284,15 @@ class CampaignZnsDetailApi(APIView):
                     amount=price.value.value,
                     total_amount=price.value.value,
                 )
+                zns_sent.refund = wall_trasn
+                zns_sent.is_refund = True
                 campaign.total_refund = (campaign.total_refund if campaign.total_refund else 0) + price.value.value
             else:
+                zns_sent.status = True
                 campaign.total_success = (campaign.total_success if campaign.total_success else 0) + 1
         campaign.save()
 
         campaign_zns.status = status
         campaign_zns.save()
+        zns_sent.save()
         return convert_response('success', 200)

@@ -22,6 +22,7 @@ from zalo_messages.models import Message
 from tags.models import TagUserZalo
 from employee.models import Employee, EmployeeUserZalo
 from zalo_messages.utils import send_message_text, send_request_info
+from zns.models import Zns, ZnsSent
 
 
 class MessageApi(APIView):
@@ -154,6 +155,33 @@ class MessageApi(APIView):
             return convert_response('success', 200)
         except Exception as e:
             return convert_response(str(e), 400)
+
+
+class MessageZnsSentApi(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        data = request.GET.copy()
+
+        page_size = int(data.get('page_size', 20))
+        offset = (int(data.get('page', 1)) - 1) * page_size
+        phone = data.get('phone')
+        if not phone:
+            return convert_response('yêu cầu thông tin sđt', 400)
+
+        zns_sent = ZnsSent.objects.filter(customer__phone=phone)
+        total = zns_sent.count()
+
+        zns_subquery = SubqueryJson(
+            Zns.objects.filter(id=OuterRef('zns_id')).values()[:1]
+        )
+
+        zns_sent = zns_sent.order_by('-id')[offset: offset + page_size].values().annotate(
+            zns=zns_subquery
+        )
+
+        return convert_response('success', 200, data=zns_sent, total=total)
 
 
 class MessageRequestInfoApi(APIView):

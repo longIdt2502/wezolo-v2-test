@@ -270,15 +270,11 @@ class ZnsSent(models.Model):
         partner = 'partner', 'Đối tác gửi'
         campaign = 'campaign', 'Chiến dịch gửi'
 
-    class STATUS_CHOICES(models.TextChoices):
-        true = 'true', 'Thành công'
-        false = 'false', 'Thất bại'
-
     zns = models.ForeignKey(Zns, on_delete=models.SET_NULL, null=True)
     oa = models.ForeignKey(ZaloOA, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     type_send = models.CharField(max_length=255, choices=TYPE_SEND_CHOICES.choices, null=True, blank=True)
-    status = models.CharField(max_length=255, choices=STATUS_CHOICES.choices, default=STATUS_CHOICES.false)
+    status = models.BooleanField(default=False)
     param = models.JSONField(null=True, blank=True)  # Lưu trữ dữ liệu JSON
     response = models.JSONField(null=True, blank=True)  # Lưu trữ phản hồi JSON
     payment = models.ForeignKey(WalletTransaction, on_delete=models.SET_NULL, null=True, blank=True, related_name='payment_transactions')

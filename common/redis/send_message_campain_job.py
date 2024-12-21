@@ -54,7 +54,8 @@ def send_zns_campain_job(access_token, phone, template, params, campaign_zns_id)
         if response.get('error') == 0 or response.get('error') == '0':
             status = 'SENT'
         payload = json.dumps({
-            'status': status
+            'status': status,
+            'response': response,
         })
         headers = {'Content-Type': 'application/json'}
         res = requests.put(url, data=payload, headers=headers)
