@@ -22,6 +22,7 @@ urlpatterns = [
     path('v1/', include('workspace.urls')),
     path('v1/employee/', include('employee.urls')),
     path('v1/wallet/', include('wallet.urls')),
+    path('v1/package/', include('package.urls')),
     path('v1/reward/', include('reward.urls')),
     path('v1/zalo/', include('zalo.urls')),
     path('v1/customer/', include('customer.urls')),

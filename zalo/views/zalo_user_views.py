@@ -180,7 +180,7 @@ class ZaloUserDetail(APIView):
             user_zalo.prefix_name = data.get('prefix_name', user_zalo.prefix_name)
             user_zalo.address = data.get('address', user_zalo.address)
             user_zalo.gender = data.get('gender', user_zalo.gender)
-            user_zalo.birthday = datetime.datetime.strptime(data.get('birthday'), "%d/%M/%y") if data.get('birthday') else None
+            user_zalo.birthday = datetime.datetime.strptime(data.get('birthday'), "%d/%m/%Y") if data.get('birthday') else None
             user_zalo.updated_at = datetime.datetime.now()
 
             tags = data.get('tags', [])
