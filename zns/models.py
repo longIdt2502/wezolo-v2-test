@@ -2,7 +2,9 @@ from django.db import models
 
 from bank.models import Banks
 from user.models import User
+from wallet.models import WalletTransaction
 from zalo.models import ZaloOA
+from customer.models import Customer
 
 
 class Zns(models.Model):
@@ -257,3 +259,35 @@ class ZnsLog(models.Model):
     content = models.TextField(null=True)
     actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     action_at = models.DateTimeField(auto_now_add=True)
+
+
+class ZnsSent(models.Model):
+    class Meta:
+        verbose_name = 'ZnsSent'
+        db_table = 'zns_sent'
+    
+    class TYPE_SEND_CHOICES(models.TextChoices):
+        partner = 'partner', 'Đối tác gửi'
+        campaign = 'campaign', 'Chiến dịch gửi'
+
+    class STATUS_CHOICES(models.TextChoices):
+        true = 'true', 'Thành công'
+        false = 'false', 'Thất bại'
+
+    zns = models.ForeignKey(Zns, on_delete=models.SET_NULL, null=True)
+    oa = models.ForeignKey(ZaloOA, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    type_send = models.CharField(max_length=255, choices=TYPE_SEND_CHOICES.choices, null=True, blank=True)
+    status = models.CharField(max_length=255, choices=STATUS_CHOICES.choices, default=STATUS_CHOICES.false)
+    param = models.JSONField(null=True, blank=True)  # Lưu trữ dữ liệu JSON
+    response = models.JSONField(null=True, blank=True)  # Lưu trữ phản hồi JSON
+    payment = models.ForeignKey(WalletTransaction, on_delete=models.SET_NULL, null=True, blank=True, related_name='payment_transactions')
+    refund = models.ForeignKey(WalletTransaction, on_delete=models.SET_NULL, null=True, blank=True, related_name='refund_transactions')
+    is_refund = models.BooleanField(default=False, help_text="Trạng thái trả lại tiền: 'true' - Đã gửi, 'false' - Chưa gửi")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='zns_sent_created')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='zns_sent_updated')
+
+    def __str__(self):
+        return f"ZNS Sent {self.id}"
