@@ -103,6 +103,7 @@ class WalletTransaction(models.Model):
         # Save transaction
         super().save(*args, **kwargs)
 
+        # Nếu là nạp tiền thì check xem -> giao dịch này đã nạp tiền thành công hay chưa dựa vào pay_os_reference
         if self.type == self.Type.DEPOSIT and self.pay_os_reference is not None:
             self.wallet.balance = F('balance') + self.amount
             self.wallet.save()

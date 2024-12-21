@@ -157,7 +157,7 @@ class CampaignApi(APIView):
                         oa=oa,
                         customer_id=id,
                         type_send=ZnsSent.TYPE_SEND_CHOICES.campaign,
-                        params=data.get('zns_params'),
+                        param=data.get('zns_params'),
                         payment=wallet_trans,
                         created_by=user,
                     )
