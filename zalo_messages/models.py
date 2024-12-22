@@ -69,6 +69,11 @@ class Message(models.Model):
 
         # Send message to socket thread OA
         user_zalo = UserZalo.objects.filter(user_zalo_id=user_zalo_id).first()
+        if self.Src.USER:
+            user_zalo.message_unread += 1
+        else:
+            user_zalo.message_unread = 0
+        user_zalo.save()
         send_message_to_ws(f'message_user_in_oa_{self.oa.uid_zalo_oa}', 'message_handler', user_zalo.to_json())
 
         user_zalo.last_message_time = datetime.fromtimestamp(float(self.send_at) / 1000).astimezone(pytz.timezone('Asia/Ho_Chi_Minh'))
@@ -95,11 +100,6 @@ class Message(models.Model):
                     send_message_text(user_zalo.oa, user_zalo_id, {
                         'text': answer.answer,
                     })
-
-
-            user_zalo.message_unread += 1
-        else:
-            user_zalo.message_unread = 0
         user_zalo.save()
 
     def from_json(self, data):
