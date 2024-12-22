@@ -39,6 +39,12 @@ class Message(models.Model):
         USER = 'USER', 'Người dùng gửi'
         CAMPAIGN = 'CAMPAIGN', 'Chiến dịch gửi'
         BOT = 'BOT', 'Bot gửi'
+    
+    class Status(models.TextChoices):
+        SENDING = 'SENDING', 'Đang gửi'
+        SENT = 'SENT', 'Đã gửi'
+        RECEIVED = 'RECEIVED', 'Đã nhận'
+        SEEN = 'SEEN', 'Đã xem'
 
     message_id = models.CharField(max_length=255, null=True, blank=True)
     quote_msg_id = models.CharField(max_length=255, null=True, blank=True)
@@ -56,6 +62,7 @@ class Message(models.Model):
     from_id = models.CharField(max_length=255, null=False, blank=False)
     to_id = models.CharField(max_length=255, null=False, blank=False)
     success = models.BooleanField(null=True)
+    status = models.CharField(max_length=255, choices=Status.choices, default=Status.SENDING, null=True)
     read_at = models.DateTimeField(null=True)
     send_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     oa = models.ForeignKey(ZaloOA, on_delete=models.SET_NULL, null=True, related_name='oa_message')
@@ -89,7 +96,7 @@ class Message(models.Model):
                 chatbot = Chatbot.objects.filter(is_active=True, oa=user_zalo.oa).first()
                 # Nếu có thực hiện các func liên quan
                 if chatbot:
-                    last_message_oa_send = Message.objects.filter(src=self.Src.OA, success=True).last()
+                    last_message_oa_send = Message.objects.filter(src=Message.Src.OA).last()
                     answer = None
                     """
                     Kiểm tra tin nhắn cuối mà OA gửi cho khách
@@ -155,6 +162,7 @@ class Message(models.Model):
             'send_at': self.send_at,
             'type_message': self.type_message,
             'type_send': self.type_send,
+            'status': self.status,
             'src': self.src,
             'oa': self.oa.to_json() if self.oa else None,
         }

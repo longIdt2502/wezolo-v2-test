@@ -153,28 +153,6 @@ def handle_message_hook(data) -> Optional[str]:
         return str(e)
 
 
-def handle_seen_message(data) -> Optional[str]:
-    try:
-        print(data)
-        sender = data.get('sender').get('id')
-        recipient = data.get('recipient').get('id')
-        message = data.get('message')
-
-        messages = Message.objects.filter(message_id__in=message.get('msg_ids'))
-        for mess in messages:
-            mess.read_at = datetime.fromtimestamp(data.get('timestamp'))
-            mess.save()
-        
-        send_message_to_ws(f'message_{recipient}', 'message_handler', {
-            'last_seen': datetime.now(),
-        })
-
-        return None
-    except Exception as e:
-        print(e)
-        return str(e)
-
-
 def handle_message_oa_send_hook(data) -> Optional[str]:
     try:
         print(data)
@@ -231,4 +209,48 @@ def handle_message_oa_send_hook(data) -> Optional[str]:
         return None
     except Exception as e:
         print(e)
+        return str(e)
+
+
+def handle_seen_message(data) -> Optional[str]:
+    try:
+        print(data)
+        sender = data.get('sender').get('id')
+        recipient = data.get('recipient').get('id')
+        message = data.get('message')
+
+        messages = Message.objects.filter(message_id__in=message.get('msg_ids'))
+        for mess in messages:
+            mess.status = Message.Status.SEEN
+            mess.read_at = datetime.fromtimestamp(data.get('timestamp'))
+            mess.save()
+        
+        send_message_to_ws(f'message_{recipient}', 'message_handler', {
+            'last_seen': datetime.now(),
+        })
+
+        return None
+    except Exception as e:
+        print(e)
+        return str(e)
+
+
+def handle_user_received_message(data) -> Optional[str]:
+    try:
+        print(data)
+        sender = data.get('sender').get('id')
+        recipient = data.get('recipient').get('id')
+        message = data.get('message')
+
+        message = Message.objects.filter(message_id=message.get('msg_id')).first()
+        if message:
+            # message.read_at = datetime.fromtimestamp(data.get('timestamp'))
+            message.status = Message.Status.RECEIVED
+            message.save()
+        
+        send_message_to_ws(f'message_{recipient}', 'message_handler', {
+            'last_seen': datetime.now(),
+        })
+        return None
+    except Exception as e:
         return str(e)
