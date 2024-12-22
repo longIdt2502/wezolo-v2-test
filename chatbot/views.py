@@ -174,7 +174,7 @@ class ChatbotDetail(APIView):
                                 else:
                                     ChatbotQuestion.objects.create(
                                         content=ques.get('content'),
-                                        type=ChatbotQuestion.Type.QUESTION,
+                                        type=ChatbotQuestion.Type.KEYWORD,
                                         answer=answer,
                                         created_by=user,
                                     )
@@ -189,7 +189,7 @@ class ChatbotDetail(APIView):
                         for ques in questions:
                             ChatbotQuestion.objects.create(
                                 content=ques.get('content'),
-                                type=ChatbotQuestion.Type.QUESTION,
+                                type=ChatbotQuestion.Type.KEYWORD,
                                 answer=answer,
                                 created_by=user,
                             )
