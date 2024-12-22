@@ -145,6 +145,9 @@ class ZaloOA(models.Model):
             'cate_name': self.cate_name,
             'oa_avatar': self.oa_avatar,
             'oa_cover': self.oa_cover,
+            'message_remain': self.message_remain,
+            'message_quota': self.message_quota,
+            'message_expired': self.message_expired,
         }
 
 
