@@ -26,13 +26,17 @@ class ChatbotApi(APIView):
 
         employee = Employee.objects.filter(account=user)
         ws = employee.values_list('workspace_id', flat=True)
-        campaign = Chatbot.objects.filter(oa__company_id__in=ws)
+
+        chatbot = Chatbot.objects.filter(oa__company_id__in=ws)
+        oa = data.get('oa')
+        if oa:
+            chatbot = chatbot.filter(oa_id=oa)
 
         search = data.get('search')
         if search:
-            campaign = campaign.filter(name__icontains=search)
+            chatbot = chatbot.filter(name__icontains=search)
 
-        total = campaign.count()
+        total = chatbot.count()
 
         question_subquery = SubqueryJsonAgg(
             ChatbotQuestion.objects.filter(answer_id=OuterRef('id')).values()
@@ -44,11 +48,11 @@ class ChatbotApi(APIView):
             )
         )
 
-        campaign = campaign[offset: offset + page_size].values().annotate(
+        chatbot = chatbot[offset: offset + page_size].values().annotate(
             scrips=answer_subquery
         )
 
-        return convert_response('success', 200, data=campaign, total=total)
+        return convert_response('success', 200, data=chatbot, total=total)
 
     def post(self, request):
         try:
@@ -170,5 +174,35 @@ class ChatbotDetail(APIView):
                         )
 
                 return convert_response('success', 200, data=chatbot.id)
+        except Exception as e:
+            return convert_response(str(e), 400)
+
+
+class ChatbotOffApi(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            with transaction.atomic():
+                user = request.user
+
+                employee = Employee.objects.filter(account=user)
+                ws = employee.values_list('workspace_id', flat=True)
+
+                chatbot = Chatbot.objects.get(id=pk)
+
+                oa = chatbot.oa
+                if oa.company_id not in ws:
+                    raise Exception('Bạn không có quyền truy cập OA đã chọn')
+                
+                if not chatbot.is_active:
+                    chatbots = Chatbot.objects.filter(oa=chatbot.oa)
+                    for item in chatbots:
+                        item.is_active = False
+                        item.save()
+                chatbot.is_active = False if chatbot.is_active else True
+                chatbot.save()
+                return convert_response('success', 200)
+
         except Exception as e:
             return convert_response(str(e), 400)
