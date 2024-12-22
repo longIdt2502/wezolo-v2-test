@@ -73,10 +73,12 @@ class Message(models.Model):
             user_zalo.message_unread += 1
         else:
             user_zalo.message_unread = 0
+        user_zalo.last_message_time = datetime.fromtimestamp(float(self.send_at) / 1000).astimezone(pytz.timezone('Asia/Ho_Chi_Minh'))
         user_zalo.save()
         send_message_to_ws(f'message_user_in_oa_{self.oa.uid_zalo_oa}', 'message_handler', user_zalo.to_json())
 
-        user_zalo.last_message_time = datetime.fromtimestamp(float(self.send_at) / 1000).astimezone(pytz.timezone('Asia/Ho_Chi_Minh'))
+        print(self.src)
+        print(self.Src.USER)
         if self.src == self.Src.USER:
             if user_zalo.chatbot:
                 # Kiểm tra xem có chat bot nào hoạt động không
@@ -112,7 +114,6 @@ class Message(models.Model):
                     send_message_text(user_zalo.oa, user_zalo_id, {
                         'text': answer.answer,
                     })
-        user_zalo.save()
 
     def from_json(self, data):
         message = Message.objects.create(
