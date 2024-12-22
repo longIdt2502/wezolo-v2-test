@@ -79,16 +79,25 @@ class Message(models.Model):
         user_zalo.last_message_time = datetime.fromtimestamp(float(self.send_at) / 1000).astimezone(pytz.timezone('Asia/Ho_Chi_Minh'))
         if self.Src.USER:
             if user_zalo.chatbot:
+                # Kiểm tra xem có chat bot nào hoạt động không
                 chatbot = Chatbot.objects.filter(is_active=True, oa=user_zalo.oa).first()
+                # Nếu có thực hiện các func liên quan
                 if chatbot:
                     last_message_oa_send = Message.objects.filter(src=self.Src.OA, success=True).last()
                     answer = None
-                    if not last_message_oa_send.type_send == self.TypeSend.BOT:
-                        answer = ChatbotAnswer.objects.filter(type=ChatbotAnswer.Type.GREETING).first()
+                    """
+                         Kiểm tra tin nhắn cuối mà OA gửi cho khách
+                         - Nếu là tin nhắn BOT thì thực hiện tìm kiếm các câu hỏi và câu trả lời
+                         - Nếu ko là tin nhắn BOT thì sẽ thực hiện câu trả lời chào mừng
+                    """
+                    if last_message_oa_send.type_send != self.TypeSend.BOT:
+                        answer = ChatbotAnswer.objects.filter(type=ChatbotAnswer.Type.GREETING, chatbot=chatbot).first()
                     else:
+                        # Tìm các câu hỏi có câu trả lời nằm trong Chatbot đang hoạt động
                         list_question = ChatbotQuestion.objects.filter(
                             answer__chatbot=chatbot
                         )
+                        # Tìm câu hỏi có keyword nằm trong tin nhắn của khách
                         for item in list_question:
                             if answer:
                                 continue
@@ -97,6 +106,9 @@ class Message(models.Model):
                                 for key in keywords:
                                     if key in self.message_text:
                                         answer = item.answer
+                        # Nếu ko có trả lời phù hợp thì chọn câu trả lời not found
+                        if not answer:
+                            answer = ChatbotAnswer.objects.filter(type=ChatbotAnswer.Type.NOT_FOUND, chatbot=chatbot).first()
                     send_message_text(user_zalo.oa, user_zalo_id, {
                         'text': answer.answer,
                     })
