@@ -19,6 +19,7 @@ class ZaloEventName:
     user_send_file = 'user_send_file'
     user_send_business_card = 'user_send_business_card'
     user_seen_message = 'user_seen_message'
+    user_received_message = 'user_received_message'
     oa_send_text = 'oa_send_text'
     oa_send_location = 'oa_send_location'
     oa_send_image = 'oa_send_image'

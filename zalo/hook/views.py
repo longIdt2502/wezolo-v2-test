@@ -50,6 +50,8 @@ class ZaloHook(APIView):
                 handle_change_template_status(data)
             if event_type == ZaloEventName.user_seen_message:
                 handle_seen_message(data)
+            if event_type == ZaloEventName.user_received_message:
+                handle_user_received_message(data)
             if event_type in [
                 ZaloEventName.user_send_audio,
                 ZaloEventName.user_send_business_card,
