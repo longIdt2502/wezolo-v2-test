@@ -143,13 +143,41 @@ class ChatbotDetail(APIView):
                 chatbot.index = data.get('index', chatbot.index)
 
                 for item in data.get('scripts', []):
+                    questions = item.get('questions', [])
                     if item.get('id_answer'):
-                        answer = ChatbotAnswer.objects.get(id=item.get('id_answer'))
-                        answer.answer = item.get('answer', answer.answer)
-                        answer.type = item.get('type_answer', answer.type)
-                        answer.updated_by = user
-                        answer.updated_at = datetime.datetime.now()
-                        answer.save()
+                        answer = ChatbotAnswer.objects.get(id=item.get('id_answer'), chatbot=chatbot)
+                        is_delete = item.get('is_delete')
+                        if is_delete:
+                            for ques in questions:
+                                if ques.get('id'):
+                                    question = ChatbotQuestion.objects.get(id=ques.get('id'))
+                                    question.delete()
+                            answer.delete()
+                            continue
+                        else:
+                            answer.answer = item.get('answer', answer.answer)
+                            answer.type = item.get('type_answer', answer.type)
+                            answer.updated_by = user
+                            answer.updated_at = datetime.datetime.now()
+                            answer.save()
+
+                            for ques in questions:
+                                if ques.get('id'):
+                                    try:
+                                        question = ChatbotQuestion.objects.get(id=ques.get('id'))
+                                        if ques.get('is_delete'):
+                                            question.delete()
+                                        question.content = ques.get('content', question.content)
+                                        question.save()
+                                    except:
+                                        continue
+                                else:
+                                    ChatbotQuestion.objects.create(
+                                        content=ques.get('content'),
+                                        type=ChatbotQuestion.Type.KEYWORD,
+                                        answer=answer,
+                                        created_by=user,
+                                    )
                     else:
                         answer = ChatbotAnswer.objects.create(
                             answer=item.get('answer'),
@@ -158,21 +186,14 @@ class ChatbotDetail(APIView):
                             created_by=user,
                         )
 
-                    if item.get('id_question'):
-                        question = ChatbotQuestion.objects.get(id=item.get('id_answer'))
-                        question.content = item.get('question', question.content)
-                        question.type = item.get('type_question', question.type)
-                        question.updated_by = user
-                        question.updated_at = datetime.datetime.now()
-                        question.save()
-                    else:
-                        question = ChatbotQuestion.objects.create(
-                            content=item.get('question'),
-                            type=item.get('type_question'),
-                            answer=answer,
-                            created_by=user,
-                        )
-
+                        for ques in questions:
+                            ChatbotQuestion.objects.create(
+                                content=ques.get('content'),
+                                type=ChatbotQuestion.Type.KEYWORD,
+                                answer=answer,
+                                created_by=user,
+                            )
+                chatbot.save()
                 return convert_response('success', 200, data=chatbot.id)
         except Exception as e:
             return convert_response(str(e), 400)
