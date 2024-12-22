@@ -61,15 +61,21 @@ class Message(models.Model):
     oa = models.ForeignKey(ZaloOA, on_delete=models.SET_NULL, null=True, related_name='oa_message')
 
     def save(self, *args, **kwargs):
+
+        if self.src == Message.Src.OA:
+            answer = ChatbotAnswer.objects.filter(answer=self.message_text).first()
+            if answer:
+                self.type_send = Message.TypeSend.BOT
+
         super().save(*args, **kwargs)
 
         # Send message to socket thread detail chat
-        user_zalo_id = self.from_id if self.src == self.Src.USER else self.to_id
+        user_zalo_id = self.from_id if self.src == Message.Src.USER else self.to_id
         send_message_to_ws(f'message_{user_zalo_id}', 'message_handler', self.to_json())
 
         # Send message to socket thread OA
         user_zalo = UserZalo.objects.filter(user_zalo_id=user_zalo_id).first()
-        if self.src == self.Src.USER:
+        if self.src == Message.Src.USER:
             user_zalo.message_unread += 1
         else:
             user_zalo.message_unread = 0
@@ -77,9 +83,7 @@ class Message(models.Model):
         user_zalo.save()
         send_message_to_ws(f'message_user_in_oa_{self.oa.uid_zalo_oa}', 'message_handler', user_zalo.to_json())
 
-        print(self.src)
-        print(self.Src.USER)
-        if self.src == self.Src.USER:
+        if self.src == Message.Src.USER:
             if user_zalo.chatbot:
                 # Kiểm tra xem có chat bot nào hoạt động không
                 chatbot = Chatbot.objects.filter(is_active=True, oa=user_zalo.oa).first()
@@ -88,9 +92,9 @@ class Message(models.Model):
                     last_message_oa_send = Message.objects.filter(src=self.Src.OA, success=True).last()
                     answer = None
                     """
-                         Kiểm tra tin nhắn cuối mà OA gửi cho khách
-                         - Nếu là tin nhắn BOT thì thực hiện tìm kiếm các câu hỏi và câu trả lời
-                         - Nếu ko là tin nhắn BOT thì sẽ thực hiện câu trả lời chào mừng
+                    Kiểm tra tin nhắn cuối mà OA gửi cho khách
+                    - Nếu là tin nhắn BOT thì thực hiện tìm kiếm các câu hỏi và câu trả lời
+                    - Nếu ko là tin nhắn BOT thì sẽ thực hiện câu trả lời chào mừng
                     """
                     if last_message_oa_send.type_send != self.TypeSend.BOT:
                         answer = ChatbotAnswer.objects.filter(type=ChatbotAnswer.Type.GREETING, chatbot=chatbot).first()
