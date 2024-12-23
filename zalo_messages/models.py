@@ -146,6 +146,9 @@ class Message(models.Model):
         return message
 
     def to_json(self):
+        user_zalo = UserZalo.objects.filter(models.Q(user_zalo_id=self.from_id) | models.Q(user_zalo_id=self.to_id)).values(
+            'phone', 'user_zalo_id', 'avatar_small', 'avatar_big', 'message_quota_type', 'message_remain', 'message_quota'
+        ).first()
         return {
             'id': self.id,
             'message_id': self.message_id,
@@ -165,4 +168,5 @@ class Message(models.Model):
             'status': self.status,
             'src': self.src,
             'oa': self.oa.to_json() if self.oa else None,
+            'user_zalo': user_zalo
         }
