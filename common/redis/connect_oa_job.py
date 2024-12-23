@@ -85,7 +85,7 @@ def connect_oa_job(access_token, oa: int):
         item_count = 50
         total_user = 0
         while item_count == 50:
-            res = oa_list_customer(access_token, 0)
+            res = oa_list_customer(access_token, offset)
             items = res['data']['users']
             for item in items:
                 django_rq.enqueue(detail_customer_oa_job, access_token, item['user_id'], oa)
