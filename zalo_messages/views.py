@@ -64,6 +64,10 @@ class MessageApi(APIView):
         if is_follow:
             is_follow = True if is_follow == 'true' else False
             user = user.filter(is_follower=is_follow)
+        
+        message_quota_type = data.get('message_quota_type')
+        if message_quota_type:
+            user = user.filter(message_quota_type=message_quota_type)
 
         tags = data.get('tags')
         if tags:
