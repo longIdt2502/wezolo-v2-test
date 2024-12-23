@@ -138,10 +138,9 @@ class MessageApi(APIView):
             quota = res.get('data').get('quota')
             if quota:
                 quota_type = quota.get('quota_type')
-                if quota_type == 'reply':
-                    user_zalo.message_quota_type = quota_type
-                    user_zalo.message_remain = quota.get('remain')
-                    user_zalo.message_quota = quota.get('total')
+                user_zalo.message_quota_type = quota_type
+                user_zalo.message_remain = quota.get('remain')
+                user_zalo.message_quota = quota.get('total')
                 if quota_type == 'sub_quota':
                     oa.message_remain = quota.get('remain')
                     oa.message_quota = quota.get('total')
