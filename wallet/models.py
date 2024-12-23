@@ -94,19 +94,22 @@ class WalletTransaction(models.Model):
             current_balance = self.wallet.balance
 
             if self.type in [
-                self.Type.IN_PACKAGE, self.Type.OUT_ZNS, self.Type.OUT_MESS, self.Type.OUT_START,
+                self.Type.OUT_ZNS, self.Type.OUT_MESS, self.Type.OUT_START,
                 self.Type.OUT_CREATE_OA, self.Type.OUT_CONECT_OA, self.Type.OUT_CREATE_WS, self.Type.OUT_OA_PREMIUM,
             ]:
                 if current_balance < self.amount:
                     raise ValueError("Insufficient wallet balance")
                 self.wallet.balance = F('balance') - self.amount
-                self.wallet.save()
+            if self.type in [self.Type.IN_PACKAGE, self.Type.IN_MESSAGE, self.Type.IN_ZNS]:
+                self.wallet.balance = F('balance') + self.amount
+            self.wallet.save()
 
         # Save transaction
         super().save(*args, **kwargs)
         if is_new and self.type in [
             self.Type.IN_PACKAGE, self.Type.OUT_ZNS, self.Type.OUT_MESS, self.Type.OUT_START,
             self.Type.OUT_CREATE_OA, self.Type.OUT_CONECT_OA, self.Type.OUT_CREATE_WS, self.Type.OUT_OA_PREMIUM,
+            self.Type.IN_MESSAGE, self.Type.IN_ZNS
         ]:
             send_message_to_ws(f'wallet_{self.wallet.id}', 'message_handler', {
                 'trans_id': self.pk,  # Now `self.pk` is valid
