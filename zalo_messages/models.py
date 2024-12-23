@@ -117,7 +117,7 @@ class Message(models.Model):
                             if item.type == ChatbotQuestion.Type.KEYWORD:
                                 keywords = item.content.split(',')
                                 for key in keywords:
-                                    if key in self.message_text:
+                                    if key.lower() in self.message_text.lower():
                                         answer = item.answer
                         # Nếu ko có trả lời phù hợp thì chọn câu trả lời not found
                         if not answer:
