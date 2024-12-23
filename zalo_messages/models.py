@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from django.db import models
 from wheel.metadata import _
 from chatbot.models import Chatbot, ChatbotAnswer, ChatbotQuestion
@@ -149,6 +150,10 @@ class Message(models.Model):
         user_zalo = UserZalo.objects.filter(models.Q(user_zalo_id=self.from_id) | models.Q(user_zalo_id=self.to_id)).values(
             'phone', 'user_zalo_id', 'avatar_small', 'avatar_big', 'message_quota_type', 'message_remain', 'message_quota', 'last_message_time'
         ).first()
+        if user_zalo:
+            user_zalo = json.dumps(user_zalo)
+        else:
+            user_zalo = None
         return {
             'id': self.id,
             'message_id': self.message_id,
