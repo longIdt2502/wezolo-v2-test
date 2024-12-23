@@ -6,6 +6,7 @@ from django.db.models import F
 from channels.layers import get_channel_layer
 
 from user.models import User, Address
+from wallet.service.create_trans_wallet_thirdparty import create_transaction_third_party
 from ws.event import send_message_to_ws
 from zalo.models import ZaloOA
 
@@ -102,6 +103,7 @@ class WalletTransaction(models.Model):
                 self.wallet.balance = F('balance') - self.amount
             if self.type in [self.Type.IN_PACKAGE, self.Type.IN_MESSAGE, self.Type.IN_ZNS]:
                 self.wallet.balance = F('balance') + self.amount
+            create_transaction_third_party(self, None)
             self.wallet.save()
 
         # Save transaction
@@ -121,6 +123,7 @@ class WalletTransaction(models.Model):
             send_message_to_ws(f'wallet_{self.wallet.id}', 'message_handler', {
                 'trans_id': self.pk,
             })
+            create_transaction_third_party(self, None)
 
     def to_json(self):
         return {

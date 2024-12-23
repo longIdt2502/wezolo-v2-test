@@ -10,11 +10,12 @@ from rest_framework.views import APIView
 
 from common.core.subquery import *
 
-from employee.models import Employee
+from employee.models import Employee, EmployeeOa
 from package.models import Price
 from reward.models import RewardBenefit
 from utils.check_financial_capacity import checkFinancialCapacity
 from utils.convert_response import convert_response
+from workspace.models import Role
 from zalo.models import ZaloOA
 from zns.models import *
 from zns.utils import (
@@ -32,24 +33,31 @@ class ZnsApi(APIView):
         data = request.GET.copy()
         page_size = int(data.get('page_size', 20))
         offset = (int(data.get('page', 1)) - 1) * page_size
-        ws = Employee.objects.filter(
-            account=user
-        ).values_list('workspace_id', flat=True)
 
-        oas = ZaloOA.objects.filter(company_id__in=ws).values_list('id', flat=True)
+        zns = Zns.objects.filter()
+        ws_query = data.get('workspace')
+        if ws_query:
+            zns = zns.filter(oa__company_id=ws_query)
 
-        zns = Zns.objects.filter(oa_id__in=oas)
-        if user.is_superuser:
-            zns = Zns.objects.filter().exclude(status=Zns.STATUS_CHOICES[0][0])
+        employee = Employee.objects.filter(
+            account=user, workspace_id=ws_query
+        ).first()
+
+        oa_query = data.get('oa')
+        if oa_query:
+            zns = zns.filter(oa_id=oa_query)
+
+        if employee.role == Role.Code.SALE:
+            employee_oa = EmployeeOa.objects.filter(employee=employee)
+            oas = employee_oa.values_list('oa_id', flat=True)
+            zns = zns.filter(oa_id__in=oas)
+            if oa_query not in oas:
+                return convert_response('Bạn không có quyền truy cập OA', 400)
 
         search = data.get('search')
         if search:
             zns = zns.filter(Q(name__icontains=search) | Q(template__icontains=search))
         total = zns.count()
-
-        oa_query = data.get('oa')
-        if oa_query:
-            zns = zns.filter(oa_id=oa_query)
 
         status = data.get('status')
         if status:
