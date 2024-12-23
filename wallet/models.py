@@ -43,6 +43,7 @@ class Wallet(models.Model):
             f'wallet_{self.id}',
             {
                 'type': 'message_handler',
+                'message': {}
             },
         )
 
