@@ -59,6 +59,11 @@ class MessageApi(APIView):
         search = data.get('search')
         if search:
             user = user.filter(Q(name__icontains=search) | Q(phone__icontains=search))
+        
+        is_follow = data.get('is_follow')
+        if is_follow:
+            is_follow = True if is_follow == 'true' else False
+            user = user.filter(is_follower=is_follow)
 
         tags = data.get('tags')
         if tags:
