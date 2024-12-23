@@ -128,7 +128,7 @@ class WalletTransaction(models.Model):
             'amount': self.amount,
             'bonus_amount': self.bonus_amount,
             'total_amount': self.total_amount,
-            'created_at': self.created_at,
+            'created_at': self.created_at.isoformat(),
         }
 
 
