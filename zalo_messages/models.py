@@ -147,7 +147,7 @@ class Message(models.Model):
 
     def to_json(self):
         user_zalo = UserZalo.objects.filter(models.Q(user_zalo_id=self.from_id) | models.Q(user_zalo_id=self.to_id)).values(
-            'phone', 'user_zalo_id', 'avatar_small', 'avatar_big', 'message_quota_type', 'message_remain', 'message_quota'
+            'phone', 'user_zalo_id', 'avatar_small', 'avatar_big', 'message_quota_type', 'message_remain', 'message_quota', 'last_message_time'
         ).first()
         return {
             'id': self.id,
