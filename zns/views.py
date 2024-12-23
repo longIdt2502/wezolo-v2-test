@@ -43,7 +43,7 @@ class ZnsApi(APIView):
 
         oa_query = data.get('oa')
         if oa_query:
-            oa = ZaloOA.objects.filter(id=oa_query)
+            oa = ZaloOA.objects.get(id=oa_query)
             employee = employee.filter(workspace=oa.company)
             zns = zns.filter(oa_id=oa_query)
 
