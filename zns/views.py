@@ -35,18 +35,22 @@ class ZnsApi(APIView):
         offset = (int(data.get('page', 1)) - 1) * page_size
 
         zns = Zns.objects.filter()
+        employee = Employee.objects.filter(account=user)
         ws_query = data.get('workspace')
         if ws_query:
+            employee = employee.filter(workspace_id=ws_query)
             zns = zns.filter(oa__company_id=ws_query)
-
-        employee = Employee.objects.filter(
-            account=user, workspace_id=ws_query
-        ).first()
 
         oa_query = data.get('oa')
         if oa_query:
+            oa = ZaloOA.objects.filter(id=oa_query)
+            employee = employee.filter(workspace=oa.company)
             zns = zns.filter(oa_id=oa_query)
 
+        employee = employee.first()
+
+        if not employee:
+            return convert_response('Bạn không có quyền truy cập')
         if employee.role == Role.Code.SALE:
             employee_oa = EmployeeOa.objects.filter(employee=employee)
             oas = employee_oa.values_list('oa_id', flat=True)
