@@ -90,6 +90,8 @@ class WalletReceiveHookPayment(APIView):
         wallet = Wallet.objects.get(owner=wallet_trans.user)
         # nếu hành động nạp tiền là để mua gói
         if data.get('description') == WalletTransaction.Type.IN_PACKAGE:
+            wallet_trans.type=WalletTransaction.Type.IN_PACKAGE
+            wallet_trans.save()
             reward_tier = wallet.owner.level
             if reward_tier:
                 reward_benefit = RewardBenefit.objects.filter(tier_id=reward_tier, type=Price.Type.START).first()
