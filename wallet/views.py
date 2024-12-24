@@ -172,3 +172,49 @@ class WalletTransApi(APIView):
 
     def post(self, request):
         pass
+
+
+class WalletTransAdminApi(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        user = request.user
+        if not user.is_superuser:
+            return convert_response('Bạn không có quyền truy cập', 400)
+
+        data = request.GET.copy()
+        page_size = int(data.get('page_size', 20))
+        offset = (int(data.get('page', 1)) - 1) * page_size
+        
+        wallet = Wallet.objects.filter(owner_id=pk).first()
+        if not wallet:
+            return convert_response('Ví không tồn tại')
+        wallet_tras = WalletTransaction.objects.filter(wallet=wallet)
+
+        type_trans = data.get('type')
+        if type_trans:
+            wallet_tras = wallet_tras.filter(type=type_trans)
+
+        date_start = data.get('date_start')
+        if date_start:
+            date_start = datetime.strptime(date_start, '%d-%m-%Y')
+            wallet_tras = wallet_tras.filter(created_at__gte=date_start)
+        
+        date_end = data.get('date_end')
+        if date_end:
+            date_end = datetime.strptime(date_end, '%d-%m-%Y')
+            wallet_tras = wallet_tras.filter(created_at__lte=date_end)
+        
+        total = wallet_tras.count()
+
+        types_in = [WalletTransaction.Type.DEPOSIT, WalletTransaction.Type.IN_MESSAGE, WalletTransaction.Type.IN_ZNS]
+        total_in = wallet_tras.filter(type__in=types_in).values().annotate(
+            total_money=Sum('total_amount')
+        ).values('total_money').first()
+        total_in = total_in['total_money'] if total_in else 0
+        total_out = wallet_tras.exclude(type__in=types_in).values().annotate(
+            total_money=Sum('total_amount')
+        ).values('total_money').first()
+        total_out = total_out['total_money'] if total_out else 0
+        wallet_tras = wallet_tras.order_by('-id')[offset: offset + page_size].values()
+        return convert_response('success', 200, data=wallet_tras, wallet=wallet.to_json(), total=total, total_in=total_in, total_out=total_out)
