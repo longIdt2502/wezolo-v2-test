@@ -372,7 +372,7 @@ class MessageOpenApi(APIView):
         data = request.data.copy()
 
         oa_id = data.get("oa_id")
-        data = data.get("data")
+        payload = data.get("data")
         # find oa object has oa_id equal oa_id in serializer
         oa = ZaloOA.objects.filter(uid_zalo_oa=oa_id).first()
         if not oa:
@@ -386,13 +386,13 @@ class MessageOpenApi(APIView):
         if user_follow is not None and oa.id == 6:
             message = ""
             if type_str == Zns.TemplateTypes.SEND_OTP:
-                message = data.get("otp")
+                message = payload.get("otp")
             if oa.id == 6 and type_str == Zns.TemplateTypes.CONFIRM_ORDER:
-                message = generate_confirmation_order_pharmago(data)
+                message = generate_confirmation_order_pharmago(payload)
             if type_str == Zns.TemplateTypes.LHE_CREATED_ORDER:
-                message = generate_created_order_lhe(data)
+                message = generate_created_order_lhe(payload)
             if type_str == Zns.TemplateTypes.LHE_CONFIRM_ORDER:
-                message = generate_confirm_order_lhe(data)
+                message = generate_confirm_order_lhe(payload)
             # res = send_message_v2(oa, user_follow.user_id, message, uuid.uuid4().hex, [], request.user.id)
             res = send_message_text(oa, user_follow.user_zalo_id, message)
             return convert_response("Success", 200, data=res)
@@ -410,7 +410,7 @@ class MessageOpenApi(APIView):
             can_send, wallet, reward_benefit = checkFinancialCapacity(oa.company.created_by, Price.Type.ZNS)
             amount = reward_benefit.value.value
             if mode == "development":
-                res = send_zns(oa, template_id, data, phone, tracking_id, mode)
+                res = send_zns(oa, template_id, payload, phone, tracking_id, mode)
             elif mode == "production":
                 # can_send = check_account_balance(oa, int(reward_benefit.value.value))
                 if not can_send:
@@ -425,7 +425,7 @@ class MessageOpenApi(APIView):
                     oa=oa,
                     used_at=datetime.now()
                 )
-                res = send_zns(oa, template_id, data, phone, tracking_id, mode)
+                res = send_zns(oa, template_id, payload, phone, tracking_id, mode)
             res = json.loads(res)
             success = res.get("message", "") == "Success" and int(
                 res.get("error", 1)) == 0
