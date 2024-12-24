@@ -33,7 +33,7 @@ class Wallet(models.Model):
                 "full_name": self.owner.full_name,
                 "avatar": self.owner.avatar,
             },
-            "wallet_authorization": self.wallet_authorization,
+            "wallet_authorization": str(self.wallet_authorization) if self.wallet_authorization else None,
         }
 
     def save(self, *args, **kwargs):
