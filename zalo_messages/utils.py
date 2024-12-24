@@ -24,7 +24,8 @@ def send_message_text(oa: ZaloOA, user_id, message):
     response = response.json()
     if response.get('error') == -216:
         oa = update_token_oa(oa.uid_zalo_oa)
-        response = send_message_text(oa, user_id, message)
+        if oa:
+            response = send_message_text(oa, user_id, message)
 
     return response
 
@@ -59,5 +60,6 @@ def send_request_info(oa: ZaloOA, user_id):
     response = response.json()
     if response.get('error') == -216:
         oa = update_token_oa(oa.uid_zalo_oa)
-        response = send_request_info(oa, user_id)
+        if oa:
+            response = send_request_info(oa, user_id)
     return response
