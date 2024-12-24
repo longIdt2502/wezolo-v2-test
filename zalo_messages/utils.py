@@ -63,3 +63,40 @@ def send_request_info(oa: ZaloOA, user_id):
         if oa:
             response = send_request_info(oa, user_id)
     return response
+
+
+def send_zns(oa, template_id, content, phone, tracking_id, mode):
+    if not oa.activate:
+        return None
+    headers = {
+        'access_token': oa.access_token,
+    }
+    if phone.startswith('0'):
+        phone = phone.replace('0', '84', 1)
+    url = os.environ.get("ZALO_ZNS_URL")
+    payload = {
+        "phone": phone,
+        "template_id": template_id,
+        "template_data": content,
+        "tracking_id": tracking_id
+    }
+    payload = json.dumps(
+        {
+            "phone": phone,
+            "template_id": template_id,
+            "template_data": content,
+            "tracking_id": tracking_id
+        })
+    if mode == 'development':
+        payload['mode'] = mode
+    payload = json.dumps(payload)
+    response = requests.request("POST", url, headers=headers, data=payload)
+    # log = ZaloOaLog()
+    # log.source = phone
+    # log.request_data = json.loads(payload)
+    # log.oa = oa.oa_id
+    # log.data = response.json()
+    # log.type = "zns"
+    # log.mode = "production"
+    # log.save()
+    return response.json()
