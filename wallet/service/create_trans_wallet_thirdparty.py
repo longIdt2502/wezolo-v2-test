@@ -31,7 +31,6 @@ def create_transaction_third_party(wallet_trans, metadata):
     }
     try:
         response = requests.post(url, headers=headers, json=payload)
-        print(response.json())
         return response.json()
     except Exception:
         return {}
