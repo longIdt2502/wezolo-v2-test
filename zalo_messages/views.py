@@ -12,6 +12,7 @@ from common.s3 import AwsS3
 from common.zalo.request import update_token_oa
 import requests
 from rest_framework import response, status
+from progress.models import ProgressTagUserZalo
 from utils.convert_response import convert_response
 from workspace.models import Role
 from ws.event import send_message_to_ws
@@ -75,6 +76,18 @@ class MessageApi(APIView):
             tags_query = TagUserZalo.objects.filter(tag_id__in=tags)
             user_id_in_tags = tags_query.values_list('user_zalo_id', flat=True)
             user = user.filter(id__in=user_id_in_tags)
+
+        progress = data.get('progress')
+        if progress:
+            tag_progress = ProgressTagUserZalo.objects.filter(tag__progress_id=progress)
+            user_id_in_progress = tag_progress.values_list('user_zalo_id', flat=True)
+            user = user.filter(id__in=user_id_in_progress)
+        
+        progress_tag = data.get('progress_tag')
+        if progress_tag:
+            tag_progress = ProgressTagUserZalo.objects.filter(id=progress_tag)
+            user_id_in_progress = tag_progress.values_list('user_zalo_id', flat=True)
+            user = user.filter(id__in=user_id_in_progress)
         
         user = user.annotate(
             is_null_last_message_time=Case(
