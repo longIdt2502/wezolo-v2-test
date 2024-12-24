@@ -22,6 +22,7 @@ def list_message_oa_job(access_token, user_zalo_oa: str):
         item_count = 10
         while item_count == 10:
             res = oa_list_message_in_conversation(access_token, user_zalo_oa, offset)
+            print(res)
             if res.get('error') != 0:
                 break
             messages_valid = []
@@ -42,6 +43,7 @@ def list_message_oa_job(access_token, user_zalo_oa: str):
 def detail_customer_oa_job(access_token, user_id, oa: int):
     try:
         res = oa_detail_customer(access_token, user_id)
+        print(res)
         if res['error'] == 0:
             customer = res['data']
             url = f'{domain}/v1/zalo/zalo_user/create'
