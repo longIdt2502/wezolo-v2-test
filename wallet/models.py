@@ -70,6 +70,7 @@ class WalletTransaction(models.Model):
     class Method(models.TextChoices):
         CASH = 'CASH', 'tiền mặt'
         TRANSFER = 'TRANSFER', 'chuyển khoản'
+        WALLET = 'WALLET', 'tài khoản ví'
 
     transaction_id = models.CharField(max_length=255, null=True, blank=True)
     wallet = models.ForeignKey(Wallet, on_delete=models.SET_NULL, null=True)

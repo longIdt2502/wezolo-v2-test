@@ -1,22 +1,25 @@
 import json
 from datetime import datetime
 from typing import Optional
+import uuid
 
 from django.db import transaction
 from django.db.models import OuterRef, Q, F, Case, When, Value, CharField, IntegerField
 from django.db.models.functions import Coalesce
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 
 from common.core.subquery import *
-
+from .common.lhe import *
 from employee.models import Employee, EmployeeOa
 from package.models import Price
 from reward.models import RewardBenefit
 from utils.check_financial_capacity import checkFinancialCapacity
 from utils.convert_response import convert_response
 from workspace.models import Role
-from zalo.models import ZaloOA
+from zalo.models import UserZalo, ZaloOA
+from zalo.utils import convert_phone
+from zalo_messages.utils import send_message_text, send_zns
 from zns.models import *
 from zns.utils import (
     createZnsFieldTitle, createZnsFieldParagraph, createZnsFieldOTP,
@@ -356,3 +359,153 @@ class ZnsTypePrice(APIView):
             price=price_subquery
         )
         return convert_response('success', 200, data=reward_benefit)
+
+
+
+class MessageOpenApi(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        authorization = request.headers.get("Authorization")
+        application_id = request.headers.get("X-Application-Id")
+        secret_key = request.headers.get("X-Secret-Key")
+        data = request.data.copy()
+
+        oa_id = data.get("oa_id")
+        data = data.get("data")
+        # find oa object has oa_id equal oa_id in serializer
+        oa = ZaloOA.objects.filter(oa_id=oa_id).first()
+        if not oa:
+            return convert_response("Error", 400, data={"message": "oa not found"})
+        # amount = os.environ.get("ZNS_DEFAULT_PRICE", 350)
+        type_str = data.get("type")
+        phone = data.get("phone")
+        if phone.startswith('0'):
+            phone = phone.replace('0', '84', 1)
+        user_follow = UserZalo.objects.filter(phone=phone, oa_id=oa_id).first()
+        if user_follow is not None and oa.id == 6:
+            message = ""
+            if type_str == Zns.TemplateTypes.SEND_OTP:
+                message = data.get("otp")
+            if oa.id == 6 and type_str == Zns.TemplateTypes.CONFIRM_ORDER:
+                message = generate_confirmation_order_pharmago(data)
+            if type_str == Zns.TemplateTypes.LHE_CREATED_ORDER:
+                message = generate_created_order_lhe(data)
+            if type_str == Zns.TemplateTypes.LHE_CONFIRM_ORDER:
+                message = generate_confirm_order_lhe(data)
+            # res = send_message_v2(oa, user_follow.user_id, message, uuid.uuid4().hex, [], request.user.id)
+            res = send_message_text(oa, user_follow.user_zalo_id, message)
+            return convert_response("Success", 200, data=res)
+        else:
+            mode = data.get("mode", "development")
+
+            tracking_id = uuid.uuid4().hex
+            template = Zns.objects.filter(type_third_party=type_str, oa=oa).first()
+            if not template:
+                return convert_response("Error", 400, data={"message": "template not found"})
+            template_id = template.template
+            # zns_custom = ZNSWorkspaceCustom.objects.filter(template_id=template_id).first()
+            res = {}
+            # amount = oa.get_pricing_zns(zns_custom.id)
+            can_send, wallet, reward_benefit = checkFinancialCapacity(oa.company.created_by, Price.Type.ZNS)
+            amount = reward_benefit.value.value
+            if mode == "development":
+                res = send_zns(oa, template_id, data, phone, tracking_id, mode)
+            elif mode == "production":
+                # can_send = check_account_balance(oa, int(reward_benefit.value.value))
+                if not can_send:
+                    return convert_response("Error", 400, data={"message": "Số dư trong ví không đủ để thực hiện"})
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    type=WalletTransaction.Type.OUT_ZNS,
+                    method=WalletTransaction.Method.WALLET,
+                    amount=amount,
+                    user=wallet.owner,
+                    total_amount=amount,
+                    oa=oa,
+                    used_at=datetime.now()
+                )
+                res = send_zns(oa, template_id, data, phone, tracking_id, mode)
+            res = json.loads(res)
+            success = res.get("message", "") == "Success" and int(
+                res.get("error", 1)) == 0
+            if not success:
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    type=WalletTransaction.Type.IN_ZNS,
+                    method=WalletTransaction.Method.WALLET,
+                    amount=amount,
+                    user=wallet.owner,
+                    total_amount=amount,
+                    oa=oa,
+                    used_at=datetime.now()
+                )
+            # save send log
+            # ZNSSendLog.objects.create(
+            #     oa=oa,
+            #     template_id=template_id,
+            #     data=data,
+            #     mode=mode,
+            #     to=phone,
+            #     res=res
+            # )
+            return convert_response("Success", 200, data=res)
+
+
+
+class MessageOpenApiV2(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        authorization = request.headers.get("Authorization")
+        application_id = request.headers.get("X-Application-Id")
+        secret_key = request.headers.get("X-Secret-Key")
+        
+        data = request.data.copy()
+
+        oa_id = data.get('oa')
+        payload = data.get('payload')
+        zns_id = data.get('zns')
+        if not oa_id or not zns_id or not payload:
+            return convert_response("Error", 400, data={"message": "Missing required parameters"})
+        phone_number = data.get('phone')
+        tracking_id = data.get('tracking_id', uuid.uuid4().hex)
+        if phone_number.startswith("0"):
+            phone_number = convert_phone(phone_number)
+        mode = data.get("mode", "development")
+        oa = ZaloOA.objects.filter(oa_id=oa_id).first()
+        res = {}
+        if mode == "development":
+            res = send_zns(oa, zns_id, payload, phone_number, tracking_id, mode)
+        elif mode == "production":
+            can_send, wallet, reward_benefit = checkFinancialCapacity(oa.company.created_by, Price.Type.ZNS)
+            if not can_send:
+                return convert_response("Error", 400, data={"message": "Số dư trong ví không đủ"})
+            amount = reward_benefit.value.value
+            WalletTransaction.objects.create(
+                wallet=wallet,
+                type=WalletTransaction.Type.OUT_ZNS,
+                method=WalletTransaction.Method.WALLET,
+                amount=amount,
+                user=wallet.owner,
+                total_amount=amount,
+                oa=oa,
+                used_at=datetime.now()
+            )
+            res = send_zns(oa, zns_id, payload, phone_number, tracking_id, mode)
+            # if not isinstance(res, dict):
+            #     res = json.loads(res)
+            success = res.get("message", "") == "Success" and int(
+                res.get("error", 1)) == 0
+            if not success:
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    type=WalletTransaction.Type.IN_ZNS,
+                    method=WalletTransaction.Method.WALLET,
+                    amount=amount,
+                    user=wallet.owner,
+                    total_amount=amount,
+                    oa=oa,
+                    used_at=datetime.now()
+                )
+        return convert_response("success", 200, data=res)

@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 import random
+import uuid
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.shortcuts import render
@@ -12,18 +13,22 @@ from common.s3 import AwsS3
 from common.zalo.request import update_token_oa
 import requests
 from rest_framework import response, status
+from package.models import Price
 from progress.models import ProgressTagUserZalo
+from utils.check_financial_capacity import checkFinancialCapacity
 from utils.convert_response import convert_response
 from workspace.models import Role
 from ws.event import send_message_to_ws
 from common.core.subquery import *
 
 from zalo.models import UserZalo, ZaloOA
+from zalo.utils import convert_phone
 from zalo_messages.models import Message
 from tags.models import TagUserZalo
 from employee.models import Employee, EmployeeUserZalo
-from zalo_messages.utils import send_message_text, send_request_info
+from zalo_messages.utils import send_message_text, send_request_info, send_zns
 from zns.models import Zns, ZnsSent
+from wallet.models import WalletTransaction
 
 
 class MessageApi(APIView):
@@ -231,6 +236,7 @@ class MessageListApi(APIView):
         user_zalo.save()
         messages = messages.order_by('-id')[offset: offset + page_size].values()
         return convert_response('success', 200, data=messages, total=total)
+
 
 class MessageFileListApi(APIView):
     permission_classes = [IsAuthenticated]

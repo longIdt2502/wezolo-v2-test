@@ -36,11 +36,20 @@ class Zns(models.Model):
         (3, 'Promotion'),
     ]
 
+    class TemplateTypes(models.TextChoices):
+        CONFIRM_ORDER = 'confirm_order'
+        SEND_OTP = 'send_otp'
+        LHE_SENT_ORDER = 'lhe_sent_order'
+        LHE_CONFIRM_ORDER = 'lhe_confirm_order'
+        LHE_CREATED_ORDER = 'lhe_created_order'
+
+
     oa = models.ForeignKey(ZaloOA, on_delete=models.CASCADE, null=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0], null=False)
     template = models.CharField(max_length=255, null=True, blank=True)
     name = models.CharField(max_length=60, null=True, blank=True)
     type = models.IntegerField(choices=TYPE_CHOICES, help_text="Loại mẫu tin.")
+    type_third_party = models.CharField(max_length=255, null=True, blank=True, choices=TemplateTypes.choices, default=TemplateTypes.CONFIRM_ORDER)
     tag = models.IntegerField(choices=TAG_CHOICES, help_text="Tag mẫu tin.")
     note = models.TextField(null=True)
     price = models.FloatField(default=0)
