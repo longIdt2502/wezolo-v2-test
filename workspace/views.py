@@ -68,6 +68,20 @@ class Workspaces(APIView):
             output_field=FloatField()
         )
 
+        total_money_spent_month_query = Coalesce(
+            Subquery(
+                WalletTransaction.objects.filter(
+                    oa__company_id=OuterRef('id'),
+                    created_at__gte=datetime.now().replace(day=1)
+                ).values('total_amount').annotate(
+                    total=Sum('total_amount')
+                ).values('total')[:1],
+                output_field=FloatField()
+            ),
+            Value(0),
+            output_field=FloatField()
+        )
+
         role_data = SubqueryJson(
             Employee.objects.filter(account_id=user.id, workspace_id=OuterRef('id')).values('id')[:1]
             .annotate(
@@ -76,9 +90,18 @@ class Workspaces(APIView):
                 )
             )
         )
+
+        address_subquery = SubqueryJson(
+            Address.objects.filter(id=OuterRef('address_id')).values(
+                'address', 'city_id', 'city__name', 'district_id', 'district__name', 'ward_id', 'ward__name'
+            )[:1]
+        )
+
         ws = ws.values().annotate(
             total_money_spent=total_money_spent_query,
-            role=role_data
+            total_money_spent_month_query=total_money_spent_month_query,
+            role=role_data,
+            address_data=address_subquery,
         )
 
         order_by_money_spent = data.get('order_by_money_spent')
