@@ -374,7 +374,7 @@ class MessageOpenApi(APIView):
         oa_id = data.get("oa_id")
         data = data.get("data")
         # find oa object has oa_id equal oa_id in serializer
-        oa = ZaloOA.objects.filter(oa_id=oa_id).first()
+        oa = ZaloOA.objects.filter(uid_zalo_oa=oa_id).first()
         if not oa:
             return convert_response("Error", 400, data={"message": "oa not found"})
         # amount = os.environ.get("ZNS_DEFAULT_PRICE", 350)
@@ -473,7 +473,7 @@ class MessageOpenApiV2(APIView):
         if phone_number.startswith("0"):
             phone_number = convert_phone(phone_number)
         mode = data.get("mode", "development")
-        oa = ZaloOA.objects.filter(oa_id=oa_id).first()
+        oa = ZaloOA.objects.filter(uid_zalo_oa=oa_id).first()
         res = {}
         if mode == "development":
             res = send_zns(oa, zns_id, payload, phone_number, tracking_id, mode)
