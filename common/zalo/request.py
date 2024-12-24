@@ -1,6 +1,6 @@
 import os
 import requests
-from typing import List
+from typing import List, Optional
 from common.pref_keys import PrefKeys
 from zalo.models import ZaloOA
 
@@ -16,17 +16,21 @@ def get_token_from_refresh(refresh_token: str) -> List[str]:
     }
     response = requests.request("POST", url, headers=headers, data=payload)
     response = response.json()
+    if response.get('error') == -14014:
+        return None, None
     new_access = response.get('access_token')
     new_refresh = response.get('refresh_token')
     if new_refresh and new_refresh:
         return new_access, new_refresh
     return None, None
 
-def update_token_oa(oa_zalo_id: str) -> ZaloOA:
+
+def update_token_oa(oa_zalo_id: str) -> Optional[ZaloOA]:
     oa = ZaloOA.objects.get(uid_zalo_oa=oa_zalo_id)
     access_token, refresh_token = get_token_from_refresh(oa.refresh_token)
     if access_token and refresh_token:
         oa.access_token = access_token
         oa.refresh_token = refresh_token
         oa.save()
-    return oa
+        return oa
+    return None
