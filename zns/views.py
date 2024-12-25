@@ -17,7 +17,7 @@ from reward.models import RewardBenefit
 from utils.check_financial_capacity import checkFinancialCapacity
 from utils.convert_response import convert_response
 from workspace.models import Role
-from zalo.models import UserZalo, ZaloOA
+from zalo.models import UserZalo, ZNSSendLog, ZaloOA
 from zalo.utils import convert_phone
 from zalo_messages.utils import send_message_text, send_zns
 from zns.models import *
@@ -426,7 +426,7 @@ class MessageOpenApi(APIView):
                     used_at=datetime.now()
                 )
                 res = send_zns(oa, template_id, payload, phone, tracking_id, mode)
-            res = json.loads(res)
+            # res = json.loads(res)
             success = res.get("message", "") == "Success" and int(
                 res.get("error", 1)) == 0
             if not success:
@@ -441,14 +441,14 @@ class MessageOpenApi(APIView):
                     used_at=datetime.now()
                 )
             # save send log
-            # ZNSSendLog.objects.create(
-            #     oa=oa,
-            #     template_id=template_id,
-            #     data=data,
-            #     mode=mode,
-            #     to=phone,
-            #     res=res
-            # )
+            ZNSSendLog.objects.create(
+                oa=oa,
+                template_id=template_id,
+                data=data,
+                mode=mode,
+                to=phone,
+                res=res
+            )
             return convert_response("Success", 200, data=res)
 
 
