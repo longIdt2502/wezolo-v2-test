@@ -69,6 +69,7 @@ def send_zns(oa, template_id, content, phone, tracking_id, mode):
     if not oa.activate:
         return None
     headers = {
+        'Content-Type': 'application/json',
         'access_token': oa.access_token,
     }
     if phone.startswith('0'):
@@ -80,13 +81,13 @@ def send_zns(oa, template_id, content, phone, tracking_id, mode):
         "template_data": content,
         "tracking_id": tracking_id
     }
-    payload = json.dumps(
-        {
-            "phone": phone,
-            "template_id": template_id,
-            "template_data": content,
-            "tracking_id": tracking_id
-        })
+    # payload = json.dumps(
+    #     {
+    #         "phone": phone,
+    #         "template_id": template_id,
+    #         "template_data": content,
+    #         "tracking_id": tracking_id
+    #     })
     if mode == 'development':
         payload['mode'] = mode
     payload = json.dumps(payload)
